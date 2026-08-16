@@ -31,14 +31,18 @@ return {
     }
 
     // ---------- 工作区根目录解析 ----------
-    function pickRoot() {
+    // 关键：必须取「当前会话」的工作区，而不是 sessions.list() 的第一个会话
+    // （那可能是别的 workspace，导致快照写错地方）。最可靠：从注册表找到
+    // 本插件自己的记录，其 agentId 就是当前会话 id。
+    async function pickRoot() {
       try {
-        const sessions = ctx.get('sessions')
-        if (sessions) {
-          for (const s of sessions.list()) {
-            const cwd = s && s.header && s.header.cwd
-            if (cwd) { rootSource = 'sessions'; return cwd }
-          }
+        const rows = await runner.inventory()
+        const me = (rows || []).find((r) => r.pluginId === 'plcntr-3')
+        if (me && me.agentId) {
+          const sessions = ctx.get('sessions')
+          const s = sessions && sessions.get(me.agentId)
+          const cwd = s && s.header && s.header.cwd
+          if (cwd) { rootSource = 'self-session'; return cwd }
         }
       } catch (err) { /* ignore */ }
       try {
@@ -63,7 +67,7 @@ return {
 
     async function ensureRoot() {
       if (root) return root
-      const r = pickRoot()
+      const r = await pickRoot()
       if (!r) return null
       root = r
       storePath = await fs.resolve('.better-manager-plugins.json', { cwd: root })
@@ -271,11 +275,10 @@ return {
       return { ok: true, restored: restoredIds.length, restoredIds, runPlan }
     }
 
-    // 进程重启后自动恢复（注册表为空时）
+    // 自动恢复：把快照里「缺失」的插件补回注册表（幂等，已存在的跳过）。
+    // 注意：不能用「注册表为空」作条件 —— 重启后用户先加载本插件本身，
+    // 注册表里已有 plcntr-3，导致其他插件不会被恢复。
     async function autoRestore() {
-      const reg = await currentRegistry()
-      if (!reg.ok) return { autoRestored: false, reason: reg.error, restored: 0 }
-      if (reg.rows.length > 0) return { autoRestored: false, reason: 'registry-not-empty', restored: 0 }
       const res = await restoreFromStore()
       if (res.ok && res.restored > 0) {
         justRestored = true

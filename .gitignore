@@ -145,6 +145,8 @@ vite.config.ts.timestamp-*
 # better-dsh runtime data
 .dsh-token-meter.json
 .better-manager-plugins.json
+.better-manager-debug.json
+probe-*.json
 
 # temp clone dirs
 .tmp-oi-clone/
