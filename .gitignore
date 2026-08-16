@@ -141,3 +141,10 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# better-dsh runtime data
+.dsh-token-meter.json
+.better-manager-plugins.json
+
+# temp clone dirs
+.tmp-oi-clone/

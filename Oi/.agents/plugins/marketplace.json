@@ -1,0 +1,17 @@
+{
+  "name": "oi",
+  "interface": { "displayName": "Oi" },
+  "plugins": [
+    {
+      "name": "oi",
+      "version": "0.0.2",
+      "description": "The Oi Agent Language",
+      "homepage": "https://github.com/oi-language/oi",
+      "repository": "https://github.com/oi-language/oi",
+      "license": "MIT",
+      "source": { "source": "local", "path": "./plugins/oi" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "category": "Productivity"
+    }
+  ]
+}
