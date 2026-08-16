@@ -293,17 +293,18 @@ return {
     }
 
     // ---------- RPC ----------
+    // 注意：harness.handle 返回值必须是纯 JSON，任何 undefined 字段都会被拒绝。
     harness.handle('bm:list', async () => {
       const reg = await currentRegistry()
       const store = await readStore()
       return {
         ok: reg.ok,
         rows: reg.rows,
-        error: reg.error,
+        error: reg.error || null,
         autoRestored: justRestored,
         runPlan: justRestored ? lastRunPlan : [],
         store: store
-          ? { savedAt: store.savedAt, count: Array.isArray(store.plugins) ? store.plugins.length : 0, root: store.root }
+          ? { savedAt: store.savedAt || null, count: Array.isArray(store.plugins) ? store.plugins.length : 0, root: store.root || null }
           : null,
       }
     })
