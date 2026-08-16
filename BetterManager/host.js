@@ -83,7 +83,13 @@ return {
     }
 
     // ---------- 当前会话 id（恢复出的插件归本会话所有） ----------
+    // 与 pickRoot 同思路：从注册表找本插件自己的记录，其 agentId 就是当前会话。
     function currentSessionId() {
+      try {
+        const rows = runner.inventory()
+        const me = (rows || []).find((r) => r.pluginId === 'plcntr-3')
+        if (me && me.agentId) return me.agentId
+      } catch (err) { /* ignore */ }
       try {
         const agents = ctx.get('agents')
         if (agents) {

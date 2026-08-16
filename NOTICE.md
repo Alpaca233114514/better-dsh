@@ -45,6 +45,17 @@
 - 完整许可证文本见 [`Oi/LICENSE`](Oi/LICENSE)。
 - Oi 项目名、logo 与吉祥物为其品牌资产，MIT 许可证不授予商标权。
 
+### DSH 技能接线（`.agents/skills/`）
+
+仓库根目录 [`.agents/skills/`](.agents/skills/) 下另存了一份 Oi 的 7 个技能
+（`using-oi`、`compile-oi`、`format-oi`、`debug-oi`、`bench-oi`、`convert-oi`、
+`upgrade-oi`）的完整副本，供 DSH 自动扫描（DSH 只发现一层深的
+`<技能根>/<name>/SKILL.md`，而 Oi 技能位于 `Oi/plugins/oi/skills/` 深层目录，
+默认不会被发现）。这些副本同样遵循 Oi 的 MIT License 与上述著作权声明。
+
+**升级 Oi 时**：覆盖 `Oi/` 后，请同步把 `Oi/plugins/oi/skills/` 下的 7 个技能目录
+重新复制到 `.agents/skills/`，保持两份内容一致。
+
 ## 更新第三方收录
 
 如需升级 `Oi/` 目录内容，请从上游仓库重新复制，并同步更新本文件中的
