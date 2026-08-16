@@ -221,7 +221,6 @@ return {
       }
       const ok = await writeStore({ version: 1, savedAt: Date.now(), root, plugins })
       if (ok) lastSavedSig = sig
-      debugLog({ step: 'save-done', ok, count: plugins.length, savedAt: ok ? Date.now() : null })
       return { ok, count: plugins.length, savedAt: ok ? Date.now() : null }
       } catch (err) {
         debugLog({ step: 'save-throw', error: errText(err) })

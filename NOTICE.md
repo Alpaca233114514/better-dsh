@@ -9,6 +9,48 @@
   为本仓库原创的 DeepSeek Harness 动态 Cordis 插件，遵循仓库根目录
   [LICENSE](LICENSE)（Apache License 2.0）。
 
+## 第三方收录：dsh-anchored-standard
+
+- **项目名称**：dsh-anchored-standard — 双阶段 DeepSeek Harness 代理 preset
+  （首轮锚定 Minimal 条件，会话持久后晋升到小型 resident 工具目录）
+- **来源仓库**：<https://github.com/xiaobright/dsh-anchored-standard>
+- **收录版本**：`main` 分支 commit `0a38616c1b7ce4219b6d94d95c89f34a90741616`（2026-08-16）
+- **收录方式**：原样复制源码至 `dsh-anchored-standard/` 目录（不含 `.git`），未做任何修改
+- **许可证**：MIT License
+- **著作权**：Copyright (c) 2026 xiaobright；Portions Copyright (c) 2026 DeepSeek
+
+  ```
+  MIT License
+
+  Copyright (c) 2026 xiaobright
+  Portions Copyright (c) 2026 DeepSeek
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+  ```
+
+- 完整许可证文本见 [`dsh-anchored-standard/LICENSE`](dsh-anchored-standard/LICENSE)。
+- 该 preset 的 `preset/agent.cordis.yml` 派生自 DeepSeek Harness Standard preset，
+  上游已保留 DeepSeek 的 MIT 著作权声明，见
+  [`dsh-anchored-standard/NOTICE`](dsh-anchored-standard/NOTICE)。
+- 这是社区项目，并非 DeepSeek 官方 preset，也不代表 DeepSeek 的认可或背书。
+  （DeepSeek 与 DeepSeek Harness 为其所有者名称。）
+
 ## 第三方收录：Oi
 
 - **项目名称**：Oi — 面向 Agent Skills 的 agent-native 语言
@@ -58,5 +100,7 @@
 
 ## 更新第三方收录
 
-如需升级 `Oi/` 目录内容，请从上游仓库重新复制，并同步更新本文件中的
-收录版本（commit hash）与日期。
+如需升级 `Oi/` 或 `dsh-anchored-standard/` 目录内容，请从上游仓库重新复制，
+并同步更新本文件中对应的收录版本（commit hash）与日期。
+`dsh-anchored-standard/` 升级时请一并核对上游 [`NOTICE`](dsh-anchored-standard/NOTICE)
+中 DeepSeek Harness 派生内容的著作权声明是否变化。

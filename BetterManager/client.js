@@ -458,7 +458,7 @@ button:has(.bm-nav-label)>svg{display:none}
         React.createElement('div', { className: 'bm-foot' },
           '数据源 = DSH 动态插件注册表（dynamicCordisRunner），与内置左下角 Cordis 面板同源；',
           '开关 = 运行 / 停止（startUserRun / stopFromPanel）；删除 = undefineFromPanel（不可恢复）。',
-          '持久化 = 快照保存到工作区根目录 .better-manager-plugins.json（含全部插件源码），进程重启后注册表为空时自动恢复定义，防止插件丢失。',
+          '持久化 = 快照保存到工作区根目录 .better-manager-plugins.json（含全部插件源码），启动时自动补回快照中缺失的插件定义，防止插件丢失。',
           '「隐藏左下角入口」默认开启（刷新页面后恢复默认）：以更低优先级覆盖内置入口，关闭开关即可恢复内置面板。',
         ),
       )

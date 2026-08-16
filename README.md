@@ -2,7 +2,7 @@
 
 致力于为小白提供更好体验和扩展空间的插件整合包
 
-本仓库整合了面向 **DeepSeek Harness** 的插件与工具，每个组件都带有独立的
+本仓库整合了面向 **DeepSeek Harness** 的插件、代理预设与工具，每个组件都带有独立的
 README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用。
 
 ## 收录内容
@@ -12,6 +12,7 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 | [TokenMeter](TokenMeter/) | Token 计量插件：统计 token 使用量并以 GitHub 风格热力图展示 | [README](TokenMeter/README.md) |
 | [BetterManager](BetterManager/) | 插件管理器：mod 菜单式管理 DSH 动态插件，带永久持久化防丢失 | [README](BetterManager/README.md) |
 | [Oi](Oi/) | 第三方收录：面向 Agent Skills 的 agent-native 语言（MIT License） | [README](Oi/README.md) |
+| [dsh-anchored-standard](dsh-anchored-standard/) | 第三方收录：双阶段 DSH 代理预设，首轮锚定 Minimal、晋升后按需解锁 Standard 工具（MIT License） | [README](dsh-anchored-standard/README.zh-CN.md) |
 
 ## 下载
 
@@ -23,7 +24,7 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 
 ## 装配到 DSH
 
-插件与技能在 DSH 里的装配方式不同，分开说明。
+插件、代理预设与技能在 DSH 里的装配方式不同，分开说明。
 
 ### 插件（TokenMeter / BetterManager）
 
@@ -53,11 +54,28 @@ DSH 可扫描副本（每技能一个 `<name>/SKILL.md` 目录，与 Oi 官方�
 - 技能说明：`using-oi` 是核心技能（加载 / 校验 / 执行版本化的 `.oi` 程序），
   其余为随附工具链（compile / format / debug / bench / convert / upgrade）的 adapter
 
+### 代理预设（dsh-anchored-standard）
+
+dsh-anchored-standard 是 **agent preset**（不是动态插件），需要复制到 DSH 的
+用户预设根目录后重启生效：
+
+1. 复制 `dsh-anchored-standard/preset/` 整个目录到
+   `~/.dsh/.agent-presets/anchored-standard`（Windows：`%USERPROFILE%\.dsh\...`）
+2. 变体可选：`dsh-anchored-standard/zero-anchored-standard/`（固定 0 工具锚定轮）、
+   `dsh-anchored-standard/whoami-standard/`（"你是谁"锚定轮）同样方式安装为独立预设 id
+3. 完全重启 DeepSeek Harness，新建一个**空白会话**，在预设选择中选
+   「Anchored Standard（experimental）」（或对应变体）——不要在已有会话中切换预设
+
+每个模式目录自包含，可单独安装；详细机制与配置见
+[dsh-anchored-standard/README.zh-CN.md](dsh-anchored-standard/README.zh-CN.md)。
+
 ### 更新
 
 - **插件**：替换仓库内 `TokenMeter/`、`BetterManager/` 源码后重新 `cordis_define`
 - **Oi**：从上游重新拉取覆盖 `Oi/`，并把 `Oi/plugins/oi/skills/` 下的 7 个技能目录
   重新复制到 `.agents/skills/`（详见 [NOTICE.md](NOTICE.md)）
+- **dsh-anchored-standard**：从上游重新拉取覆盖 `dsh-anchored-standard/`，
+  并同步更新 [NOTICE.md](NOTICE.md) 中的收录版本与著作权信息
 
 ## TokenMeter（Token 计量插件）
 
@@ -96,9 +114,34 @@ DeepSeek Harness 动态 Cordis 插件：代替内置左下角 Cordis 插件面�
 - 文档：语言设计见 [Oi/docs/language/design.md](Oi/docs/language/design.md)，
   使用方式见 [Oi/README.zh-CN.md](Oi/README.zh-CN.md)
 
+## dsh-anchored-standard（第三方收录）
+
+[dsh-anchored-standard](dsh-anchored-standard/) 是实验性的 **DeepSeek Harness 代理
+preset** 集合（社区项目，非 DeepSeek 官方 preset）：把会话首个模型请求锚定在
+Minimal 条件上（真实 Minimal 工具 schema、不注入自动上下文），会话产生首个持久
+信号（`tool/call` 或 `assistant/message`）后晋升到小型 resident 工具目录，重型
+Standard 工具（`web_search`、`subagent`、`workflow` 等）通过 `dev_tool_search`
+按需解锁。
+
+- **三种模式**：Anchored Standard（`preset/`，首轮 2 个 Minimal 工具，无额外代价）、
+  Zero-Anchored Standard（`zero-anchored-standard/`，首轮 0 工具 + 固定锚定消息）、
+  Whoami Standard（`whoami-standard/`，首轮 "你是谁" 自我介绍轮，子代理继承锚定流程）
+- **安装**：复制对应模式目录到 `~/.dsh/.agent-presets/<id>` 后重启 DSH，
+  详见上文 [代理预设（dsh-anchored-standard）](#代理预设dsh-anchored-standard) 与
+  [dsh-anchored-standard/README.zh-CN.md](dsh-anchored-standard/README.zh-CN.md)
+- **来源**：<https://github.com/xiaobright/dsh-anchored-standard>（MIT License，
+  Copyright (c) 2026 xiaobright；Portions Copyright (c) 2026 DeepSeek）
+- **收录版本**：commit `0a38616c1b7ce4219b6d94d95c89f34a90741616`（原样复制至
+  `dsh-anchored-standard/`）
+
 ## 著作权与许可
 
 - 本仓库原创插件（TokenMeter、BetterManager）遵循 [LICENSE](LICENSE)
   （Apache License 2.0）
 - 第三方收录的 Oi 遵循其自身 MIT License（见 [Oi/LICENSE](Oi/LICENSE)），
+  完整著作权声明见 [NOTICE.md](NOTICE.md)
+- 第三方收录的 dsh-anchored-standard 遵循其自身 MIT License（见
+  [dsh-anchored-standard/LICENSE](dsh-anchored-standard/LICENSE)，其派生自
+  DeepSeek Harness Standard preset 的部分保留 DeepSeek 著作权声明，见
+  [dsh-anchored-standard/NOTICE](dsh-anchored-standard/NOTICE)），
   完整著作权声明见 [NOTICE.md](NOTICE.md)
