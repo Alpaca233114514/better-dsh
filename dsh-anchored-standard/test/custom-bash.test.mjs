@@ -3,10 +3,21 @@ import test from 'node:test'
 
 import { apply, name, inject } from '../shared/custom-bash.mjs'
 
+function runtime() {
+  return {
+    workingDirectory: { ensure: async (agent) => agent.session.header.cwd },
+    sandboxPolicy: { resolve: () => ({ mode: 'workspace-write', workspaceRoot: 'C:/work' }) },
+    sandbox: { confine: async (argv) => ({ argv: ['sandbox-runner', ...argv] }) },
+    shellEnv: { collect: () => ({}) },
+    timeout: () => () => {},
+  }
+}
+
 function register(config) {
   const registered = []
   const spawnCalls = []
   const ctx = {
+    ...runtime(),
     subprocess: {
       async resolveExecutable(path) {
         return path
@@ -38,9 +49,9 @@ const exec = (overrides = {}) => ({
   ...overrides,
 })
 
-test('exports a diagnostic plugin name and injects subprocess + tools', () => {
+test('declares runtime, working directory, policy, confinement and deadline services', () => {
   assert.equal(name, 'custom-bash')
-  assert.deepEqual(inject.sort(), ['subprocess', 'tools'].sort())
+  assert.deepEqual([...inject].sort(), ['subprocess', 'tools', 'workingDirectory', 'sandboxPolicy', 'sandbox', 'timer', 'shellEnv'].sort())
 })
 
 test('registers the bash tool with a Minimal-compatible description', () => {
@@ -56,7 +67,7 @@ test('execute spawns `bash -c <command>` and returns the combined output', async
   const result = await tool.execute({ command: 'echo hi' }, exec())
   assert.equal(result.text, 'hello from bash')
   assert.equal(spawnCalls.length, 1)
-  assert.deepEqual(spawnCalls[0].argv, ['C:/Program Files/Git/bin/bash.exe', '-c', 'echo hi'])
+  assert.deepEqual(spawnCalls[0].argv, ['sandbox-runner', 'C:/Program Files/Git/bin/bash.exe', '-c', 'echo hi'])
 })
 
 test('execute passes the session cwd by default and honors an explicit workdir', async () => {
@@ -70,6 +81,7 @@ test('execute passes the session cwd by default and honors an explicit workdir',
 test('a non-zero exit throws with the captured output', async () => {
   const registered = []
   const ctx = {
+    ...runtime(),
     subprocess: {
       async resolveExecutable(path) { return path },
       spawn() {
@@ -91,6 +103,7 @@ test('a non-zero exit throws with the captured output', async () => {
 test('a spawn-level failure throws a descriptive error', async () => {
   const registered = []
   const ctx = {
+    ...runtime(),
     subprocess: {
       async resolveExecutable(path) { return path },
       spawn() {
@@ -106,6 +119,7 @@ test('a spawn-level failure throws a descriptive error', async () => {
 test('missing output readers degrade to the exit code text', async () => {
   const registered = []
   const ctx = {
+    ...runtime(),
     subprocess: {
       async resolveExecutable(path) { return path },
       spawn() {
@@ -129,6 +143,7 @@ test('the default bashPath falls back to `bash` on PATH', async () => {
   const resolved = []
   const registered = []
   const ctx = {
+    ...runtime(),
     subprocess: {
       async resolveExecutable(path) { resolved.push(path); return path },
       spawn() { return { done: Promise.resolve({ exitCode: 0 }), collected: { stdout: { readFrom() { return { text: 'ok' } } }, stderr: { readFrom() { return { text: '' } } } } } },

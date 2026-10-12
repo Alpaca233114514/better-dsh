@@ -21,6 +21,7 @@ function register(skills = []) {
       },
     },
     agents: {},
+    workingDirectory: { get: (session) => session.header.cwd },
   }
   apply(ctx)
   return { registered, injected, ctx }

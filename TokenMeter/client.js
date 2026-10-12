@@ -9,7 +9,7 @@
 //       localStorage 记忆上次选择。
 // ============================================================================
 return {
-  inject: ['timer'],
+  inject: ['timer', 'slots'],
   apply(ctx) {
     const slots = ctx.get('slots')
     if (slots === undefined) return
