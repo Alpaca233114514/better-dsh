@@ -1,0 +1,15 @@
+{
+  "hostVersion": "0.2.1-alpha.2",
+  "workspaceKind": "single-file local arithmetic fixture",
+  "scanId": "853d2fdd-6982-44ab-bff4-0c2069296355",
+  "provider": "deepseek-account",
+  "model": "deepseek-flash",
+  "reasoningEffort": "max",
+  "status": "completed",
+  "startedAt": "2026-10-12T14:59:48.041Z",
+  "updatedAt": "2026-10-12T15:00:57.349Z",
+  "findings": 0,
+  "limitations": [
+    "Smoke test of native model execution and original workbench report creation only; not scan-quality equivalence or dynamic exploit verification."
+  ]
+}

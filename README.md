@@ -11,6 +11,7 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 | --- | --- | --- |
 | [TokenMeter](TokenMeter/) | Token 计量插件：统计 token 使用量并以 GitHub 风格热力图展示 | [README](TokenMeter/README.md) |
 | [BetterManager](BetterManager/) | 插件管理器：mod 菜单式管理 DSH 动态插件，带永久持久化防丢失 | [README](BetterManager/README.md) |
+| [DeepSeek Security](DeepSeekSecurity/) | 原生安全审计插件：通过 @ 引用和聊天需求调用，执行期间显示进度 | [README](DeepSeekSecurity/README.md) |
 | [Oi](Oi/) | 第三方收录：面向 Agent Skills 的 agent-native 语言（MIT License） | [README](Oi/README.md) |
 | [dsh-anchored-standard](dsh-anchored-standard/) | 第三方收录：双阶段 DSH 代理预设，首轮锚定 Minimal、晋升后按需解锁 Standard 工具（MIT License） | [README](dsh-anchored-standard/README.zh-CN.md) |
 
@@ -25,6 +26,42 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 ## 装配到 DSH
 
 插件、代理预设与技能在 DSH 里的装配方式不同，分开说明。
+
+### DeepSeek Security（原生安全审计插件）
+
+验证基线为 **DSH 0.2.1-alpha.2**，需要 Node.js 和可用的 Python 3。先在仓库根目录构建：
+
+```powershell
+npm --prefix DeepSeekSecurity ci --ignore-scripts
+npm --prefix DeepSeekSecurity run build
+```
+
+然后通过目标 DSH 运行时的原生插件管理命令安装。以下以 Web profile 为例，将路径改为实际绝对目录：
+
+```powershell
+dsh plugin --profile web add "link:C:/path/to/better-dsh/DeepSeekSecurity" --ignore-scripts
+```
+
+桌面安装须使用桌面版附带的 `dsh` 命令，将 profile 改为 `desktop`，安装前完整退出桌面，安装后重新打开。
+本机已接入的 **DeepSeek Harness Alpha** 源码桌面入口及其依赖见
+[桌面安装记录](DeepSeekSecurity/DESKTOP.md)；它是独立开发构建，克隆仓库不会自动安装该桌面运行时。
+
+使用方法：
+
+1. 在目标工作区的输入框输入 `@`，选择 **DeepSeek Security**（也可搜索 `@security`），插入插件引用。
+2. 在引用后写自己的需求，例如 **`@DeepSeek Security 帮我扫描这段仓库`**，然后发送。
+3. 模型按需求调用扫描工具后，输入框上方自动出现进度框。完成后进度框收起，报告返回聊天；进度框或聊天中的 **停止** 均可取消扫描。
+
+没有专用启动面板或“开始扫描”按钮。仅插入插件引用不启动扫描，**发送审计请求后会消耗当前模型账号的额度**。
+引用后的需求、关注点和排除项会传给扫描 Agent。需要已有结果时，直接说“查看上次安全扫描报告”。
+同一工作区的活动任务会去重，切换聊天不会自动重启扫描；中断后保留检查点，不自动继续调用模型。
+
+当前支持 Standard 静态源码审计，包括威胁模型、候选漏洞核对和报告生成；
+尚未实现 Deep Scan、PR/diff 扫描和动态漏洞复现。复用 Codex Security 的公开审计流程、语义草稿与
+Python 工作台，模型执行适配 DSH 原生 AgentLoop，不调用 Codex Security CLI。
+
+插件引用、需求传递、任务进度和报告链路已通过 13 项本地测试（scripted adapter，不消费模型额度）；此前版本另有真实 DSH 小样例扫描记录，验证范围见 [验证记录](DeepSeekSecurity/VERIFICATION.md)。
+开发其他原生插件时，可参考 [插件 UI 规范](DeepSeekSecurity/UI-GUIDE.md)。
 
 ### 插件（TokenMeter / BetterManager）
 
