@@ -1,0 +1,3 @@
+- insert:
+    - id: deepseek-security
+      name: '@better-dsh/deepseek-security'

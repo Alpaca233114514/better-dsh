@@ -13,6 +13,12 @@
   遵循 [LICENSE](LICENSE)（Apache License 2.0）。测试可只读加载指定版本的 DSH 官方源码；
   插件安装包不收录该源码，也不复制第三方 Spinner 插件实现。
 
+## DeepSeek Security
+
+`DeepSeekSecurity/` 的 DSH 适配代码遵循 Apache License 2.0。复用的 OpenAI Codex Security
+核心保留 Apache-2.0 许可证，DSH 原生组件与布局参考保留 MIT 声明。来源、固定版本和完整
+许可边界见 [DeepSeekSecurity/NOTICE.md](DeepSeekSecurity/NOTICE.md)。
+
 ## 第三方收录：dsh-anchored-standard
 
 - **项目名称**：dsh-anchored-standard — 双阶段 DeepSeek Harness 代理 preset

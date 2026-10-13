@@ -1,0 +1,29 @@
+/* Composer geometry follows DSH TodoPanel (MIT, Copyright DeepSeek).
+   Colors, radii, elevation and type remain owned by the DSH theme. */
+.dss-panel {
+  box-sizing: border-box;
+  flex: none;
+  margin: 0 auto;
+  width: calc(100% - 2 * var(--dsh-composer-side-clearance) - 4 * var(--dsh-composer-dock-inset));
+  max-width: calc(var(--dsh-composer-card-max-width) - 4 * var(--dsh-composer-dock-inset));
+  border-radius: var(--dsw-radius-lg);
+  background: var(--dsw-specific-menu);
+  color: var(--dsw-alias-label-primary);
+  --dsw-elevation-stroke-color: var(--dsw-alias-border-l1);
+  box-shadow: var(--dsw-elevation-panel);
+  backdrop-filter: var(--dsw-menu-backdrop-filter);
+  padding: 6px 12px;
+  font-family: inherit;
+  min-width: 0;
+}
+.dss-summary { color: var(--dsw-alias-label-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-inline-start: 8px; }
+.dss-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.dss-head > :first-child { min-width: 0; flex: 1; }
+.dss-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.dss-steps { margin: 0; padding: 8px 0; list-style: none; display: grid; gap: 8px; }
+.dss-steps li { display: flex; align-items: center; gap: 10px; color: var(--dsw-alias-label-secondary); }
+.dss-meta { color: var(--dsw-alias-label-tertiary); overflow-wrap: anywhere; }
+.dss-error { color: var(--dsw-alias-state-error-primary); overflow-wrap: anywhere; }
+.dss-body { max-height: min(32vh, 240px); overflow-y: auto; font-size: 13px; line-height: 20px; }
+.dss-report { max-height: 65vh; overflow: auto; overflow-wrap: anywhere; }
+.dss-dialog { width: min(90vw, 900px); }
