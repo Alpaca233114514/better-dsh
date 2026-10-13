@@ -72,3 +72,7 @@ dsh plugin --profile web add "link:C:/path/to/better-dsh/DeepSeekSecurity" --ign
 调用方式参考 [Codex Security 源码](https://github.com/openai/codex-security) 的插件 manifest、技能/工具与扫描进度结构，以及 [OpenAI 插件技能说明](https://developers.openai.com/plugins/concepts/skills)。DSH 适配使用 `inputTriggers.registerSource` 的引用插入与 codec、`defineTool` 和 `conversation.input.dock`。进度框使用 DSH DisclosureRow、StateDot、Button 及主题变量；浏览器入口保留 DSH ModuleLoader factory，宿主入口保持 ESM。
 
 本目录与仓库根部的 `RichThinking/` 为独立插件，没有跨目录代码导入或共享构建产物。
+
+## 许可证与来源
+
+本插件复用 OpenAI Codex Security 的部分开源代码与审计资料，固定版本、复用范围及 Apache-2.0 / MIT 许可说明见 [许可证与来源声明](LICENSE-DECLARATION.md)。

@@ -21,8 +21,18 @@ export async function nativeFixture(browser = false, extraEntry = '') {
     import React, { useState } from 'react';
     import { createRoot } from 'react-dom/client';
     import { ReasoningRow } from ${native('packages/client/ui-chat/src/client/chat/ReasoningRow.tsx')};
+    import { RunningStatus } from ${native('packages/client/ui-chat/src/client/chat/RunningStatus.tsx')};
     export { assistantDefinition } from ${native('packages/client/ui-chat/src/client/conversation-nodes/assistant.ts')};
-    import { apply } from ${JSON.stringify(join(pluginRoot, 'src/client.tsx').replaceAll('\\', '/'))};
+    ${browser ? `
+    import * as ReactDOM from 'react-dom';
+    import * as primitives from '@deepseek-ai/dsh-client-ui-primitives';
+    let apply;
+    window.__ModuleLoader__ = { load({ factory }) {
+      apply = factory(name => ({ react: React, 'react-dom': ReactDOM,
+        '@deepseek-ai/dsh-client-ui-primitives': primitives })[name]).apply;
+    } };
+    ${await readFile(join(pluginRoot, 'lib/client.js'), 'utf8')}
+    ` : `import { apply } from ${JSON.stringify(join(pluginRoot, 'src/client.tsx').replaceAll('\\', '/'))};`}
     export { ReasoningRow, React, createRoot, apply };
     export { Settings } from ${JSON.stringify(join(pluginRoot, 'src/settings.tsx').replaceAll('\\', '/'))};
     export const bodySelector = ${JSON.stringify(hasBodySlot ? '[data-slot="conversation.chat.reasoning.body"]' : '[data-native-markdown-fixture]')};
@@ -36,16 +46,26 @@ export async function nativeFixture(browser = false, extraEntry = '') {
           renderSlot: (name, props) => React.createElement('div', { 'data-slot': name }, body || React.createElement('pre', null, props.text)),
         }));
     }
+    const statusTranslate = (key, values) => ({
+      'chat.deepDiving': '深度求索中', 'chat.deepDivingFor': '深度求索中，用时 ' + values?.duration + ' ···',
+      'duration.secondUnit': '秒', 'duration.minuteUnit': '分', 'duration.hourUnit': '小时',
+    })[key] || key;
+    const statusStart = Date.now() - 122000;
+    export function NativeConversation(props) {
+      return React.createElement(React.Fragment, null,
+        React.createElement(NativeRow, props),
+        props.running !== false && React.createElement(RunningStatus, { startTime: props.startTime ?? statusStart, t: statusTranslate }));
+    }
     ${browser ? await readFile(new URL('../test/browser-entry.txt', import.meta.url), 'utf8') : ''}
     ${extraEntry}
   `
   await build({ stdin: { contents: entry, resolveDir: pluginRoot, loader: 'tsx' },
     outfile: join(out, 'fixture.js'), bundle: true, format: browser ? 'iife' : 'esm',
-    platform: browser ? 'browser' : 'node', target: 'es2022', jsx: 'automatic',
+    platform: browser ? 'browser' : 'node', target: 'es2022', jsx: 'automatic', loader: { '.png': 'dataurl' },
     external: browser ? [] : ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime'],
     nodePaths: [join(pluginRoot, 'node_modules')],
-    // The integrated fixture imports a sibling plugin; mirror DSH's shared
-    // React singleton instead of bundling that plugin's own devDependency.
+    // Keep the shared React singleton when the repository integration fixture
+    // imports the sibling Security plugin.
     alias: browser ? { react: join(pluginRoot, 'node_modules/react'), 'react-dom': join(pluginRoot, 'node_modules/react-dom') } : {},
     plugins: [{ name: 'native-primitives-subset', setup(build) {
       build.onResolve({ filter: /^@deepseek-ai\/dsh-client-ui-primitives$/ }, () => ({ path: 'primitives', namespace: 'native' }))

@@ -1,13 +1,8 @@
 // All rules scoped to adapter-owned markers; no theme, root, button or Markdown resets.
 export const css = `
-[data-rich-thinking] [data-rich-thinking-title] {
-  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
-  overflow:hidden; clip-path:inset(50%); white-space:nowrap;
-}
-/* Native decorative text remains React-owned. Suppress its duplicate title/preview
-   overlay while the plugin presents a label; the real preview is still visible. */
-[data-rich-thinking] [data-disclosure-row] > [data-shimmer] > [aria-hidden="true"] { display:none; }
-[data-rich-thinking] > div > button[data-process-activity] > [data-shimmer] > [aria-hidden="true"] { display:none; }
+/* One visible label: suppress the entire native shimmer subtree, including copies.
+   The whale and accessible status are separate siblings and remain native. */
+[data-chat-running][data-rich-thinking] [data-rich-thinking-native] { display:none !important; }
 /* ConfigField's select/textarea are not public exports in either supported DSH
    version. Match their tokens and geometry; keep Switch/Input/Button native. */
 [data-rich-thinking-settings] { display:flex; flex-direction:column; min-width:0; color:var(--dsw-alias-label-primary); }
@@ -23,21 +18,15 @@ export const css = `
 [data-rich-thinking-settings] [role="status"] { margin:12px 0 0; color:var(--dsw-alias-label-secondary); font-size:13px; overflow-wrap:anywhere; }
 [data-rich-thinking-host] {
   display:inline-flex; flex:0 1 auto; min-width:0; max-width:100%;
-  font-size:var(--dsh-content-font-size-secondary,13px);
-  line-height:calc(24px + var(--dsh-content-font-delta,0px)); color:inherit;
+  font:inherit; color:inherit;
 }
 [data-rich-thinking-label] {
-  display:inline-flex; align-items:center; gap:8px; min-width:0; max-width:100%;
+  display:inline-flex; align-items:center; min-width:0; max-width:100%;
 }
 [data-rich-thinking-word] {
-  display:inline-block; flex:0 1 auto; min-width:0; width:23ch; max-width:100%; overflow:hidden;
+  display:inline-block; min-width:0; max-width:23ch; overflow:hidden;
   text-overflow:ellipsis; white-space:nowrap;
 }
-[data-rich-thinking-label][lang="zh"] [data-rich-thinking-word] { width:9em; }
-[data-rich-thinking-elapsed] { flex:none; font-variant-numeric:tabular-nums; min-width:4ch; text-align:right; }
-[data-rich-thinking-label][data-motion="on"] [data-rich-thinking-word] { animation:dsh-rich-thinking-enter 160ms ease-out; }
-@keyframes dsh-rich-thinking-enter { from { opacity:.55; } to { opacity:1; } }
-@media (prefers-reduced-motion:reduce) {
-  [data-rich-thinking-label] [data-rich-thinking-word] { animation:none !important; }
-}
+[data-rich-thinking-label][lang="zh"] [data-rich-thinking-word] { max-width:9em; }
+[data-rich-thinking-elapsed] { font-variant-numeric:tabular-nums; flex-shrink:0; white-space:pre; }
 `

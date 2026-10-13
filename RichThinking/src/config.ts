@@ -6,12 +6,11 @@ export interface Preferences {
   chineseVerbs: string[]
   intervalMs: number
   animation: boolean
-  showElapsed: boolean
 }
 
 export const defaults: Preferences = {
   enabled: true, language: 'zh', vocabularyMode: 'append',
-  englishVerbs: [], chineseVerbs: [], intervalMs: 5000, animation: true, showElapsed: true,
+  englishVerbs: [], chineseVerbs: [], intervalMs: 5000, animation: true,
 }
 
 export function cleanWords(value: unknown): string[] {
@@ -28,7 +27,6 @@ export function normalize(input: Partial<Preferences> = {}): Preferences {
     intervalMs: typeof input.intervalMs === 'number' && Number.isFinite(input.intervalMs)
       ? Math.min(60000, Math.max(2000, Math.round(input.intervalMs))) : defaults.intervalMs,
     animation: typeof input.animation === 'boolean' ? input.animation : defaults.animation,
-    showElapsed: typeof input.showElapsed === 'boolean' ? input.showElapsed : defaults.showElapsed,
   }
 }
 

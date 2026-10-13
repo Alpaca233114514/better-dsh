@@ -38,6 +38,6 @@ test('invalid preferences cannot create hot loops and defaults preserve explicit
   assert.equal(normalize({ intervalMs: -4 }).intervalMs, 2000)
   assert.equal(normalize({ intervalMs: Infinity }).intervalMs, 5000)
   assert.equal(normalize({ intervalMs: 999999 }).intervalMs, 60000)
-  const config = normalize({ enabled: false, animation: false, showElapsed: false })
-  assert.equal(config.enabled || config.animation || config.showElapsed, false)
+  const config = normalize({ enabled: false, animation: false })
+  assert.equal(config.enabled || config.animation, false)
 })
