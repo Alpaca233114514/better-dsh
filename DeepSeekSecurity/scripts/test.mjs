@@ -6,5 +6,5 @@ await build({
   outfile: 'dist/test-runtime.js', bundle: true, platform: 'node', format: 'esm', target: 'es2022',
   external: ['@deepseek-ai/*', 'zod', 'zod/*'],
 })
-const result = spawnSync(process.execPath, ['--test', 'test/security.test.mjs'], { stdio: 'inherit' })
+const result = spawnSync(process.execPath, ['--test', 'test/security.test.mjs', 'test/boundary.test.mjs'], { stdio: 'inherit' })
 process.exitCode = result.status ?? 1

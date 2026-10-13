@@ -1,3 +1,19 @@
+# Review fixes — 2026-10-13
+
+Security Host alpha.2: typecheck/build passed; 15/15 tests passed, none skipped.
+Two new tests execute 22 calls each through the actual driver and AgentLoop with
+Minimal/Standard parent tool inventories and a scripted provider. Windows junctions
+and file symlinks were created successfully. Outside canaries never reached the
+provider; internal reads succeeded. Details: [BOUNDARY.md](BOUNDARY.md).
+
+The existing local mention patch is retained: pick, display, clipboard and Send
+use `@deepseek-security`; internal routing text stays in the Host tool description.
+No real model, desktop loading, rc.2 Host execution or GitHub CI pass is claimed.
+The historical records below describe earlier implementations; preset inheritance
+and the old mention serialization are superseded by this fix.
+
+---
+
 # 验证记录 · 2026-10-13 · 插件引用与执行进度
 
 - 当前流程：`@DeepSeek Security` 原生引用 + 用户需求 → 发送 → 模型调用 `security_scan` → 输入框上方显示实际进度 → 报告回到聊天，进度框收起。

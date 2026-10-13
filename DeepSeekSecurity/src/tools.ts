@@ -28,7 +28,7 @@ export function securityTools(manager: SecurityManager, workbench: Workbench) {
     defineTool({
       name: 'security_scan',
       presentCall: () => ({ card: 'generic', title: 'DeepSeek Security · 扫描工作区', kind: 'read' }),
-      description: 'Run DeepSeek Security Standard static security audit when requested (including @DeepSeek Security or @security). Pass the user request, focus and exclusions in instructions; never discard the text after the mention. Uses the current workspace and DSH model quota. No source edits, network attacks, dynamic exploits, diff scans or Deep Scan. Waits for a verified report; chat Stop cancels the scan. Real progress appears above the composer automatically. No separate start button is needed.',
+      description: 'Run DeepSeek Security Standard static security audit when requested, including @deepseek-security followed by a scan request. Pass the user request, focus and exclusions in instructions; never discard the text after the mention. A mention alone does not request a scan. Use security_report for existing results, and explain unsupported requests instead of converting them to a full scan. Uses the current workspace and DSH model quota. No source edits, network attacks, dynamic exploits, diff scans or Deep Scan. Waits for a verified report; chat Stop cancels the scan. Real progress appears above the composer automatically. No separate start button is needed.',
       parameters: { instructions: { type: 'string', description: 'The user security scan request, including requested focus and exclusions.', required: true } }, output,
       execute: async ({ instructions }, exec) => {
         if (!instructions.trim()) throw new Error('请传入用户的扫描需求。')
