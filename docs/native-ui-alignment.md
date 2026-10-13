@@ -6,18 +6,18 @@ not introduce a shared plugin runtime or a second component library.
 ## Dependency baseline
 
 - Rich Thinking PR #2: `c4935e26ee3d7c796c5fd23c3aca3808f5e5a0aa`.
-- DeepSeek Security PR #3: `4eab585a1915a1dea42feb1f6f82f2dae13e00fc`.
-- `codex/ui-unification-base`: `04023810c9976b8fef39ee329b8267e178993d6a`.
+- DeepSeek Security PR #3: `73d3d0e116e15ae2bde6462d18f0cd1e40992ced`.
+- `codex/ui-unification-base`: `d691e2b5083ce811a80c71c6fb985d46d169007e`.
 
 The baseline merges these exact commits, preserving both additions in README and
-NOTICE. Neither prerequisite was merged to main. The UI PR targets this baseline,
+NOTICE. PR #2 has merged to main; PR #3 remains open for independent review. The UI PR targets this baseline,
 so its review diff excludes the two plugin implementations. Before integration
 into main, resolve the prerequisite PRs and retarget/revalidate the UI change;
 merging this stacked PR into its temporary base alone does not deliver it to main.
 
 ## UI contracts
 
-Security keeps `@DeepSeek Security` plus the user's request. Selecting a reference
+Security keeps `@deepseek-security` plus the user's request. Selecting a reference
 does not start a scan. Model invocation starts work, the composer dock shows actual
 progress while active, and terminal states hide the panel. Results stay in chat.
 
@@ -74,7 +74,7 @@ Artifacts are written to `RichThinking/.cache/browser/unified-*`.
 
 ## Verification scope
 
-- DeepSeekSecurity: typecheck/build and 13 existing regression tests passed.
+- DeepSeekSecurity: typecheck/build and 15 regression tests passed, including the new workspace boundary probes.
 - RichThinking: typecheck/build and 25 tests passed against alpha.2; all 25 also
   passed against rc.2, with no skipped tests.
 - Combined local Chromium: 8 groups passed on each of alpha.2 and rc.2. They cover idle/active/terminal states, Enter/Space
@@ -95,3 +95,29 @@ scans and native OS/system-theme propagation were not exercised for this change.
 The Security host compatibility claim remains alpha.2; rendering against rc.2
 does not prove its full host runtime. No GitHub CI result or independent PR review
 is claimed by these local checks.
+
+## Security review fixes and rerun
+
+The prerequisite now contains the workspace boundary fix and independent scoped
+read/search tools; Windows Minimal no longer has to provide read/glob/grep. The
+existing local mention patch was reused without importing unrelated progress
+changes from the original user checkout. Tool instructions remain in the Host
+description. All links, including internal links, are excluded; text/search
+limits are documented in [BOUNDARY.md](../DeepSeekSecurity/BOUNDARY.md).
+
+On the integrated code after merge `f7eebaa9317fe54d910768638bad4676360d059b`,
+Security typecheck/build and all 15 tests passed. Rich Thinking typecheck/build
+passed and 25 tests passed on each official alpha.2/rc.2 source baseline. The
+combined browser fixture passed 8 groups on each version with zero page errors;
+the screenshots and JSON evidence here were refreshed. The final documentation
+commit does not change executable source.
+
+[Boundary evidence](ui-verification/security-boundary.json): two actual
+AgentLoop runs, each with 22 tool calls and 23 scripted provider requests;
+Windows file symlinks and directory junctions created successfully. External
+canary content never entered provider messages, and legitimate internal reads
+succeeded. No real model calls or external network traffic were used by tests.
+
+These are implementation checks, not independent review approval. PR #3 and #4
+remain unmerged pending a fresh independent review of their exact new heads.
+GitHub checks were absent on the new Security head at verification time.
