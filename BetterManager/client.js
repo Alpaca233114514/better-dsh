@@ -5,12 +5,12 @@
 //       DSH 动态插件注册表（dynamicCordisRunner.inventory），提供开关
 //       （运行/停止，startUserRun / stopFromPanel）与删除（undefineFromPanel），
 //       可在设置页里隐藏内置的左下角入口与「插件」设置分区；
-//       并配合 Host 半区实现永久持久化（保存/恢复快照、自动恢复已启用插件）。
-// 数据源: ctx.get('remote').dynamicCordisRunner + ctx.get('dynamicCordisRunner')
+//       并配合 Host 半区保存/恢复定义，已启用清单由用户点击恢复运行。
+// 数据源: ctx.get('remote.dynamicCordisRunner') + ctx.get('dynamicCordisRunner')
 //       —— 与内置面板完全同源，即 DSH 自己的插件目录（注册表）。
 // ============================================================================
 return {
-  inject: ['timer'],
+  inject: ['timer', 'slots', 'remote.dynamicCordisRunner', 'dynamicCordisRunner'],
   apply(ctx) {
     const slots = ctx.get('slots')
     if (slots === undefined) return
@@ -23,7 +23,7 @@ return {
     const runner = ctx.get('dynamicCordisRunner')        // startUserRun（运行编排）
 
     // ---------- 隐去内置入口（同 id + 低优先级覆盖，dispose 后自动恢复） ----------
-    let footerHidden = true      // 默认隐藏左下角 Cordis 面板入口
+    let footerHidden = true      // 默认隐藏；待批准请求自动显示原生入口
     let footerDisposer = null
     let settingsHidden = false   // 默认保留设置里的「插件」分区（可选隐藏）
     let settingsDisposer = null
@@ -31,7 +31,8 @@ return {
     function setFooterHidden(hidden) {
       if (footerDisposer) { footerDisposer(); footerDisposer = null }
       footerHidden = hidden
-      if (hidden && slots) {
+      const needsApproval = [...runner.activeRuns.getSnapshot().values()].some((run) => run.phase === 'awaiting-approval')
+      if (hidden && slots && !needsApproval) {
         footerDisposer = slots.inject('sidebar.footer.action', () => slots.register(
           { name: 'sidebar.footer.action', id: 'cordis-panel', priority: -1000 },
           () => null,
@@ -57,7 +58,9 @@ return {
     ctx.effect(() => {
       setFooterHidden(true)
       setSettingsHidden(false)
+      const unsubscribe = runner.activeRuns.subscribe(() => setFooterHidden(footerHidden))
       return () => {
+        unsubscribe()
         if (footerDisposer) { footerDisposer(); footerDisposer = null }
         if (settingsDisposer) { settingsDisposer(); settingsDisposer = null }
       }
@@ -135,7 +138,9 @@ button:has(.bm-nav-label)>svg{display:none}
         const s = latest.status
         if (s === 'awaiting-approval') return { key: 'approval', label: '等待批准', cls: 'warn' }
         if (s === 'failed') return { key: 'failed', label: '运行失败', cls: 'err' }
-        if (s === 'running' || s === 'client-pending' || s === 'starting-host' || s === 'waiting') return { key: 'running', label: '运行中', cls: 'ok' }
+        if (s === 'client-pending' || s === 'starting-host') return { key: 'starting', label: '启动中', cls: 'warn' }
+        if (s === 'waiting') return { key: 'running', label: '等待服务', cls: 'warn' }
+        if (s === 'running') return { key: 'running', label: '运行中', cls: 'ok' }
       }
       if (row.activeRun) return { key: 'running', label: '运行中', cls: 'ok' }
       return { key: 'idle', label: '未运行', cls: '' }
@@ -152,9 +157,20 @@ button:has(.bm-nav-label)>svg{display:none}
       return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes())
     }
 
+    function packageForRow(row, preferredId) {
+      const packages = row && Array.isArray(row.packages) ? row.packages : []
+      if (preferredId) {
+        const preferred = packages.find((pkg) => pkg && pkg.packageId === preferredId)
+        if (preferred) return preferred
+      }
+      return packages.length ? packages[packages.length - 1] : null
+    }
+
     // ---------- 页面组件 ----------
     function BetterManagerPage(props) {
-      const useSessions = props && props.useSessions
+      // settings.section 新契约只提供 close，所属会话由 Host 元数据提供。
+      const [ownerId, setOwnerId] = React.useState(null)
+      const runErrors = React.useSyncExternalStore(runner.lastRunError.subscribe, runner.lastRunError.getSnapshot)
       const [rows, setRows] = React.useState(null)
       const [error, setError] = React.useState(null)
       const [busyId, setBusyId] = React.useState(null)
@@ -164,8 +180,8 @@ button:has(.bm-nav-label)>svg{display:none}
       const [store, setStore] = React.useState(null)
       const [msg, setMsg] = React.useState(null)
       const [pendingRun, setPendingRun] = React.useState([])
-      const didAutoRun = React.useRef(false)
-      const current = useSessions ? useSessions((state) => state.current) : undefined
+      const didReadRestore = React.useRef(false)
+      const current = ownerId || undefined
 
       const runEnabled = React.useCallback((plan, rowsNow) => {
         if (!runner) { setError('无法运行：dynamicCordisRunner（运行编排器）不可用'); return }
@@ -176,15 +192,18 @@ button:has(.bm-nav-label)>svg{display:none}
         for (const entry of plan || []) {
           const row = list.find((r) => r.pluginId === entry.pluginId)
           if (!row) { missing += 1; continue }
+          const pkg = packageForRow(row, entry.packageId)
+          if (!pkg) { missing += 1; continue }
           ran += 1
-          jobs.push(runner.startUserRun({
+          jobs.push(Promise.resolve().then(() => runner.startUserRun({
             agentId: row.agentId,
             pluginId: entry.pluginId,
-            packageId: entry.packageId,
+            packageId: pkg.packageId,
             mode: 'run',
-            hasClientHalf: entry.hasClientHalf,
-          }).catch((err) => setError('运行 ' + entry.pluginId + ' 失败：' + errText(err))))
+            hasClientHalf: !!pkg.hasClientHalf,
+          })).catch((err) => setError('运行 ' + entry.pluginId + ' 失败：' + errText(err))))
         }
+        Promise.all(jobs).then(() => refresh())
         if (ran > 0) setMsg('已发起运行 ' + ran + ' 个插件' + (missing ? '（' + missing + ' 个清单未刷新，稍后重试）' : '') + '…')
         else if (missing > 0) setMsg('插件清单尚未刷新，请稍候再点「运行已启用」')
       }, [runner, rows])
@@ -204,19 +223,21 @@ button:has(.bm-nav-label)>svg{display:none}
           })
         const meta = host.call('bm:list')
           .then((res) => (res && res.ok ? res : { ok: false, rows: [], error: res && res.error, autoRestored: false, runPlan: [], store: null }))
-          .catch(() => ({ ok: false, rows: [], autoRestored: false, runPlan: [], store: null }))
+          .catch((err) => ({ ok: false, rows: [], error: errText(err), autoRestored: false, runPlan: [], store: null }))
         Promise.all([inv, meta]).then(([rowsNow, meta]) => {
           setRows(rowsNow)
+          runner.reconcileApprovals(rowsNow)
+          setOwnerId(meta.ownerId || null)
           setStore(meta.store || null)
           setError(meta.error || null)
-          if (meta.autoRestored && meta.runPlan && meta.runPlan.length && !didAutoRun.current) {
-            didAutoRun.current = true
-            setMsg('已从快照自动恢复插件定义，正在运行 ' + meta.runPlan.length + ' 个已启用的插件…')
-            runEnabled(meta.runPlan, rowsNow)
-            host.call('bm:consumeAutoRestore', null).catch(() => {})
+          if (meta.autoRestored && meta.runPlan && meta.runPlan.length && !didReadRestore.current) {
+            didReadRestore.current = true
+            setMsg('已从快照恢复插件定义，点击「运行已启用」恢复运行')
+            // startUserRun 的授权来自用户手势；恢复定义后等待点击运行。
+            setPendingRun(meta.runPlan)
           }
         }).catch((err) => setError('读取插件清单失败：' + errText(err)))
-      }, [runEnabled])
+      }, [])
 
       React.useEffect(() => {
         refresh()
@@ -225,7 +246,7 @@ button:has(.bm-nav-label)>svg{display:none}
 
       const act = React.useCallback((pluginId, op) => {
         setBusyId(pluginId)
-        op()
+        Promise.resolve().then(op)
           .then(() => { setBusyId(null); refresh() })
           .catch((err) => { setBusyId(null); setError(errText(err)); refresh() })
       }, [refresh])
@@ -264,14 +285,13 @@ button:has(.bm-nav-label)>svg{display:none}
       }, [refresh])
 
       const run = React.useCallback((row) => {
-        const pkgId = row.currentPackageId || (row.packages && row.packages.length ? row.packages[row.packages.length - 1].packageId : null)
-        if (!pkgId) { setError('该插件没有可运行的 Package'); return }
-        const pkg = (row.packages || []).find((p) => p.packageId === pkgId)
+        const pkg = packageForRow(row, row.currentPackageId)
+        if (!pkg) { setError('该插件没有可运行的 Package'); return }
         if (!runner) { setError('无法启动：dynamicCordisRunner（运行编排器）不可用'); return }
         act(row.pluginId, () => runner.startUserRun({
           agentId: row.agentId,
           pluginId: row.pluginId,
-          packageId: pkgId,
+          packageId: pkg.packageId,
           mode: 'run',
           hasClientHalf: !!(pkg && pkg.hasClientHalf),
         }))
@@ -327,9 +347,7 @@ button:has(.bm-nav-label)>svg{display:none}
 
       const cards = list.map((row) => {
         const st = statusOf(row)
-        const pkg = row.packages && row.packages.length
-          ? row.packages.find((p) => p.packageId === (row.currentPackageId || row.packages[row.packages.length - 1].packageId))
-          : undefined
+        const pkg = packageForRow(row, row.nextPackageId || row.currentPackageId)
         const name = (pkg && pkg.name) || row.pluginId
         const purpose = (pkg && pkg.purpose) || ''
         const mine = current !== undefined && row.agentId === current
@@ -345,7 +363,14 @@ button:has(.bm-nav-label)>svg{display:none}
           confirmRemove === row.pluginId ? React.createElement('span', { key: 'x', className: 'bm-badge bm-err' }, '确认删除？') : null,
         ]
 
-        const foot = confirmRemove === row.pluginId
+        const requestId = row.latestRun && row.latestRun.approvalRequestId
+        const failure = runErrors.get(row.pluginId) || (row.latestRun && row.latestRun.error)
+        const foot = st.key === 'approval' && requestId
+          ? React.createElement('div', { className: 'bm-confirm' },
+              React.createElement('button', { className: 'bm-btn', disabled: busy, onClick: () => act(row.pluginId, () => runner.approve(requestId, false)) }, '批准此版本'),
+              React.createElement('button', { className: 'bm-btn bm-btn-danger', disabled: busy, onClick: () => act(row.pluginId, () => runner.decline(requestId)) }, '拒绝'),
+            )
+          : confirmRemove === row.pluginId
           ? React.createElement('div', { className: 'bm-confirm' },
               React.createElement('button', { className: 'bm-btn bm-btn-danger', disabled: busy, onClick: () => remove(row) }, '确认删除'),
               React.createElement('button', { className: 'bm-btn', disabled: busy, onClick: () => setConfirmRemove(null) }, '取消'),
@@ -360,7 +385,7 @@ button:has(.bm-nav-label)>svg{display:none}
                 }, '删除'),
                 React.createElement('button', {
                   className: 'bm-switch' + (st.key === 'running' ? ' bm-on' : ''),
-                  disabled: busy || st.key === 'approval',
+                  disabled: busy || st.key === 'approval' || st.key === 'starting',
                   role: 'switch',
                   'aria-checked': st.key === 'running',
                   'aria-label': (st.key === 'running' ? '停止 ' : '运行 ') + name,
@@ -379,6 +404,7 @@ button:has(.bm-nav-label)>svg{display:none}
             React.createElement('div', { className: 'bm-badges' }, badges),
           ),
           React.createElement('div', { className: 'bm-purpose' }, purpose || '（无描述）'),
+          failure ? React.createElement('div', { className: 'bm-error', role: 'alert' }, failure.message) : null,
           React.createElement('div', { className: 'bm-version' },
             'Package: ' + (pkg ? pkg.packageId : '-') +
             (row.packages && row.packages.length > 1 ? '（共 ' + row.packages.length + ' 个版本）' : ''),
@@ -475,7 +501,7 @@ button:has(.bm-nav-label)>svg{display:none}
           'Better Manager',
         ),
       },
-      (props) => React.createElement(BetterManagerPage, { useSessions: props && props.useSessions }),
+      (props) => React.createElement(BetterManagerPage, props),
     ))
   },
 }

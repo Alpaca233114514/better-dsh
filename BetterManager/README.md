@@ -1,60 +1,38 @@
 # Better Manager 插件管理器
 
-DeepSeek Harness 动态 Cordis 插件：**代替内置的左下角 Cordis 插件面板**，像 Minecraft 的 mod 菜单一样管理 DSH 动态插件目录（注册表）中的 cordis 插件，并带有**永久持久化**能力，防止插件丢失。
+面向 DeepSeek Harness **0.2.1-alpha.2** 的动态 Cordis 插件，以卡片网格管理插件。
+入口：设置 → Better Manager。完整基线与验证范围见 [DSH 适配说明](../docs/dsh-compatibility.md)。
 
 ## 功能
 
-- **插件列表**：读取 DSH 动态插件注册表（`dynamicCordisRunner.inventory`，与内置左下角面板完全同源），卡片网格展示每个插件的名称、pluginId、用途描述、状态（运行中 / 未运行 / 等待批准 / 运行失败）、当前 Package 与版本数
-- **开关**：一键运行 / 停止。运行走客户端运行编排器（`startUserRun`，用户点击即授权），停止走 `stopFromPanel`
-- **删除**：`undefineFromPanel` 从 DSH 插件目录中永久移除（二次确认）
-- **永久持久化（防丢失）**：
-  - **保存快照**：把整个注册表（全部插件 + 全部 Package 源码 + 启用状态）写入工作区根目录 `.better-manager-plugins.json`，每 10 秒自动检测变化落盘，也有「保存快照」按钮
-  - **自动恢复**：每次启动（apply）时自动把快照里**缺失**的插件补回注册表 —— **保留原 pluginId**，从快照源码重建全部 Package；若快照中该插件标记为已启用，Client 会自动 `startUserRun` 运行它（手动恢复后也有「运行已启用的 N 个插件」按钮）。删除过的插件在下次保存后从快照移除，不会复活
-  - **手动恢复**：「从快照恢复」按钮恢复缺失的插件定义，「运行已启用的 N 个插件」一键运行
-- **隐去左下角入口**：默认隐藏内置的「cordis-panel」左下角按钮 —— 用同 id + 更低优先级注册空渲染覆盖内置入口，关闭开关（或刷新页面后默认值恢复）即还原内置面板；**停止/删除本插件时左下角入口自动恢复显示**（fiber 级联 + ctx.effect 双保险）
-- **隐去设置插件分区**（可选，默认关闭）：同样方式隐藏设置里的「插件」分区
-- **自动刷新**：打开页面后每 5 秒重新拉取清单，也有手动刷新按钮
-- **入口**：设置侧边栏「Better Manager」（自定义方块图标）
+- 读取 DSH 全实例插件目录，查看版本、状态和失败原因，运行 / 停止 / 删除（二次确认）。
+- 待批准请求提供「批准此版本 / 拒绝」，批准不覆盖未来版本；有待批准请求时显示原生 Cordis 入口。
+- 默认隐藏左下角 Cordis 入口，可选隐藏设置里的插件分区；卸载时恢复原入口。
+- 快照保存到所属会话工作区的 `.better-manager-plugins.json`，每 10 秒检查变化。
+- 重新加载管理器后恢复缺失定义；用户点击「运行已启用」恢复运行。
 
-## 文件
+## 使用
 
-| 文件 | 说明 |
-| --- | --- |
-| `host.js` | Host 半区源码（cordis_define 的 `code.host` 函数体）：持久化快照 + 自动恢复 |
-| `client.js` | Client 半区源码（cordis_define 的 `code.client` 函数体）：mod 菜单 UI + 隐藏入口 + 快照操作 |
+1. 让 DSH Agent 读取 `host.js` 和 `client.js`，使用 `cordis_define`（idPrefix `plcntr`）注册。
+2. 使用 `cordis_run` 激活；已有插件更新时定义新的 Package 并使用 `update` 模式。
+3. 同一 DSH 实例只运行一个 BetterManager。管理器身份从公开源码接口识别，不依赖固定 pluginId。
 
-## 使用方法
+## 持久化
 
-在 DeepSeek Harness 会话中，让模型通过 `cordis_define` 注册动态插件：
+- 保存所有 Package 源码、启用状态和当前版本；源码无法完整读取或快照损坏时保留旧文件并提示错误。
+- 支持旧 v1 快照；新版写 v2，并记录 `sourcePluginId`。恢复通过 DSH 的公开 `define()` 创建新身份，
+  不再写内部注册表。pluginId / packageId 会改变，但原先选中的版本和版本源码保留。
+- 旧管理器副本不重复恢复；部分版本恢复失败后可重试，已完成的版本不会重复创建。
+- 恢复定义不会恢复旧批准状态或自动执行源码。用户点击运行使用 DSH 的 `startUserRun` 编排器。
+- 文件写入遵守所属 Session 的沙箱策略；只读会话不能保存快照。
 
-1. `cordis_define`（插件 idPrefix：`plcntr`，同时传 `code.host` 与 `code.client`）
-2. `cordis_run` 激活，批准后即可在 **设置（⚙️）→ 侧边栏「Better Manager」** 查看与管理插件
-3. 首次运行后会自动保存快照；之后 DSH 重启，只要重新加载本插件（定义 + 运行），注册表为空时会自动从快照恢复全部插件并运行已启用的
+## 接口
 
-## 持久化设计
+Host：`dynamicCordisRunner.inventory / inspectPackage / define`、`agents`、`sessions`、`fs`、
+`sandboxPolicy`、`timer`。Client：`remote.dynamicCordisRunner` 的 inventory / stopFromPanel /
+undefineFromPanel，以及 `dynamicCordisRunner` 的 startUserRun / reconcileApprovals / approve /
+decline / activeRuns / lastRunError。
 
-- **快照文件**：`<工作区根目录>/.better-manager-plugins.json`（workspace-write 沙箱内可写）
-- **保存**：Host 每 10 秒对比当前注册表与上次快照，有变化才落盘；插件开关 / 删除后自动更新；「保存快照」按钮强制立即保存
-- **自动恢复**：Host `apply` 时把快照里缺失的插件补回注册表 —— 用 `runner.registry.add` 以原 pluginId 重建记录，再用 `runner.define` 重建全部 Package（幂等，已存在的跳过）；Client 收到 `autoRestored` 标记后自动 `startUserRun` 运行快照中标记为已启用的插件
-- **工作区定位**：从注册表找到本插件自己的记录（agentId = 当前会话 id）再取其会话 cwd，避免取到其他 workspace 的会话
-- **防误删**：自动保存时若注册表为空但快照里原本有插件，跳过不覆盖（防止恢复失败时把旧快照冲掉）；通过 Better Manager 删除插件后，快照在下一次保存时不再包含它（重启后不会复活）
-- **删除语义**：通过 Better Manager 删除插件后，快照在下一次保存时不再包含它（重启后不会复活）
-
-## 数据源与能力
-
-- **清单 / 停止 / 删除**：`ctx.get('remote.dynamicCordisRunner')`（`inventory()` / `stopFromPanel(sessionId, pluginId)` / `undefineFromPanel(sessionId, pluginId)`），返回 Remote 信封 `{ ok, value | error }`。注意不能写 `ctx.get('remote').dynamicCordisRunner` —— remote 命名空间是 Cordis 上下文代理，点号路径会以 `'remote.dynamicCordisRunner'` 全名走守卫（`cannot get property ... without inject`），必须直接取服务键或声明 `inject: ['remote.dynamicCordisRunner', …]`（内置面板正是后者）
-- **运行**：`ctx.get('dynamicCordisRunner').startUserRun({ agentId, pluginId, packageId, mode, hasClientHalf })` —— 与内置面板的 `onRun` 同一调用方式，用户手势即授权，无需额外批准
-- **持久化（Host）**：`ctx.get('dynamicCordisRunner')` 的 `define()`（重建 Package）与 `registry`（读取/重建插件记录）；`inventory()` 读取清单
-- **隐藏入口**：`sidebar.footer.action` 的 `cordis-panel` 单元格与 `settings.section` 的 `plugins` 单元格，用更低优先级覆盖内置（priority 升序取每单元格胜者，败者保留在账本中，dispose 后自动恢复）
-
-## 实现要点
-
-- Host + Client 双半区：数据全部来自 DSH 自身的服务，不扫描任何本地目录
-- 动态插件每次页面刷新后重新 apply，隐藏开关恢复默认（左下角入口默认隐藏）
-- 状态推导：`activeRun` 存在或 `latestRun.status` 为 running/client-pending/starting-host/waiting → 运行中；awaiting-approval → 等待批准；failed → 运行失败；其余 → 未运行
-- 防呆：停止/删除本插件时，ctx.effect 卸载清理显式 dispose 两个隐藏注册，左下角内置入口必定恢复
-
-## 依赖的服务
-
-- Host：`dynamicCordisRunner`（define / registry / inventory）、`fs`、`sessions` / `agents`、`timer`
-- Client：`remote.dynamicCordisRunner`、`dynamicCordisRunner`、Slot `settings.section` / `sidebar.footer.action`、主题 token `--dsw-alias-*`
+新版 `settings.section` 只提供 `close`；所属会话信息从 Host 元数据读取。
+运行失败可能通过 `lastRunError` 报告而不拒绝 Promise，页面订阅该状态显示诊断。
+Host / Client 函数体必须返回 Cordis 插件；RPC 结果只包含 JSON 数据。

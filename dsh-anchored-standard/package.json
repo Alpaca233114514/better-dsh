@@ -9,6 +9,7 @@
     "node": ">=22.19.0"
   },
   "scripts": {
+    "dsh:patch": "node scripts/generate-dsh-patch.mjs",
     "sync": "node scripts/sync-modes.mjs",
     "test": "node --test",
     "check": "node scripts/sync-modes.mjs --check && node --test"
