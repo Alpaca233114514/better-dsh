@@ -11,7 +11,7 @@ export async function available() {
 }
 
 /** Read the actual upstream files; never modify, vendor, or mock their implementations. */
-export async function nativeFixture(browser = false) {
+export async function nativeFixture(browser = false, extraEntry = '') {
   const out = join(pluginRoot, '.cache', browser ? 'browser' : 'native')
   await mkdir(out, { recursive: true })
   const native = path => JSON.stringify(join(upstream, path).replaceAll('\\', '/'))
@@ -37,12 +37,16 @@ export async function nativeFixture(browser = false) {
         }));
     }
     ${browser ? await readFile(new URL('../test/browser-entry.txt', import.meta.url), 'utf8') : ''}
+    ${extraEntry}
   `
   await build({ stdin: { contents: entry, resolveDir: pluginRoot, loader: 'tsx' },
     outfile: join(out, 'fixture.js'), bundle: true, format: browser ? 'iife' : 'esm',
     platform: browser ? 'browser' : 'node', target: 'es2022', jsx: 'automatic',
     external: browser ? [] : ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime'],
     nodePaths: [join(pluginRoot, 'node_modules')],
+    // The integrated fixture imports a sibling plugin; mirror DSH's shared
+    // React singleton instead of bundling that plugin's own devDependency.
+    alias: browser ? { react: join(pluginRoot, 'node_modules/react'), 'react-dom': join(pluginRoot, 'node_modules/react-dom') } : {},
     plugins: [{ name: 'native-primitives-subset', setup(build) {
       build.onResolve({ filter: /^@deepseek-ai\/dsh-client-ui-primitives$/ }, () => ({ path: 'primitives', namespace: 'native' }))
       build.onLoad({ filter: /.*/, namespace: 'native' }, () => ({
@@ -54,8 +58,9 @@ export async function nativeFixture(browser = false) {
           export { Button } from ${native('packages/client/ui-primitives/src/Button.tsx')};
           export { Input } from ${native('packages/client/ui-primitives/src/Input.tsx')};
           export { Switch } from ${native('packages/client/ui-primitives/src/Switch.tsx')};
+          export { StateDot } from ${native('packages/client/ui-primitives/src/StateDot.tsx')};
           export { TextShimmer } from ${native('packages/client/ui-primitives/src/TextShimmer.tsx')};
-          export { IconThinkOutlineRegular } from ${native('packages/client/ui-primitives/src/icons/index.tsx')};`,
+          export { IconThinkOutlineRegular, IconChecklistOutlineRegular } from ${native('packages/client/ui-primitives/src/icons/index.tsx')};`,
         loader: 'tsx', resolveDir: pluginRoot,
       }))
     } }],

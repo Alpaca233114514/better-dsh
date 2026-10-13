@@ -395,12 +395,19 @@ var css = `
    overlay while the plugin presents a label; the real preview is still visible. */
 [data-rich-thinking] [data-disclosure-row] > [data-shimmer] > [aria-hidden="true"] { display:none; }
 [data-rich-thinking] > div > button[data-process-activity] > [data-shimmer] > [aria-hidden="true"] { display:none; }
-[data-rich-thinking-settings] { display:flex; flex-direction:column; gap:10px; max-width:560px; padding:8px 0; }
+/* ConfigField's select/textarea are not public exports in either supported DSH
+   version. Match their tokens and geometry; keep Switch/Input/Button native. */
+[data-rich-thinking-settings] { display:flex; flex-direction:column; min-width:0; color:var(--dsw-alias-label-primary); }
+[data-rich-thinking-settings] [data-rt-setting-field] { display:flex; flex-direction:column; gap:6px; min-width:0; padding:12px 0; }
+[data-rich-thinking-settings] [data-rt-setting-field] + [data-rt-setting-field] { border-top:0.5px solid var(--dsw-alias-border-l2); }
 [data-rich-thinking-settings] [data-rt-setting-row] { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:32px; }
-[data-rich-thinking-settings] [data-rt-setting-actions] { display:flex; gap:8px; margin-top:6px; }
-[data-rich-thinking-settings] :is(select,textarea) { font:inherit; color:inherit; background:var(--dsw-alias-bg-base,transparent); border:1px solid var(--dsw-alias-border-primary,currentColor); border-radius:8px; padding:8px 10px; }
-[data-rich-thinking-settings] textarea { resize:vertical; }
-[data-rich-thinking-settings] label { margin-top:4px; }
+[data-rich-thinking-settings] [data-rt-setting-actions] { display:flex; flex-wrap:wrap; gap:8px; padding-top:16px; }
+[data-rich-thinking-settings] :is(select,textarea) { box-sizing:border-box; width:100%; min-width:0; font:inherit; color:var(--dsw-alias-label-primary); background:var(--dsw-alias-bg-layer-3); border:0.5px solid var(--dsw-alias-border-l4); border-radius:var(--dsw-radius-md); padding:6px 12px; }
+[data-rich-thinking-settings] :is(select,textarea):focus-visible { outline:var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary)); outline-offset:1px; }
+[data-rich-thinking-settings] :is(select,textarea):disabled { opacity:0.4; cursor:default; }
+[data-rich-thinking-settings] textarea { resize:vertical; line-height:1.5; }
+[data-rich-thinking-settings] label, [data-rich-thinking-settings] [data-rt-setting-row] > span { font-size:13px; font-weight:500; }
+[data-rich-thinking-settings] [role="status"] { margin:12px 0 0; color:var(--dsw-alias-label-secondary); font-size:13px; overflow-wrap:anywhere; }
 [data-rich-thinking-host] {
   display:inline-flex; flex:0 1 auto; min-width:0; max-width:100%;
   font-size:var(--dsh-content-font-size-secondary,13px);
@@ -410,11 +417,11 @@ var css = `
   display:inline-flex; align-items:center; gap:8px; min-width:0; max-width:100%;
 }
 [data-rich-thinking-word] {
-  display:inline-block; width:23ch; max-width:100%; overflow:hidden;
+  display:inline-block; flex:0 1 auto; min-width:0; width:23ch; max-width:100%; overflow:hidden;
   text-overflow:ellipsis; white-space:nowrap;
 }
 [data-rich-thinking-label][lang="zh"] [data-rich-thinking-word] { width:9em; }
-[data-rich-thinking-elapsed] { font-variant-numeric:tabular-nums; min-width:4ch; text-align:right; }
+[data-rich-thinking-elapsed] { flex:none; font-variant-numeric:tabular-nums; min-width:4ch; text-align:right; }
 [data-rich-thinking-label][data-motion="on"] [data-rich-thinking-word] { animation:dsh-rich-thinking-enter 160ms ease-out; }
 @keyframes dsh-rich-thinking-enter { from { opacity:.55; } to { opacity:1; } }
 @media (prefers-reduced-motion:reduce) {
@@ -480,8 +487,8 @@ function Settings({ form }) {
     if (!disabled && draft) void save();
   } }, ["enabled", "animation", "showElapsed"].map((field, index) => {
     const label = ["\u542F\u7528 Rich Thinking", "\u6587\u5B57\u8FC7\u6E21\u52A8\u753B", "\u663E\u793A\u8FD0\u884C\u8017\u65F6"][index];
-    return /* @__PURE__ */ import_react.default.createElement("div", { key: field, "data-rt-setting-row": "" }, /* @__PURE__ */ import_react.default.createElement("span", null, label), /* @__PURE__ */ import_react.default.createElement(import_dsh_client_ui_primitives.Switch, { label, checked: current.values[field], disabled, onChange: (next) => value(field, next) }));
-  }), /* @__PURE__ */ import_react.default.createElement("label", { htmlFor: `${id}-language` }, "\u8F6E\u64AD\u8BED\u8A00"), /* @__PURE__ */ import_react.default.createElement(
+    return /* @__PURE__ */ import_react.default.createElement("div", { key: field, "data-rt-setting-field": "" }, /* @__PURE__ */ import_react.default.createElement("div", { "data-rt-setting-row": "" }, /* @__PURE__ */ import_react.default.createElement("span", null, label), /* @__PURE__ */ import_react.default.createElement(import_dsh_client_ui_primitives.Switch, { label, checked: current.values[field], disabled, onChange: (next) => value(field, next) })));
+  }), /* @__PURE__ */ import_react.default.createElement("div", { "data-rt-setting-field": "" }, /* @__PURE__ */ import_react.default.createElement("label", { htmlFor: `${id}-language` }, "\u8F6E\u64AD\u8BED\u8A00"), /* @__PURE__ */ import_react.default.createElement(
     "select",
     {
       id: `${id}-language`,
@@ -491,7 +498,7 @@ function Settings({ form }) {
     },
     /* @__PURE__ */ import_react.default.createElement("option", { value: "zh" }, "\u4E2D\u6587"),
     /* @__PURE__ */ import_react.default.createElement("option", { value: "en" }, "English")
-  ), /* @__PURE__ */ import_react.default.createElement("label", { htmlFor: `${id}-mode` }, "\u81EA\u5B9A\u4E49\u8BCD\u5E93"), /* @__PURE__ */ import_react.default.createElement(
+  )), /* @__PURE__ */ import_react.default.createElement("div", { "data-rt-setting-field": "" }, /* @__PURE__ */ import_react.default.createElement("label", { htmlFor: `${id}-mode` }, "\u81EA\u5B9A\u4E49\u8BCD\u5E93"), /* @__PURE__ */ import_react.default.createElement(
     "select",
     {
       id: `${id}-mode`,
@@ -501,7 +508,7 @@ function Settings({ form }) {
     },
     /* @__PURE__ */ import_react.default.createElement("option", { value: "append" }, "\u8FFD\u52A0\u5230\u9ED8\u8BA4\u8BCD\u5E93"),
     /* @__PURE__ */ import_react.default.createElement("option", { value: "replace" }, "\u66FF\u6362\u9ED8\u8BA4\u8BCD\u5E93")
-  ), /* @__PURE__ */ import_react.default.createElement("label", { htmlFor: `${id}-chinese` }, "\u4E2D\u6587\u8BCD\u5E93\uFF08\u6BCF\u884C\u4E00\u6761\uFF09"), /* @__PURE__ */ import_react.default.createElement(
+  )), /* @__PURE__ */ import_react.default.createElement("div", { "data-rt-setting-field": "" }, /* @__PURE__ */ import_react.default.createElement("label", { htmlFor: `${id}-chinese` }, "\u4E2D\u6587\u8BCD\u5E93\uFF08\u6BCF\u884C\u4E00\u6761\uFF09"), /* @__PURE__ */ import_react.default.createElement(
     "textarea",
     {
       id: `${id}-chinese`,
@@ -511,7 +518,7 @@ function Settings({ form }) {
       placeholder: "\u53FD\u91CC\u5471\u5566\u4E2D\n\u7422\u78E8\u4E2D\n\u60F3\u6CD5\u5192\u6CE1\u4E2D",
       onChange: (event) => edit({ chinese: event.target.value })
     }
-  ), /* @__PURE__ */ import_react.default.createElement("label", { htmlFor: `${id}-english` }, "English vocabulary\uFF08\u6BCF\u884C\u4E00\u6761\uFF09"), /* @__PURE__ */ import_react.default.createElement(
+  )), /* @__PURE__ */ import_react.default.createElement("div", { "data-rt-setting-field": "" }, /* @__PURE__ */ import_react.default.createElement("label", { htmlFor: `${id}-english` }, "English vocabulary\uFF08\u6BCF\u884C\u4E00\u6761\uFF09"), /* @__PURE__ */ import_react.default.createElement(
     "textarea",
     {
       id: `${id}-english`,
@@ -521,7 +528,7 @@ function Settings({ form }) {
       placeholder: "Pondering\nConnecting the dots\nUntangling",
       onChange: (event) => edit({ english: event.target.value })
     }
-  ), /* @__PURE__ */ import_react.default.createElement("label", { htmlFor: `${id}-interval` }, "\u5207\u6362\u95F4\u9694\uFF08\u79D2\uFF09"), /* @__PURE__ */ import_react.default.createElement(
+  )), /* @__PURE__ */ import_react.default.createElement("div", { "data-rt-setting-field": "" }, /* @__PURE__ */ import_react.default.createElement("label", { htmlFor: `${id}-interval` }, "\u5207\u6362\u95F4\u9694\uFF08\u79D2\uFF09"), /* @__PURE__ */ import_react.default.createElement(
     import_dsh_client_ui_primitives.Input,
     {
       id: `${id}-interval`,
@@ -533,7 +540,7 @@ function Settings({ form }) {
       disabled,
       onChange: (event) => edit({ seconds: event.target.value })
     }
-  ), /* @__PURE__ */ import_react.default.createElement("div", { "data-rt-setting-actions": "" }, /* @__PURE__ */ import_react.default.createElement(import_dsh_client_ui_primitives.Button, { type: "submit", variant: "primary", disabled: disabled || !draft }, saving ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58\u8BBE\u7F6E"), /* @__PURE__ */ import_react.default.createElement(import_dsh_client_ui_primitives.Button, { disabled: saving || !draft, onClick: () => {
+  )), /* @__PURE__ */ import_react.default.createElement("div", { "data-rt-setting-actions": "" }, /* @__PURE__ */ import_react.default.createElement(import_dsh_client_ui_primitives.Button, { type: "submit", variant: "primary", disabled: disabled || !draft }, saving ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58\u8BBE\u7F6E"), /* @__PURE__ */ import_react.default.createElement(import_dsh_client_ui_primitives.Button, { disabled: saving || !draft, onClick: () => {
     setDraft(void 0);
     setMessage("");
   } }, "\u91CD\u65B0\u8F7D\u5165")), state.status !== "ready" && /* @__PURE__ */ import_react.default.createElement("p", { role: "status" }, state.status === "loading" ? "\u6B63\u5728\u8F7D\u5165\u8BBE\u7F6E\u2026" : "\u5F53\u524D\u8FDE\u63A5\u65E0\u6CD5\u8BFB\u53D6\u8BBE\u7F6E\u3002"), state.status === "ready" && !state.writable && /* @__PURE__ */ import_react.default.createElement("p", { role: "status" }, "\u5F53\u524D\u8BBE\u7F6E\u4E3A\u53EA\u8BFB\u3002"), message && /* @__PURE__ */ import_react.default.createElement("p", { role: "status" }, message));

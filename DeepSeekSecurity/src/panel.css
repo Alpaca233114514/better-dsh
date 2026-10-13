@@ -15,15 +15,20 @@
   padding: 6px 12px;
   font-family: inherit;
   min-width: 0;
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
 }
-.dss-summary { color: var(--dsw-alias-label-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-inline-start: 8px; }
-.dss-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.dss-head > :first-child { min-width: 0; flex: 1; }
-.dss-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-.dss-steps { margin: 0; padding: 8px 0; list-style: none; display: grid; gap: 8px; }
-.dss-steps li { display: flex; align-items: center; gap: 10px; color: var(--dsw-alias-label-secondary); }
-.dss-meta { color: var(--dsw-alias-label-tertiary); overflow-wrap: anywhere; }
-.dss-error { color: var(--dsw-alias-state-error-primary); overflow-wrap: anywhere; }
-.dss-body { max-height: min(32vh, 240px); overflow-y: auto; font-size: 13px; line-height: 20px; }
-.dss-report { max-height: 65vh; overflow: auto; overflow-wrap: anywhere; }
-.dss-dialog { width: min(90vw, 900px); }
+.dss-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.dss-head > :first-child { flex: 1; min-width: 0; }
+.dss-panel .dss-heading { height: auto; min-height: calc(24px + var(--dsh-content-font-delta, 0px)); }
+.dss-heading-content { flex: 1; min-width: 0; }
+.dss-heading-text { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.dss-stop { flex: none; white-space: nowrap; }
+.dss-summary { color: var(--dsw-alias-label-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.dss-steps { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; max-height: 180px; overflow-y: auto; }
+.dss-steps li { display: flex; align-items: center; gap: 10px; min-width: 0; color: var(--dsw-alias-label-secondary); }
+.dss-glyph { display: grid; flex: none; place-items: center; width: 16px; height: 16px; }
+.dss-step-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dss-steps, .dss-summary, .dss-error { font-size: var(--dsh-content-font-size-secondary, 13px); line-height: calc(20px + var(--dsh-content-font-delta, 0px)); }
+.dss-error { margin-top: 8px; color: var(--dsw-alias-state-error-primary); overflow-wrap: anywhere; }
+.dss-panel [data-disclosure-row]:focus-visible { outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary)); outline-offset: 2px; border-radius: var(--dsw-radius-sm); }
