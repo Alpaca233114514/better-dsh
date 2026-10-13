@@ -130,7 +130,8 @@ export function apply(ctx, config) {
 
       const fs = ctx.get('fs')
       if (fs === undefined) return decision
-      const cwd = session.header.cwd ?? process.cwd()
+      const workingDirectory = ctx.get('workingDirectory')
+      const cwd = workingDirectory ? workingDirectory.get(session) : session.header.cwd ?? process.cwd()
 
       const projectFiles = []
       const root = await findProjectRoot(fs, cwd, signal)

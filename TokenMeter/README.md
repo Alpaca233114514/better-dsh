@@ -1,6 +1,6 @@
 # Token Meter 计量插件
 
-DeepSeek Harness 动态 Cordis 插件：统计 token 使用量并以 GitHub 风格热力图展示。
+DeepSeek Harness 动态 Cordis 插件：统计 token 使用量并以 GitHub 风格热力图展示。适配基线：**DSH 0.2.1-alpha.2**，详见 [适配说明](../docs/dsh-compatibility.md)。
 
 ## 功能
 
@@ -30,12 +30,12 @@ DeepSeek Harness 动态 Cordis 插件：统计 token 使用量并以 GitHub 风�
 ## 实现要点
 
 - **采集**：包装 `llm/stream` 瀑布事件，从每次流式调用的 `usage` chunk 读取
-  `inputTokens` / `outputTokens` / `cacheReadTokens`（StreamChunk 协议，
-  `@deepseek-ai/dsh-llm`）。输入按 `prompt_tokens = inputTokens + cacheReadTokens`
-  计入（DeepSeek 的 `prompt_tokens` 包含缓存命中），缓存部分单独展示
+  `inputTokens` / `outputTokens` / `cacheReadTokens` / `cacheWriteTokens`（StreamChunk 协议，
+  `@deepseek-ai/dsh-llm`）。输入按 `inputTokens + cacheReadTokens + cacheWriteTokens`
+  计入（三个输入桶互不重叠）；`reasoningTokens` 已包含在输出，不重复加入
 - **轮次**：`agent/inbox/claimed`（起点）→ `agent/turn-stopping`（终点）配对，
   按会话归集单轮 token（含缓存）与执行时长
-- **持久化**：写入 `.dsh-token-meter.json`（显式 `workspace-write` 沙箱策略），
+- **持久化**：写入 `.dsh-token-meter.json`（遵守当前 Session 沙箱策略；只读不提升为可写），
   1.5s 防抖 + 每 10s 变更心跳 + 停止时冲刷，重启不丢失。
   数据文件位置自愈：启动时扫描活跃会话工作区 / 沙箱策略根（**新会话优先**），
   **找回已有数据文件**并继续沿用；若发现多份（如迁移/续接留下的旧文件），
@@ -56,3 +56,7 @@ DeepSeek Harness 动态 Cordis 插件：统计 token 使用量并以 GitHub 风�
 早期版本漏计 `cacheReadTokens`（缓存命中），导致输入被严重低估
 （如真实输入 31.1M 只显示 14 万）。v13 起输入口径为
 `inputTokens + cacheReadTokens`（= 提供商计费的 `prompt_tokens`）。
+
+## DSH 0.2 更新
+
+新增缓存写入计量，旧汇总字段按 0 读取；先完成旧数据加载再记入首次 usage，避免启动覆盖。历史遗漏的缓存写入无法从汇总数据补算。

@@ -102,21 +102,21 @@ async function run(ctx, config, io) {
   // Optional: cancel as soon as the first assistant message is durable, so a
   // verbose multi-tool run does not burn the whole task budget.
   let cancelled = false
-  const watch = setInterval(() => {
+  const watch = config.stopAfterFirstAssistant ? setInterval(() => {
     if (cancelled) return
     const hit = agent.session.events.some((event) => event.type === 'assistant/message' && event.seq >= firstSeq)
     if (hit) {
       cancelled = true
       agent.cancel({ kind: 'user' })
     }
-  }, 100)
+  }, 100) : undefined
 
   agent.followup(createUserMessage({
     content: [{ type: 'text', text: config.task }],
     source: { kind: 'user' },
   }))
   await agent.whenIdle()
-  clearInterval(watch)
+  if (watch !== undefined) clearInterval(watch)
   await sessions.flush(agent.session)
 
   // Report: session identity, every request header, then the first assistant reply.

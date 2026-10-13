@@ -17,10 +17,10 @@
  *  - explicit absolute path (e.g. `C:\Program Files\Git\bin\bash.exe`), or
  *  - `bash` resolved through `ctx.subprocess.resolveExecutable` (PATH lookup).
  *
- * Semantics mirror the official bash tool: `bash -c <command>` in a fresh
- * process, bounded output, non-zero exit reported not thrown. No sandbox
- * confinement on Windows (the sandbox backend is linux-only); the tool
- * description says so. The bootstrap catalog pairs this with
+ * `bash -c <command>` in a fresh process with bounded output and deadline.
+ * DSH 0.2 resolves the Session policy and confines argv through its sandbox
+ * provider (including the Windows runner). A missing backend refuses execution.
+ * The bootstrap catalog pairs this with
  * `str_replace_editor` (Minimal's two tools).
  */
 
@@ -28,7 +28,7 @@
 export const name = 'custom-bash'
 
 /** The subprocess and tools services must exist before this tool can register. */
-export const inject = ['subprocess', 'tools']
+export const inject = ['subprocess', 'tools', 'workingDirectory', 'sandboxPolicy', 'sandbox', 'timer', 'shellEnv']
 
 const DEFAULT_TIMEOUT_MS = 120000
 const DEFAULT_MAX_OUTPUT_BYTES = 64000
@@ -66,7 +66,7 @@ export function apply(ctx, config) {
       '* State does NOT persist across command calls: each call runs in a fresh shell.',
       "* To inspect a particular line range of a file, e.g. lines 10-25, try 'sed -n 10,25p /path/to/the/file'.",
       '* Please avoid commands that may produce a very large amount of output.',
-      '* NOTE: runs without OS sandbox confinement on Windows (no landlock); treat output as untrusted.',
+      '* Commands follow the session file policy; a sandbox refusal must not be retried unconfined.',
     ].join('\n'),
     parameters: commandSchema,
     output: {
@@ -84,11 +84,15 @@ export function apply(ctx, config) {
       const shell = await ctx.subprocess.resolveExecutable(bashPath, undefined, exec?.signal)
       const workdir = typeof args.workdir === 'string' && args.workdir.length > 0
         ? args.workdir
-        : exec?.agent?.session?.header?.cwd
+        : exec?.agent ? await ctx.workingDirectory.ensure(exec.agent, exec.signal) : process.cwd()
       const signal = exec?.signal
+      signal?.throwIfAborted()
+      const policy = ctx.sandboxPolicy.resolve(exec?.agent ? { session: exec.agent.session } : {})
+      const argv = [shell, '-c', args.command]
+      const confined = policy.mode === 'danger-full-access' ? null : await ctx.sandbox.confine(argv, policy, signal)
       const handle = ctx.subprocess.spawn({
-        argv: [shell, '-c', args.command],
-        ...workdir !== undefined ? { cwd: workdir } : {},
+        argv: confined ? confined.argv : argv,
+        cwd: workdir,
         stdio: {
           stdin: 'ignore',
           stdout: { maxBytes: maxOutputBytes },
@@ -96,7 +100,13 @@ export function apply(ctx, config) {
         },
         ...signal !== undefined ? { signal } : {},
         graceMs: 3000,
+        env: ctx.shellEnv.collect(exec),
       })
+      let timedOut = false
+      const cancelTimeout = ctx.timeout(() => {
+        timedOut = true
+        handle.terminate().catch(() => {})
+      }, timeoutMs)
       let outcome
       try {
         outcome = await handle.done
@@ -104,7 +114,11 @@ export function apply(ctx, config) {
         // A spawn-level failure (bad executable, EPERM) surfaces as a throw,
         // which the runtime turns into an isError result.
         throw new Error(`bash spawn failed: ${String(error)}`)
+      } finally {
+        cancelTimeout()
       }
+      if (timedOut) throw new Error(`bash timed out after ${timeoutMs} ms`)
+      signal?.throwIfAborted()
       let stdout = ''
       let stderr = ''
       try {
