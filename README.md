@@ -11,6 +11,7 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 | --- | --- | --- |
 | [TokenMeter](TokenMeter/) | Token 计量插件：统计 token 使用量并以 GitHub 风格热力图展示 | [README](TokenMeter/README.md) |
 | [BetterManager](BetterManager/) | 插件管理器：mod 菜单式管理 DSH 动态插件，带永久持久化防丢失 | [README](BetterManager/README.md) |
+| [RichThinking](RichThinking/) | 原生推理行动态状态词，默认中文独立轮播，保留原生折叠与正文 | [README](RichThinking/README.md) |
 | [Oi](Oi/) | 第三方收录：面向 Agent Skills 的 agent-native 语言（MIT License） | [README](Oi/README.md) |
 | [dsh-anchored-standard](dsh-anchored-standard/) | 第三方收录：双阶段 DSH 代理预设，首轮锚定 Minimal、晋升后按需解锁 Standard 工具（MIT License） | [README](dsh-anchored-standard/README.zh-CN.md) |
 
@@ -25,6 +26,18 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 ## 装配到 DSH
 
 插件、代理预设与技能在 DSH 里的装配方式不同，分开说明。
+
+### Rich Thinking（原生组合包）
+
+支持 DSH **0.2.0-rc.2 / 0.2.1-alpha.2 的 Web 客户端**，用原生插件管理器安装独立包（将路径改为实际绝对目录）：
+
+```powershell
+dsh plugin --profile web add "file:C:/path/to/better-dsh/RichThinking"
+```
+
+默认每 5 秒轮播中文状态词，例如「叽里呱啦中」「琢磨中」；英文独立成组，手动选择才启用。
+源码和构建产物均随仓库交付，设置遵循 DSH 原生配置；不依赖 DeepSeek Security。
+支持版本、安装开关、配置示例及标题兼容层限制见 [RichThinking/README](RichThinking/README.md)。
 
 ### 插件（TokenMeter / BetterManager）
 
@@ -136,7 +149,7 @@ Standard 工具（`web_search`、`subagent`、`workflow` 等）通过 `dev_tool_
 
 ## 著作权与许可
 
-- 本仓库原创插件（TokenMeter、BetterManager）遵循 [LICENSE](LICENSE)
+- 本仓库原创插件（TokenMeter、BetterManager、RichThinking）遵循 [LICENSE](LICENSE)
   （Apache License 2.0）
 - 第三方收录的 Oi 遵循其自身 MIT License（见 [Oi/LICENSE](Oi/LICENSE)），
   完整著作权声明见 [NOTICE.md](NOTICE.md)

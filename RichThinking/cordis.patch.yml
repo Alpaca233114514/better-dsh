@@ -1,0 +1,12 @@
+- insert:
+    - id: rich-thinking
+      name: dsh-rich-thinking
+      config:
+        enabled: true
+        language: zh
+        vocabularyMode: append
+        englishVerbs: []
+        chineseVerbs: []
+        intervalMs: 5000
+        animation: true
+        showElapsed: true
