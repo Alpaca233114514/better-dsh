@@ -3,12 +3,12 @@
 // 插件 ID: tkmtr-2   Package: pkg-14
 // 说明: 这是 cordis_define 的 code.host 函数体。把它作为 code.host 传入即可。
 // 功能: 包装 llm/stream 瀑布捕获每次模型调用的 usage chunk，
-//       输入 token 含缓存命中（prompt_tokens = inputTokens + cacheReadTokens），
+//       输入 token = inputTokens + cacheReadTokens + cacheWriteTokens，
 //       用 agent/inbox/claimed → agent/turn-stopping 配对统计每轮峰值与时长，
 //       数据持久化到会话工作区 .dsh-token-meter.json（重启不丢失）。
 // ============================================================================
 return {
-  inject: ['timer'],
+  inject: ['timer', 'fs', 'sandboxPolicy'],
   apply(ctx) {
     const fs = ctx.get('fs')
     const sandboxPolicy = ctx.get('sandboxPolicy')
@@ -16,10 +16,12 @@ return {
     let root = null
     let rootSource = null
     let dirty = false
+    let targetPromise = null
 
     const state = {
       totalInput: 0,          // 输入（含缓存命中）
       totalCacheRead: 0,      // 其中缓存命中
+      totalCacheWrite: 0,     // 其中缓存写入
       totalOutput: 0,
       peakRoundTokens: 0,
       peakRoundDate: null,
@@ -94,6 +96,7 @@ return {
         const num = (v) => Number(v) || 0
         state.totalInput = Math.max(state.totalInput, num(p.totalInput))
         state.totalCacheRead = Math.max(state.totalCacheRead, num(p.totalCacheRead))
+        state.totalCacheWrite = Math.max(state.totalCacheWrite, num(p.totalCacheWrite))
         state.totalOutput = Math.max(state.totalOutput, num(p.totalOutput))
         if (num(p.peakRoundTokens) > state.peakRoundTokens) {
           state.peakRoundTokens = num(p.peakRoundTokens)
@@ -109,6 +112,7 @@ return {
             const cur = state.daily[k] || (state.daily[k] = { input: 0, cache: 0, output: 0 })
             cur.input = Math.max(cur.input, num(v.input))
             cur.cache = Math.max(cur.cache, num(v.cache))
+            cur.cacheWrite = Math.max(cur.cacheWrite || 0, num(v.cacheWrite))
             cur.output = Math.max(cur.output, num(v.output))
           }
         }
@@ -150,7 +154,13 @@ return {
       return null
     }
 
-    async function ensureTarget(preferred) {
+    function ensureTarget(preferred) {
+      if (targetPromise) return targetPromise
+      targetPromise = resolveTarget(preferred).finally(() => { targetPromise = null })
+      return targetPromise
+    }
+
+    async function resolveTarget(preferred) {
       if (fileTarget || !fs) return
       // 1) 已有数据文件 → 主用第一个（新会话优先），其余文件只吸收增量后弃用
       const files = await findExistingTarget()
@@ -189,6 +199,7 @@ return {
         if (!parsed || typeof parsed !== 'object') return
         state.totalInput = Number(parsed.totalInput) || 0
         state.totalCacheRead = Number(parsed.totalCacheRead) || 0
+        state.totalCacheWrite = Number(parsed.totalCacheWrite) || 0
         state.totalOutput = Number(parsed.totalOutput) || 0
         state.peakRoundTokens = Number(parsed.peakRoundTokens) || 0
         state.peakRoundDate = parsed.peakRoundDate || null
@@ -201,6 +212,7 @@ return {
               state.daily[k] = {
                 input: Number(v.input) || 0,
                 cache: Number(v.cache) || 0,
+                cacheWrite: Number(v.cacheWrite) || 0,
                 output: Number(v.output) || 0,
               }
             }
@@ -215,9 +227,11 @@ return {
     async function save() {
       if (!fs || !fileTarget || !root) return
       try {
+        const sessions = ctx.get('sessions')
+        const session = sessions && sessions.list().find((s) => s.header.cwd === root)
+        const policy = sandboxPolicy.resolve(session ? { session } : {})
         await fs.writeText(fileTarget, JSON.stringify(state), undefined, undefined, {
-          mode: 'workspace-write',
-          workspaceRoot: root,
+          ...policy, mode: policy.mode === 'read-only' ? 'read-only' : 'workspace-write', workspaceRoot: root,
         })
         dirty = false
       } catch (err) {
@@ -235,18 +249,21 @@ return {
     const scheduleSave = ctx.debounce(() => { save() }, 1500)
 
     function recordUsage(sessionId, usage, at) {
-      // 输入包含缓存命中（prompt_tokens = inputTokens + cacheReadTokens）
-      const input = (Number(usage.inputTokens) || 0) + (Number(usage.cacheReadTokens) || 0)
+      // 新版 TokenUsage 的三个输入桶互不重叠；reasoningTokens 已包含在输出。
+      const cacheWrite = Number(usage.cacheWriteTokens) || 0
+      const input = (Number(usage.inputTokens) || 0) + (Number(usage.cacheReadTokens) || 0) + cacheWrite
       const cache = Number(usage.cacheReadTokens) || 0
       const output = Number(usage.outputTokens) || 0
       if (input + output <= 0) return
       state.totalInput += input
       state.totalCacheRead += cache
+      state.totalCacheWrite += cacheWrite
       state.totalOutput += output
       const key = dateKey(at)
-      const entry = state.daily[key] || (state.daily[key] = { input: 0, cache: 0, output: 0 })
+      const entry = state.daily[key] || (state.daily[key] = { input: 0, cache: 0, cacheWrite: 0, output: 0 })
       entry.input += input
       entry.cache += cache
+      entry.cacheWrite = (entry.cacheWrite || 0) + cacheWrite
       entry.output += output
       if (sessionId) {
         const round = activeRounds.get(sessionId)
@@ -269,6 +286,7 @@ return {
           }
         } finally {
           if (usage) {
+            await ensureTarget() // 先读取旧数据，避免首次加载覆盖刚采集的 usage。
             recordUsage(options.sessionId, usage, Date.now())
           }
         }
@@ -325,15 +343,16 @@ return {
     function buildState() {
       const today = dateKey(Date.now())
       const t = state.daily[today]
-      const mk = (input, cache, output) => ({
+      const mk = (input, cache, output, cacheWrite) => ({
         input,
         cacheRead: cache,
+        cacheWrite,
         output,
         total: input + output,
       })
       return {
-        cumulative: mk(state.totalInput, state.totalCacheRead, state.totalOutput),
-        today: mk(t ? t.input : 0, t ? t.cache : 0, t ? t.output : 0),
+        cumulative: mk(state.totalInput, state.totalCacheRead, state.totalOutput, state.totalCacheWrite),
+        today: mk(t ? t.input : 0, t ? t.cache : 0, t ? t.output : 0, t ? t.cacheWrite || 0 : 0),
         peakRoundTokens: state.peakRoundTokens,
         peakRoundDate: state.peakRoundDate,
         longestRoundMs: state.longestRoundMs,
@@ -343,22 +362,25 @@ return {
       }
     }
 
-    harness.handle('meter:state', () => buildState())
+    harness.handle('meter:state', async () => { await ensureTarget(); return buildState() })
     harness.handle('meter:diag', () => ({
       root,
       rootSource,
       fileTargetReady: !!fileTarget,
       totalInput: state.totalInput,
       totalCacheRead: state.totalCacheRead,
+      totalCacheWrite: state.totalCacheWrite,
       totalOutput: state.totalOutput,
       dailyDays: Object.keys(state.daily).length,
       activeRounds: activeRounds.size,
       dirty,
       now: Date.now(),
     }))
-    harness.handle('meter:reset', () => {
+    harness.handle('meter:reset', async () => {
+      await ensureTarget()
       state.totalInput = 0
       state.totalCacheRead = 0
+      state.totalCacheWrite = 0
       state.totalOutput = 0
       state.peakRoundTokens = 0
       state.peakRoundDate = null

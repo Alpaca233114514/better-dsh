@@ -1,5 +1,28 @@
 # dsh-anchored-standard
 
+## DSH 0.2 compatibility update / 兼容更新（2026-10-12）
+
+本目录是上游历史基线加本地兼容修改，目标为 DSH `0.2.1-alpha.2`。新版通过
+`@deepseek-ai/dsh-agent-preset` 配置声明加载，旧 `.agent-presets` 复制安装说明已失效。
+从此目录运行以下命令，再创建空白会话选择预设：
+
+```powershell
+node scripts/generate-dsh-patch.mjs --mode anchored-standard --out anchored-standard.patch.yml
+dsh web --patch ./anchored-standard.patch.yml
+```
+
+其他模式替换 `--mode` 为 `zero-anchored-standard` 或 `whoami-standard`。
+输出文件必须不存在，移动仓库后重新生成。编辑器共享 Host 文件沙箱；Windows Git Bash
+通过 DSH 沙箱执行并遵守工作目录和超时。缺少沙箱服务时拒绝执行。
+
+Upstream has frozen maintenance. The installation instructions and exact-Minimal
+claims below describe historical DSH/V4 experiments. This local compatibility patch
+has no new live-model anchoring or performance evidence. Use the generator above
+for DSH 0.2; see [compatibility notes](../docs/dsh-compatibility.md).
+
+---
+
+
 [中文说明](./README.zh-CN.md)
 
 Experimental DeepSeek Harness agent presets — one base mode plus two variants
@@ -225,7 +248,7 @@ DeepSeek Harness is currently a developer preview and explicitly permits
 breaking changes. This preset is a full snapshot of the Standard composition,
 so review upstream changes before using it with a newer release.
 
-## Install
+## Install (historical; DSH 0.2 uses the generator above)
 
 Clone this repository, then copy the entire `preset` directory into the user
 preset root under the id `anchored-standard`. Every mode directory in this

@@ -25,7 +25,7 @@
   （首轮锚定 Minimal 条件，会话持久后晋升到小型 resident 工具目录）
 - **来源仓库**：<https://github.com/xiaobright/dsh-anchored-standard>
 - **收录版本**：`main` 分支 commit `0a38616c1b7ce4219b6d94d95c89f34a90741616`（2026-08-16）
-- **收录方式**：原样复制源码至 `dsh-anchored-standard/` 目录（不含 `.git`），未做任何修改
+- **收录方式**：以所列提交为收录基线；2026-10-12 增加 DSH 0.2.1-alpha.2 兼容修改（配置声明生成、persona/workflow 接口、工作目录、文件与进程沙箱、验证脚本和测试）。已有本地扩展保留，详见 `docs/dsh-compatibility.md`
 - **许可证**：MIT License
 - **著作权**：Copyright (c) 2026 xiaobright；Portions Copyright (c) 2026 DeepSeek
 

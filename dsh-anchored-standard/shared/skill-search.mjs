@@ -29,7 +29,7 @@
 export const name = 'skill-search'
 
 /** The agent, tools, and skills services must exist before these tools can register. */
-export const inject = ['agents', 'tools', 'skills']
+export const inject = ['agents', 'tools', 'skills', 'workingDirectory']
 
 const MAX_RESULTS = 20
 
@@ -67,7 +67,7 @@ export function apply(ctx) {
       try {
         const all = await ctx.skills.list({
           scope,
-          cwd: exec?.agent?.session?.header?.cwd,
+          cwd: exec?.agent ? ctx.workingDirectory.get(exec.agent.session) : undefined,
           signal: exec?.signal,
         })
         const matches = all.filter((skill) => {
@@ -105,7 +105,7 @@ export function apply(ctx) {
         if (agent === undefined) return { text: 'skill_load requires an agent context.' }
         const skill = await ctx.skills.get(args.name, {
           scope: agent,
-          cwd: agent.session.header.cwd,
+          cwd: ctx.workingDirectory.get(agent.session),
           signal: exec?.signal,
         })
         if (skill === undefined) {
