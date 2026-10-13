@@ -329,14 +329,16 @@ test('progress cancellation wins over an old poll and ignores responses after se
   assert.equal(observer.getSnapshot().task, null)
 })
 
-test('@DeepSeek Security inserts an atomic mention, preserving the user request until Send', async () => {
-  assert.equal((await source.candidates({}, {}))[0].name, 'DeepSeek Security')
+test('@deepseek-security stays intact across pick, clipboard and Send without injecting prompt text', async () => {
+  assert.equal((await source.candidates({}, {}))[0].name, 'deepseek-security')
   assert.deepEqual(await source.candidates({}, { quoted: true }), [])
   assert.deepEqual(await source.candidates({}, { drilled: true }), [])
   const picked = source.onPick({})
-  assert.deepEqual(picked, { insert: { source: 'deepseek-security', ref: securityMention, label: 'DeepSeek Security', clipboardText: securityMention } })
-  assert.equal(source.codec.clipboardText(picked.insert.ref), '@DeepSeek Security')
+  assert.deepEqual(picked, { insert: { source: 'deepseek-security', ref: securityMention, label: 'deepseek-security', clipboardText: securityMention } })
+  assert.equal(source.codec.clipboardText(picked.insert.ref), '@deepseek-security')
   assert.equal(await source.codec.serialize(picked.insert.ref, new AbortController().signal), securityContext)
+  assert.equal(securityContext + instructions, '@deepseek-security ' + instructions)
+  assert.equal(await source.codec.serialize('@DeepSeek Security', new AbortController().signal), '@deepseek-security ', 'An already saved chip also serializes to the canonical mention')
   const controller = new AbortController()
   controller.abort(new Error('Send cancelled'))
   await assert.rejects(source.codec.serialize(picked.insert.ref, controller.signal), /Send cancelled/)

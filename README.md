@@ -48,8 +48,8 @@ dsh plugin --profile web add "link:C:/path/to/better-dsh/DeepSeekSecurity" --ign
 
 使用方法：
 
-1. 在目标工作区的输入框输入 `@`，选择 **DeepSeek Security**（也可搜索 `@security`），插入插件引用。
-2. 在引用后写自己的需求，例如 **`@DeepSeek Security 帮我扫描这段仓库`**，然后发送。
+1. 在目标工作区的输入框输入 `@`，选择 **deepseek-security**（也可搜索 `@deepseek-security`），插入插件引用。
+2. 在引用后写自己的需求，例如 **`@deepseek-security 帮我扫描这段仓库`**，然后发送。
 3. 模型按需求调用扫描工具后，输入框上方自动出现进度框。完成后进度框收起，报告返回聊天；进度框或聊天中的 **停止** 均可取消扫描。
 
 没有专用启动面板或“开始扫描”按钮。仅插入插件引用不启动扫描，**发送审计请求后会消耗当前模型账号的额度**。

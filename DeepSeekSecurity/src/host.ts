@@ -15,7 +15,7 @@ import { contribution } from './remote.ts'
 import { scanWorkspace, securityTools } from './tools.ts'
 
 export interface Config { stateDirectory?: string; python?: string }
-export const inject = ['agents', 'agentPresets', 'sessions', 'sessionProjections', 'agentDefaultModel', 'tools', 'sandboxPolicy', 'typert']
+export const inject = ['agents', 'sessions', 'sessionProjections', 'agentDefaultModel', 'tools', 'sandboxPolicy', 'typert']
 
 class SecurityService extends TypertRemoteService {
   constructor(ctx: Context, private manager: SecurityManager, private workbench: Workbench) {
