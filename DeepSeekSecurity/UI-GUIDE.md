@@ -11,3 +11,6 @@
 验证重点：插入标签后保留需求、发送才执行、真实阶段驱动进度、完成后隐藏、RPC 错误、重复停止、晚到响应、切换会话及重启恢复。
 
 参考：[Codex Security](https://github.com/openai/codex-security)、[OpenAI 插件技能](https://developers.openai.com/plugins/concepts/skills)。
+
+与 Rich Thinking 共同遵循的原生 UI 约束、跨版本注意事项和组合验证见
+[Native UI alignment](../docs/native-ui-alignment.md)。两个插件仍可独立安装。

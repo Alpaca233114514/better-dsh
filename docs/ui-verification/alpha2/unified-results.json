@@ -1,0 +1,16 @@
+{
+  "passed": 8,
+  "checks": [
+    "Idle hidden; native Enter/Space disclosure; accessible phase markers",
+    "Host stage updates preserve disclosure state",
+    "Light/dark tokens, secondary typography, field focus ring",
+    "360px viewport, enlarged font, stop action within panel",
+    "Read error recovery; duplicate Stop blocked; cancel failure retained; retry succeeds",
+    "All terminal states hide panel; session away/back retains workspace task",
+    "Settings save, rejected edits, reload, leave/return, read-only",
+    "Reduced motion and teardown remove UI and listeners"
+  ],
+  "errors": [],
+  "upstream": "C:\\Users\\Logan\\Documents\\GitHub\\better-dsh\\.cache\\dsh-upstream-20261012",
+  "scope": "Local headless Chromium; real plugin UI and DSH primitives/tokens; scripted RPC/config, not a live desktop/model session."
+}

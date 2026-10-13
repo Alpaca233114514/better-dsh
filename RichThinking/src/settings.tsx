@@ -45,29 +45,39 @@ export function Settings({ form }: { form: ConfigForm<Preferences> }) {
   return <form data-rich-thinking-settings="" onSubmit={event => { event.preventDefault(); if (!disabled && draft) void save() }}>
     {(['enabled', 'animation', 'showElapsed'] as const).map((field, index) => {
       const label = ['启用 Rich Thinking', '文字过渡动画', '显示运行耗时'][index]!
-      return <div key={field} data-rt-setting-row=""><span>{label}</span>
-        <Switch label={label} checked={current.values[field]} disabled={disabled} onChange={next => value(field, next)} />
+      return <div key={field} data-rt-setting-field=""><div data-rt-setting-row=""><span>{label}</span>
+        <Switch label={label} checked={current.values[field]} disabled={disabled} onChange={next => value(field, next)} /></div>
       </div>
     })}
-    <label htmlFor={`${id}-language`}>轮播语言</label>
-    <select id={`${id}-language`} value={current.values.language} disabled={disabled}
-      onChange={event => value('language', event.target.value as 'zh' | 'en')}>
-      <option value="zh">中文</option><option value="en">English</option>
-    </select>
-    <label htmlFor={`${id}-mode`}>自定义词库</label>
-    <select id={`${id}-mode`} value={current.values.vocabularyMode} disabled={disabled}
-      onChange={event => value('vocabularyMode', event.target.value as 'append' | 'replace')}>
-      <option value="append">追加到默认词库</option><option value="replace">替换默认词库</option>
-    </select>
-    <label htmlFor={`${id}-chinese`}>中文词库（每行一条）</label>
-    <textarea id={`${id}-chinese`} rows={4} value={current.chinese} disabled={disabled}
-      placeholder={'叽里呱啦中\n琢磨中\n想法冒泡中'} onChange={event => edit({ chinese: event.target.value })} />
-    <label htmlFor={`${id}-english`}>English vocabulary（每行一条）</label>
-    <textarea id={`${id}-english`} rows={4} value={current.english} disabled={disabled}
-      placeholder={'Pondering\nConnecting the dots\nUntangling'} onChange={event => edit({ english: event.target.value })} />
-    <label htmlFor={`${id}-interval`}>切换间隔（秒）</label>
-    <Input id={`${id}-interval`} type="number" min={2} max={60} step={0.1} value={current.seconds}
-      disabled={disabled} onChange={event => edit({ seconds: event.target.value })} />
+    <div data-rt-setting-field="">
+      <label htmlFor={`${id}-language`}>轮播语言</label>
+      <select id={`${id}-language`} value={current.values.language} disabled={disabled}
+        onChange={event => value('language', event.target.value as 'zh' | 'en')}>
+        <option value="zh">中文</option><option value="en">English</option>
+      </select>
+    </div>
+    <div data-rt-setting-field="">
+      <label htmlFor={`${id}-mode`}>自定义词库</label>
+      <select id={`${id}-mode`} value={current.values.vocabularyMode} disabled={disabled}
+        onChange={event => value('vocabularyMode', event.target.value as 'append' | 'replace')}>
+        <option value="append">追加到默认词库</option><option value="replace">替换默认词库</option>
+      </select>
+    </div>
+    <div data-rt-setting-field="">
+      <label htmlFor={`${id}-chinese`}>中文词库（每行一条）</label>
+      <textarea id={`${id}-chinese`} rows={4} value={current.chinese} disabled={disabled}
+        placeholder={'叽里呱啦中\n琢磨中\n想法冒泡中'} onChange={event => edit({ chinese: event.target.value })} />
+    </div>
+    <div data-rt-setting-field="">
+      <label htmlFor={`${id}-english`}>English vocabulary（每行一条）</label>
+      <textarea id={`${id}-english`} rows={4} value={current.english} disabled={disabled}
+        placeholder={'Pondering\nConnecting the dots\nUntangling'} onChange={event => edit({ english: event.target.value })} />
+    </div>
+    <div data-rt-setting-field="">
+      <label htmlFor={`${id}-interval`}>切换间隔（秒）</label>
+      <Input id={`${id}-interval`} type="number" min={2} max={60} step={0.1} value={current.seconds}
+        disabled={disabled} onChange={event => edit({ seconds: event.target.value })} />
+    </div>
     <div data-rt-setting-actions="">
       <Button type="submit" variant="primary" disabled={disabled || !draft}>{saving ? '保存中…' : '保存设置'}</Button>
       <Button disabled={saving || !draft} onClick={() => { setDraft(undefined); setMessage('') }}>重新载入</Button>

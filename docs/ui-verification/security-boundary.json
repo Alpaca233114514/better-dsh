@@ -1,0 +1,39 @@
+{
+  "securityCommit": "73d3d0e116e15ae2bde6462d18f0cd1e40992ced",
+  "integratedCodeCommit": "f7eebaa9317fe54d910768638bad4676360d059b",
+  "hostVersion": "0.2.1-alpha.2",
+  "runs": [
+    {
+      "preset": "minimal-windows",
+      "requests": 23,
+      "toolCalls": 22,
+      "toolsSeen": [
+        "complete_codex_security_scan",
+        "glob",
+        "grep",
+        "read",
+        "record_codex_security_scan_draft",
+        "security_progress"
+      ],
+      "outsideReachedModel": false,
+      "liveNetworkRequests": 0,
+      "symlinkAndJunctionCreated": true
+    },
+    {
+      "preset": "standard",
+      "requests": 23,
+      "toolCalls": 22,
+      "toolsSeen": [
+        "complete_codex_security_scan",
+        "glob",
+        "grep",
+        "read",
+        "record_codex_security_scan_draft",
+        "security_progress"
+      ],
+      "outsideReachedModel": false,
+      "liveNetworkRequests": 0,
+      "symlinkAndJunctionCreated": true
+    }
+  ]
+}
