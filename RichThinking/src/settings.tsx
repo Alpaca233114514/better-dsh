@@ -43,8 +43,8 @@ export function Settings({ form }: { form: ConfigForm<Preferences> }) {
     finally { setSaving(false) }
   }
   return <form data-rich-thinking-settings="" onSubmit={event => { event.preventDefault(); if (!disabled && draft) void save() }}>
-    {(['enabled', 'animation', 'showElapsed'] as const).map((field, index) => {
-      const label = ['启用 Rich Thinking', '文字过渡动画', '显示运行耗时'][index]!
+    {(['enabled', 'animation'] as const).map((field, index) => {
+      const label = ['启用 Rich Thinking', '逐字替换动画'][index]!
       return <div key={field} data-rt-setting-field=""><div data-rt-setting-row=""><span>{label}</span>
         <Switch label={label} checked={current.values[field]} disabled={disabled} onChange={next => value(field, next)} /></div>
       </div>

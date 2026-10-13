@@ -6,14 +6,14 @@ import { available, nativeFixture } from '../scripts/native-fixture.mjs'
 import { dom, flush } from './helpers.mjs'
 
 const hasSource = await available()
-test('real upstream ReasoningRow: portal, disclosure, stream, reduced motion and disposal', { skip: !hasSource && 'Set DSH_SOURCE to the audited DSH checkout' }, async () => {
+test('real upstream RunningStatus: native whale and duration, untouched disclosure, stream and disposal', { skip: !hasSource && 'Set DSH_SOURCE to the audited DSH checkout' }, async () => {
   const out = await nativeFixture()
   const env = dom(), doc = env.window.document
   const saved = { window: globalThis.window, document: globalThis.document, act: globalThis.IS_REACT_ACT_ENVIRONMENT }
   globalThis.window = env.window
   globalThis.document = doc
   globalThis.IS_REACT_ACT_ENVIRONMENT = true
-  const { React, createRoot, NativeRow, apply, bodySelector } = await import(pathToFileURL(join(out, 'fixture.js')).href)
+  const { React, createRoot, NativeConversation, apply, bodySelector } = await import(pathToFileURL(join(out, 'fixture.js')).href)
   const { act } = React
   const host = doc.createElement('div'), controller = doc.createElement('div')
   doc.body.append(host, controller)
@@ -22,11 +22,14 @@ test('real upstream ReasoningRow: portal, disclosure, stream, reduced motion and
   let config = { status: 'ready', value: { language: 'zh', vocabularyMode: 'replace', chineseVerbs: ['叽里呱啦中'], showElapsed: false } }
   try {
     await act(async () => {
-      root.render(React.createElement(NativeRow))
+      root.render(React.createElement(NativeConversation))
       await flush()
     })
     const row = host.querySelector('[data-variant="think"]')
     const button = row.querySelector('[data-disclosure-row]')
+    const status = host.querySelector('[data-chat-running]')
+    const whale = status.querySelector('svg').parentElement
+    const whaleMarkup = whale.outerHTML
     await act(async () => {
       apply({ effect: fn => effects.push(fn()),
         configForms: { get: id => {
@@ -40,31 +43,36 @@ test('real upstream ReasoningRow: portal, disclosure, stream, reduced motion and
       })
       await flush()
     })
-    assert.equal(row.querySelector('[data-rich-thinking-word]').textContent, '叽里呱啦中…')
+    assert.equal(status.querySelector('[data-rich-thinking-word]').textContent, '叽里呱啦中')
+    assert.equal(row.querySelector('[data-rich-thinking-host]'), null)
+    assert.equal(whale.outerHTML, whaleMarkup)
     assert.equal(button.getAttribute('aria-expanded'), 'false')
-    assert.equal(row.querySelector('[data-rich-thinking-host]').getAttribute('aria-hidden'), 'true')
-    assert.equal(row.querySelector('[data-rich-thinking-title]').textContent, '思考')
+    assert.equal(status.querySelector('[data-rich-thinking-host]').getAttribute('aria-hidden'), 'true')
+    assert.equal(status.querySelector('[data-rich-thinking-elapsed]').textContent, status.querySelector('[data-rich-thinking-title]').textContent.slice('深度求索中'.length))
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 1100)) })
+    assert.equal(status.querySelector('[data-rich-thinking-elapsed]').textContent, status.querySelector('[data-rich-thinking-title]').textContent.slice('深度求索中'.length))
+    assert.equal(status.querySelector('svg').parentElement, whale)
     // Real DisclosureRow's handler, not our fixture, processes the key.
     await act(async () => { button.dispatchEvent(new env.window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); await flush() })
     assert.equal(button.getAttribute('aria-expanded'), 'true')
     assert.equal(row.querySelector(bodySelector).textContent, '**Actual model text**\n\nMore reasoning.')
     const expandedBody = row.querySelector(bodySelector)
     await act(async () => {
-      root.render(React.createElement(NativeRow, { text: 'Unmodified live Markdown **delta**' }))
+      root.render(React.createElement(NativeConversation, { text: 'Unmodified live Markdown **delta**' }))
       await flush()
     })
     assert.equal(row.querySelector(bodySelector), expandedBody)
     assert.equal(expandedBody.textContent, 'Unmodified live Markdown **delta**')
     assert.equal(button.getAttribute('aria-expanded'), 'true')
     await act(async () => { env.reduce(true); await flush() })
-    assert.equal(row.querySelector('[data-rich-thinking-label]').dataset.motion, 'off')
+    assert.equal(status.querySelector('[data-rich-thinking-label]').dataset.motion, 'off')
     // Native completion rerenders the same row, restoring native title immediately.
-    await act(async () => { root.render(React.createElement(NativeRow, { running: false })); await flush() })
+    await act(async () => { root.render(React.createElement(NativeConversation, { running: false })); await flush() })
     assert.equal(host.querySelector('[data-variant="think"]'), row)
     assert.equal(row.querySelector('[data-rich-thinking-host]'), null)
     assert.equal(button.getAttribute('aria-expanded'), 'true')
-    await act(async () => { root.render(React.createElement(NativeRow)); await flush() })
-    assert.ok(row.querySelector('[data-rich-thinking-host]'))
+    await act(async () => { root.render(React.createElement(NativeConversation)); await flush() })
+    assert.ok(host.querySelector('[data-chat-running] [data-rich-thinking-host]'))
     await act(async () => {
       config = { status: 'ready', value: { enabled: false } }
       for (const fn of configListeners) fn()

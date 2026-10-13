@@ -48,8 +48,7 @@ var defaults = {
   englishVerbs: [],
   chineseVerbs: [],
   intervalMs: 5e3,
-  animation: true,
-  showElapsed: true
+  animation: true
 };
 function cleanWords(value) {
   return Array.isArray(value) ? [...new Set(value.filter((s) => typeof s === "string").map((s) => s.trim().replace(/(?:\.{3}|…)+$/u, "").trim()).filter(Boolean))] : [];
@@ -62,8 +61,7 @@ function normalize(input = {}) {
     englishVerbs: cleanWords(input.englishVerbs),
     chineseVerbs: cleanWords(input.chineseVerbs),
     intervalMs: typeof input.intervalMs === "number" && Number.isFinite(input.intervalMs) ? Math.min(6e4, Math.max(2e3, Math.round(input.intervalMs))) : defaults.intervalMs,
-    animation: typeof input.animation === "boolean" ? input.animation : defaults.animation,
-    showElapsed: typeof input.showElapsed === "boolean" ? input.showElapsed : defaults.showElapsed
+    animation: typeof input.animation === "boolean" ? input.animation : defaults.animation
   };
 }
 function languageOf(config) {
@@ -161,8 +159,8 @@ var WordBag = class {
 };
 
 // src/adapter.ts
-var REASONING = '[data-chat-flow-kind="assistant-step"] [data-variant="think"]';
-var ACTIVE = `${REASONING}[data-state="running"]`;
+var RUNNING = "[data-chat-running]";
+var ACTIVE = RUNNING;
 var OWN = "[data-rich-thinking-host]";
 var HIDDEN = '[hidden], [data-turn-process-hidden="true"], [data-turn-process-inline="true"]';
 var clock = {
@@ -170,7 +168,7 @@ var clock = {
   start: (fn, ms) => setInterval(fn, ms),
   stop: (id) => clearInterval(id)
 };
-var ReasoningAdapter = class {
+var RunningStatusAdapter = class {
   constructor(doc, config, time = clock, random = Math.random) {
     this.doc = doc;
     this.time = time;
@@ -206,8 +204,9 @@ var ReasoningAdapter = class {
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ["data-state", "data-turn-process-hidden", "data-turn-process-inline", "hidden", "data-process-activity", "data-shimmer", "aria-expanded"]
-      // No characterData: incoming reasoning/Markdown tokens must not tick this UI.
+      characterData: true,
+      attributeFilter: ["data-chat-running", "data-turn-process-hidden", "data-turn-process-inline", "hidden", "data-shimmer"]
+      // Only native status-label changes are consumed; transcript tokens are ignored.
     });
     this.scan(this.doc.body);
     this.sync();
@@ -241,32 +240,31 @@ var ReasoningAdapter = class {
     return this.config.enabled && !this.doc.hidden && row.isConnected && row.matches(ACTIVE) && this.location(row) !== void 0;
   }
   location(row) {
-    if (!row.closest(HIDDEN)) {
-      const header2 = row.querySelector("[data-disclosure-row]");
-      if (header2?.closest('[data-variant="think"]') === row && header2.getAttribute("role") === "button" && header2.hasAttribute("aria-expanded")) return { scope: row, header: header2 };
-      return;
-    }
-    const group = row.closest("[data-step-process]");
-    if (!group || group.closest(HIDDEN)) return;
-    const header = group.querySelector(':scope > div > button[data-process-activity="thinking"]');
-    const body = group.querySelector(":scope > [data-step-process-body]");
-    if (!header || header.closest(HIDDEN) || header.getAttribute("aria-expanded") !== "false" || !body?.contains(row) || !body.hasAttribute("hidden") || !header.querySelector(':scope > [data-shimmer="true"]')) return;
-    return { scope: group, header };
+    if (row.closest(HIDDEN)) return;
+    const header = row.querySelector(':scope > span > [data-shimmer="true"]');
+    if (!header || !row.querySelector(':scope > [role="status"]')) return;
+    return { scope: row, header };
+  }
+  suffix(row, title) {
+    const prefix = row.querySelector(':scope > [role="status"]')?.textContent;
+    const text = title.textContent ?? "";
+    return prefix && text.startsWith(prefix) ? text.slice(prefix.length) : void 0;
   }
   attach(row) {
     if (this.seats.has(row) || !this.live(row) || row.hasAttribute("data-rich-thinking")) return;
     const { scope, header } = this.location(row);
     if (scope.hasAttribute("data-rich-thinking")) return;
-    const shimmer = header.children.item(1);
-    const content = shimmer?.firstElementChild;
+    const shimmer = header;
+    const content = shimmer.firstElementChild;
     const title = content?.firstElementChild;
-    if (!(title instanceof this.doc.defaultView.HTMLElement) || title.tagName !== "SPAN" || !shimmer?.hasAttribute("data-shimmer") || !title.textContent?.trim() || title.querySelector("*") || title.hasAttribute("data-rich-thinking-title")) return;
+    if (!(title instanceof this.doc.defaultView.HTMLElement) || title.tagName !== "SPAN" || !shimmer?.hasAttribute("data-shimmer") || !title.textContent?.trim() || title.querySelector("*") || title.hasAttribute("data-rich-thinking-title") || this.suffix(row, title) === void 0) return;
     const host = this.doc.createElement("span");
     host.setAttribute("data-rich-thinking-host", "");
     host.setAttribute("aria-hidden", "true");
     title.setAttribute("data-rich-thinking-title", "");
     scope.setAttribute("data-rich-thinking", "");
-    content.insertBefore(host, title);
+    header.setAttribute("data-rich-thinking-native", "");
+    header.parentElement.insertBefore(host, header);
     const bag = this.makeBag();
     const now = this.time.now();
     this.seats.set(row, {
@@ -275,7 +273,6 @@ var ReasoningAdapter = class {
       header,
       title,
       host,
-      started: now,
       nextWordAt: now + this.config.intervalMs,
       bag,
       word: bag.next(),
@@ -285,6 +282,7 @@ var ReasoningAdapter = class {
   detach(seat) {
     seat.host.remove();
     seat.title.removeAttribute("data-rich-thinking-title");
+    seat.header.removeAttribute("data-rich-thinking-native");
     seat.scope.removeAttribute("data-rich-thinking");
     seat.scope.removeAttribute("data-rich-thinking-motion");
     this.seats.delete(seat.row);
@@ -298,18 +296,19 @@ var ReasoningAdapter = class {
     if (this.disposed) return;
     let relevant = false;
     for (const record of records) {
-      const target = record.target.nodeType === 1 ? record.target : null;
+      const target = record.target.nodeType === 1 ? record.target : record.target.parentElement;
       if (target?.closest(OWN) || target?.closest('[data-slot="conversation.chat.reasoning.body"]')) continue;
+      if (target?.closest(RUNNING)) relevant = true;
+      if (record.type === "characterData") continue;
       if (record.type === "attributes") {
-        if (record.attributeName === "data-state" && !target?.matches(REASONING)) continue;
-        if (target) this.scan(target.closest("[data-step-process]") ?? target);
+        if (target) this.scan(target.closest(RUNNING) ?? target);
         relevant = true;
       } else {
         for (const added of record.addedNodes) {
           if (added.nodeType !== 1) continue;
           const element = added;
           if (element.matches(OWN) || element.closest(OWN)) continue;
-          this.scan(element);
+          this.scan(element.closest(RUNNING) ?? element);
           if (element.matches(ACTIVE) || element.querySelector(ACTIVE)) relevant = true;
         }
         if (this.seats.size && [...record.removedNodes].some((node) => node.nodeType === 1 && [...this.seats.values()].some((seat) => node.contains(seat.row) || node.contains(seat.host) || node.contains(seat.title)))) relevant = true;
@@ -320,14 +319,14 @@ var ReasoningAdapter = class {
   sync() {
     const relocate = [];
     for (const seat of this.seats.values()) {
-      if (!this.live(seat.row) || !seat.host.isConnected || !seat.header.contains(seat.host) || !seat.title.isConnected || !seat.header.contains(seat.title) || this.location(seat.row)?.header !== seat.header) {
+      if (!this.live(seat.row) || !seat.host.isConnected || seat.host.parentElement !== seat.header.parentElement || !seat.title.isConnected || !seat.header.contains(seat.title) || this.location(seat.row)?.header !== seat.header || this.suffix(seat.row, seat.title) === void 0) {
         relocate.push(seat.row);
         this.detach(seat);
       }
     }
     for (const row of relocate) this.attach(row);
     for (const seat of this.seats.values()) seat.scope.setAttribute("data-rich-thinking-motion", this.motion() ? "on" : "off");
-    const delay = this.seats.size && (this.config.showElapsed || vocabulary(this.config, languageOf(this.config)).length > 1) ? this.config.showElapsed ? 1e3 : this.config.intervalMs : void 0;
+    const delay = this.seats.size && vocabulary(this.config, languageOf(this.config)).length > 1 ? this.config.intervalMs : void 0;
     if (this.timerDelay !== delay) {
       this.stopClock();
       if (delay !== void 0) {
@@ -356,13 +355,13 @@ var ReasoningAdapter = class {
       id: seat.id,
       host: seat.host,
       word: seat.word,
-      elapsed: this.config.showElapsed ? Math.floor((this.time.now() - seat.started) / 1e3) : null,
+      suffix: this.suffix(seat.row, seat.title) ?? "",
       language: languageOf(this.config),
       motion: this.motion()
     }));
     if (next.length === this.snapshot.length && next.every((item, index) => {
       const old = this.snapshot[index];
-      return item.id === old.id && item.word === old.word && item.elapsed === old.elapsed && item.language === old.language && item.motion === old.motion;
+      return item.id === old.id && item.word === old.word && item.suffix === old.suffix && item.language === old.language && item.motion === old.motion;
     })) return;
     this.snapshot = next;
     for (const notify of this.listeners) notify();
@@ -387,14 +386,9 @@ var ReasoningAdapter = class {
 
 // src/style.ts
 var css = `
-[data-rich-thinking] [data-rich-thinking-title] {
-  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
-  overflow:hidden; clip-path:inset(50%); white-space:nowrap;
-}
-/* Native decorative text remains React-owned. Suppress its duplicate title/preview
-   overlay while the plugin presents a label; the real preview is still visible. */
-[data-rich-thinking] [data-disclosure-row] > [data-shimmer] > [aria-hidden="true"] { display:none; }
-[data-rich-thinking] > div > button[data-process-activity] > [data-shimmer] > [aria-hidden="true"] { display:none; }
+/* One visible label: suppress the entire native shimmer subtree, including copies.
+   The whale and accessible status are separate siblings and remain native. */
+[data-chat-running][data-rich-thinking] [data-rich-thinking-native] { display:none !important; }
 /* ConfigField's select/textarea are not public exports in either supported DSH
    version. Match their tokens and geometry; keep Switch/Input/Button native. */
 [data-rich-thinking-settings] { display:flex; flex-direction:column; min-width:0; color:var(--dsw-alias-label-primary); }
@@ -410,23 +404,17 @@ var css = `
 [data-rich-thinking-settings] [role="status"] { margin:12px 0 0; color:var(--dsw-alias-label-secondary); font-size:13px; overflow-wrap:anywhere; }
 [data-rich-thinking-host] {
   display:inline-flex; flex:0 1 auto; min-width:0; max-width:100%;
-  font-size:var(--dsh-content-font-size-secondary,13px);
-  line-height:calc(24px + var(--dsh-content-font-delta,0px)); color:inherit;
+  font:inherit; color:inherit;
 }
 [data-rich-thinking-label] {
-  display:inline-flex; align-items:center; gap:8px; min-width:0; max-width:100%;
+  display:inline-flex; align-items:center; min-width:0; max-width:100%;
 }
 [data-rich-thinking-word] {
-  display:inline-block; flex:0 1 auto; min-width:0; width:23ch; max-width:100%; overflow:hidden;
+  display:inline-block; min-width:0; max-width:23ch; overflow:hidden;
   text-overflow:ellipsis; white-space:nowrap;
 }
-[data-rich-thinking-label][lang="zh"] [data-rich-thinking-word] { width:9em; }
-[data-rich-thinking-elapsed] { flex:none; font-variant-numeric:tabular-nums; min-width:4ch; text-align:right; }
-[data-rich-thinking-label][data-motion="on"] [data-rich-thinking-word] { animation:dsh-rich-thinking-enter 160ms ease-out; }
-@keyframes dsh-rich-thinking-enter { from { opacity:.55; } to { opacity:1; } }
-@media (prefers-reduced-motion:reduce) {
-  [data-rich-thinking-label] [data-rich-thinking-word] { animation:none !important; }
-}
+[data-rich-thinking-label][lang="zh"] [data-rich-thinking-word] { max-width:9em; }
+[data-rich-thinking-elapsed] { font-variant-numeric:tabular-nums; flex-shrink:0; white-space:pre; }
 `;
 
 // src/settings.tsx
@@ -485,8 +473,8 @@ function Settings({ form }) {
   return /* @__PURE__ */ import_react.default.createElement("form", { "data-rich-thinking-settings": "", onSubmit: (event) => {
     event.preventDefault();
     if (!disabled && draft) void save();
-  } }, ["enabled", "animation", "showElapsed"].map((field, index) => {
-    const label = ["\u542F\u7528 Rich Thinking", "\u6587\u5B57\u8FC7\u6E21\u52A8\u753B", "\u663E\u793A\u8FD0\u884C\u8017\u65F6"][index];
+  } }, ["enabled", "animation"].map((field, index) => {
+    const label = ["\u542F\u7528 Rich Thinking", "\u9010\u5B57\u66FF\u6362\u52A8\u753B"][index];
     return /* @__PURE__ */ import_react.default.createElement("div", { key: field, "data-rt-setting-field": "" }, /* @__PURE__ */ import_react.default.createElement("div", { "data-rt-setting-row": "" }, /* @__PURE__ */ import_react.default.createElement("span", null, label), /* @__PURE__ */ import_react.default.createElement(import_dsh_client_ui_primitives.Switch, { label, checked: current.values[field], disabled, onChange: (next) => value(field, next) })));
   }), /* @__PURE__ */ import_react.default.createElement("div", { "data-rt-setting-field": "" }, /* @__PURE__ */ import_react.default.createElement("label", { htmlFor: `${id}-language` }, "\u8F6E\u64AD\u8BED\u8A00"), /* @__PURE__ */ import_react.default.createElement(
     "select",
@@ -548,13 +536,40 @@ function Settings({ form }) {
 
 // src/client.tsx
 var inject = ["slots", "configForms"];
-var Label = (0, import_react2.memo)(function Label2({ word, elapsed, language, motion }) {
-  return /* @__PURE__ */ import_react2.default.createElement("span", { "data-rich-thinking-label": "", "data-motion": motion ? "on" : "off", lang: language }, /* @__PURE__ */ import_react2.default.createElement("span", { key: word, "data-rich-thinking-word": "", title: word }, word, "\u2026"), elapsed !== null && /* @__PURE__ */ import_react2.default.createElement("span", { "data-rich-thinking-elapsed": "", title: language === "zh" ? "\u6B64\u63A8\u7406\u884C\u5728\u5F53\u524D\u9875\u9762\u53EF\u89C1\u671F\u95F4\u7684\u8BA1\u65F6\uFF1B\u4E0D\u662F\u6A21\u578B\u62A5\u544A\u7684\u63A8\u7406\u65F6\u957F" : "Time this live reasoning row has been visible here; not model-reported reasoning time" }, elapsed, "s"));
+var characters = new Intl.Segmenter(void 0, { granularity: "grapheme" });
+var splitWord = (word) => Array.from(characters.segment(word), (part) => part.segment);
+var RotatingWord = (0, import_react2.memo)(function RotatingWord2({ word, motion }) {
+  const [visible, setVisible] = (0, import_react2.useState)(word);
+  const current = (0, import_react2.useRef)(word);
+  (0, import_react2.useEffect)(() => {
+    if (!motion || current.current === word) {
+      current.current = word;
+      setVisible(word);
+      return;
+    }
+    const before = splitWord(current.current), after = splitWord(word);
+    const length = Math.max(before.length, after.length);
+    const duration = Math.min(280, length * 32);
+    const started = performance.now();
+    let frame;
+    const advance = (now) => {
+      const count = Math.min(length, Math.max(0, Math.floor((now - started) / duration * length)));
+      current.current = after.slice(0, count).join("") + before.slice(count).join("");
+      setVisible(current.current);
+      if (count < length) frame = window.requestAnimationFrame(advance);
+    };
+    frame = window.requestAnimationFrame(advance);
+    return () => window.cancelAnimationFrame(frame);
+  }, [word, motion]);
+  return /* @__PURE__ */ import_react2.default.createElement(import_react2.default.Fragment, null, motion ? visible : word);
+});
+var Label = (0, import_react2.memo)(function Label2({ word, suffix, language, motion }) {
+  return /* @__PURE__ */ import_react2.default.createElement("span", { "data-rich-thinking-label": "", "data-motion": motion ? "on" : "off", lang: language }, /* @__PURE__ */ import_react2.default.createElement("span", { "data-rich-thinking-word": "", title: word }, /* @__PURE__ */ import_react2.default.createElement(RotatingWord, { word, motion }), suffix ? "" : "\u2026"), suffix && /* @__PURE__ */ import_react2.default.createElement("span", { "data-rich-thinking-elapsed": "" }, suffix));
 });
 function apply(ctx) {
   const form = ctx.configForms.get("rich-thinking");
   const preferences = () => form.getSnapshot().status === "ready" ? normalize(form.getSnapshot().value) : normalize({ enabled: false });
-  const adapter = new ReasoningAdapter(document, preferences());
+  const adapter = new RunningStatusAdapter(document, preferences());
   function Controller() {
     const labels = (0, import_react2.useSyncExternalStore)(adapter.subscribe, adapter.getSnapshot, adapter.getSnapshot);
     return /* @__PURE__ */ import_react2.default.createElement(import_react2.default.Fragment, null, labels.map(({ id, host, ...view }) => (0, import_react_dom.createPortal)(/* @__PURE__ */ import_react2.default.createElement(Label, { ...view }), host, String(id))));

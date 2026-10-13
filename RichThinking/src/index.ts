@@ -9,8 +9,7 @@ export const Config = z.object({
   englishVerbs: z.array(z.string()).default([]).description('Custom English phrases / 自定义英文词库').volatile(),
   chineseVerbs: z.array(z.string()).default([]).description('Custom Chinese phrases / 自定义中文词库').volatile(),
   intervalMs: z.number().min(2000).max(60000).step(1).default(5000).description('Switch interval in ms / 切换间隔（毫秒）').volatile(),
-  animation: z.boolean().default(true).description('Gentle transitions / 轻微过渡动画').volatile(),
-  showElapsed: z.boolean().default(true).description('Show observed live duration / 显示本次可见推理计时').volatile(),
+  animation: z.boolean().default(true).description('Left-to-right character replacement / 从左到右逐字替换').volatile(),
 })
 
 export function apply(ctx: HostContext): void {

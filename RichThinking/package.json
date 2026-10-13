@@ -1,7 +1,7 @@
 {
   "name": "dsh-rich-thinking",
-  "version": "0.1.2",
-  "description": "Native DSH reasoning disclosure with bilingual spinner verbs",
+  "version": "0.1.5",
+  "description": "Native DSH running status with bilingual rotating phrases",
   "type": "module",
   "license": "Apache-2.0",
   "exports": { ".": "./lib/index.js", "./client": "./lib/client.js" },

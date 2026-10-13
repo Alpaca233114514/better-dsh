@@ -13,7 +13,7 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 | [BetterManager](BetterManager/) | 插件管理器：mod 菜单式管理 DSH 动态插件，带永久持久化防丢失 | [README](BetterManager/README.md) |
 | [DeepSeek Security](DeepSeekSecurity/) | 原生安全审计插件：通过 @ 引用和聊天需求调用，执行期间显示进度 | [README](DeepSeekSecurity/README.md) |
 
-| [RichThinking](RichThinking/) | 原生推理行动态状态词，默认中文独立轮播，保留原生折叠与正文 | [README](RichThinking/README.md) |
+| [RichThinking](RichThinking/) | 底部运行状态词轮播，保留原生鲸鱼、用时、推理折叠与正文 | [README](RichThinking/README.md) |
 | [Oi](Oi/) | 第三方收录：面向 Agent Skills 的 agent-native 语言（MIT License） | [README](Oi/README.md) |
 | [dsh-anchored-standard](dsh-anchored-standard/) | 第三方收录：双阶段 DSH 代理预设，首轮锚定 Minimal、晋升后按需解锁 Standard 工具（MIT License） | [README](dsh-anchored-standard/README.zh-CN.md) |
 
@@ -30,6 +30,10 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 插件、代理预设与技能在 DSH 里的装配方式不同，分开说明。
 
 ### DeepSeek Security（原生安全审计插件）
+
+请注意，本插件只用于防御性网络安全目的，任何人与企业使用本插件进行骇入活动等非法行为时，本插件作者不负任何责任。
+
+Codex Security 的来源、复用范围与许可证见 [许可证与来源声明](DeepSeekSecurity/LICENSE-DECLARATION.md)。
 
 验证基线为 **DSH 0.2.1-alpha.2**，需要 Node.js 和可用的 Python 3。先在仓库根目录构建：
 

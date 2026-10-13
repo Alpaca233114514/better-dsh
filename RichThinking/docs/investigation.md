@@ -1,5 +1,7 @@
 # DSH 源码调查与兼容选择
 
+> 以下旧记录描述早期实现；当前替换位置和文字隐藏方式以文末 0.1.4 / 0.1.5 调整为准。
+
 调查日期：2026-10-12。源码基线：官方 `0.2.1-alpha.2` / `d743267388641bc76f17c45ce8b4c231aed1d32c`。本机已有该提交只读缓存，调查未修改上游代码。
 
 ## 已有项目
@@ -69,3 +71,21 @@
 标准模式由 ChatGroupSeat 折叠 ReasoningRow。适配层在真实 running reasoning 存在且原生 data-process-activity=thinking 时，装饰可见的分组标题；分组展开后恢复分组标题，转而装饰内部原生推理行。工具状态、完成、外层历史隐藏时撤销。底部 RunningStatus（“深度求索中”及回合时钟）按用户最终要求保持原样。
 
 设置 schema 不会自动在插件详情页显示表单。0.1.2 显式注册 plugins.bundle.config，使用 DSH 的 Switch/Input/Button 与 configForms.mutate 原子保存，并携带编辑时的 revision；保存失败保留编辑，成功才显示已保存。
+
+## 2026-10-13：0.1.4 替换位置调整
+
+按最新要求，取消 ReasoningRow 与标准折叠分组标题增强，只替换底部 RunningStatus 的「深度求索中」状态词。鲸鱼尾巴保持原生节点和动画，用时保持原生数值、格式及刷新节奏。
+
+rc.2 与 alpha.2 的 RunningStatus 结构一致：独立 role=status 无障碍文字，以及包含 RunningWhaleTail / TextShimmer 的内容行。适配器读取原生 role=status 的本地化前缀，从完整文字中分离原生用时后缀，原样显示该后缀；不写 React 管理的文字、不自建秒表。仅隐藏旧文字及 shimmer 的装饰副本，Portal 插入同一文字容器。原生前缀不匹配时保留原生 UI。
+
+轮播只由插件间隔触发；MutationObserver 只消费原生状态文字变更，正文 token 不驱动轮播。设置页移除插件计时开关，旧 showElapsed 字段不影响原生用时。
+
+### 同版本逐字动画
+
+先检索了 GitHub 的 [react-stagger-text](https://github.com/stephenscaff/react-stagger-text) 等逐字动画实现；本次直接实现短小的 requestAnimationFrame 替换，不新增依赖。按 Unicode 字素分割，从左到右将旧字符换成新字符，约 32ms/字、最多 280ms；仅词语变化触发，原生用时刷新不会重启动画。禁用动画、减少动态效果或卸载时取消动画帧。
+
+## 2026-10-13：0.1.5 重复文字修复
+
+用户反馈桌面新旧状态和用时重复，换词时出现叠字。适配器改为整体隐藏原生 TextShimmer，将插件 Portal 放在其同级位置，从而覆盖原生基础文字与所有装饰副本。原生鲸鱼和独立读屏状态保留；原生计时在隐藏容器中继续更新，插件只读取后缀。停用或卸载移除隐藏标记并恢复原生文字。
+
+浏览器夹具改为加载实际构建的 DSH 模块入口，验证完整可见行只有一个用时，并检查长短词互换及中途连续切换的每帧文字。截图未提供故障现场 DOM，因此不把这次修复描述成已确定现场叠字的唯一根因。组件验证与安装后实机验收分别记录在 verification.md。
