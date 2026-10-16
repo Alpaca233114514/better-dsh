@@ -13,6 +13,7 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 | [BetterManager](BetterManager/) | 插件管理器：mod 菜单式管理 DSH 动态插件，带永久持久化防丢失 | [README](BetterManager/README.md) |
 | [DeepSeek Security](DeepSeekSecurity/) | 原生安全审计插件：通过 @ 引用和聊天需求调用，执行期间显示进度 | [README](DeepSeekSecurity/README.md) |
 | [RichThinking](RichThinking/) | 底部运行状态词轮播，保留原生鲸鱼、用时、推理折叠与正文 | [README](RichThinking/README.md) |
+| [MoonSeek](MoonSeek/) | 月面外观插件：月之亮面 / 月之暗面，统一原生卡片与月相图标 | [README](MoonSeek/README.md) |
 | [Oi](Oi/) | 第三方收录：面向 Agent Skills 的 agent-native 语言（MIT License） | [README](Oi/README.md) |
 | [dsh-anchored-standard](dsh-anchored-standard/) | 第三方收录：双阶段 DSH 代理预设，首轮锚定 Minimal、晋升后按需解锁 Standard 工具（MIT License） | [README](dsh-anchored-standard/README.zh-CN.md) |
 
@@ -79,6 +80,18 @@ dsh plugin --profile web add "file:C:/path/to/better-dsh/RichThinking"
 默认每 5 秒轮播中文状态词，例如「叽里呱啦中」「琢磨中」；英文独立成组，手动选择才启用。
 源码和构建产物均随仓库交付，设置遵循 DSH 原生配置；不依赖 DeepSeek Security。
 支持版本、安装开关、配置示例及标题兼容层限制见 [RichThinking/README](RichThinking/README.md)。
+
+### MoonSeek（原生外观插件）
+
+将「设置 → 通用 → 外观」中的浅色、深色改为 **月之亮面 / 月之暗面**，
+使用满月 / 弯月图标，卡片沿用 DSH 原生 UI 规范；保留跟随系统与原生主题持久化。
+适配 DSH **0.2.1-alpha.2 Web 客户端**，构建产物已随仓库提供：
+
+```powershell
+dsh plugin --profile web add "file:C:/path/to/better-dsh/MoonSeek" --ignore-scripts
+```
+
+重启目标 profile 后生效。桌面安装与验证范围见 [MoonSeek/README](MoonSeek/README.md)。
 
 ### 插件（TokenMeter / BetterManager）
 
@@ -200,8 +213,9 @@ node dsh-anchored-standard/scripts/sync-modes.mjs --check
 
 ## 著作权与许可
 
-- 本仓库原创插件（TokenMeter、BetterManager、RichThinking）遵循 [LICENSE](LICENSE)
+- 本仓库原创插件（TokenMeter、BetterManager、RichThinking、MoonSeek）遵循 [LICENSE](LICENSE)
   （Apache License 2.0）
+- MoonSeek 的原生外观布局参考保留 DeepSeek MIT 声明，见 [MoonSeek/NOTICE.md](MoonSeek/NOTICE.md)
 - 第三方收录的 Oi 遵循其自身 MIT License（见 [Oi/LICENSE](Oi/LICENSE)），
   完整著作权声明见 [NOTICE.md](NOTICE.md)
 - 第三方收录的 dsh-anchored-standard 遵循其自身 MIT License（见

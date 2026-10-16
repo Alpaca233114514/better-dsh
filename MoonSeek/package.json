@@ -1,0 +1,30 @@
+{
+  "name": "dsh-moonseek",
+  "version": "0.1.0",
+  "description": "MoonSeek: lunar appearance names and icons for DSH",
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": { ".": "./lib/index.js", "./client": "./lib/client.js" },
+  "files": ["lib", "cordis.patch.yml", "README.md", "LICENSE", "NOTICE.md", "LICENSES", "docs"],
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "inject": ["@deepseek-ai/dsh-client-ui-theme", "@deepseek-ai/dsh-client-locale", "@deepseek-ai/dsh-client-ui-settings"]
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test test/*.test.mjs",
+    "preview": "node scripts/preview.mjs",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": { "@deepseek-ai/dsh": "0.2.1-alpha.2" },
+  "peerDependenciesMeta": { "@deepseek-ai/dsh": { "optional": true } },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "jsdom": "26.1.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  }
+}
