@@ -11,6 +11,11 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 | --- | --- | --- |
 | [TokenMeter](TokenMeter/) | Token 计量插件：统计 token 使用量并以 GitHub 风格热力图展示 | [README](TokenMeter/README.md) |
 | [BetterManager](BetterManager/) | 插件管理器：mod 菜单式管理 DSH 动态插件，带永久持久化防丢失 | [README](BetterManager/README.md) |
+| [DSHKey](DSHKey/) | 更多快捷键：9 个扩展动作，原生设置页统一改键、冲突检查和持久化 | [README](DSHKey/README.md) |
+| [DSHGit](DSHGit/) | 原生 Git 面板：变更、文件差异、暂存、提交与推送、创建 Pull Request，跟随宿主亮暗主题 | [README](DSHGit/README.md) |
+| [DeepSeek Security](DeepSeekSecurity/) | 原生安全审计插件：通过 `@deepseek-security` 呼出，使用 DSH 当前模型执行静态审计并生成报告 | [README](DeepSeekSecurity/README.md) |
+| [RichThinking](RichThinking/) | 底部运行状态词轮播，保留原生鲸鱼、用时、推理折叠与正文 | [README](RichThinking/README.md) |
+| [MoonSeek](MoonSeek/) | 月面外观插件：月之亮面 / 月之暗面，统一原生卡片与月相图标 | [README](MoonSeek/README.md) |
 | [Oi](Oi/) | 第三方收录：面向 Agent Skills 的 agent-native 语言（MIT License） | [README](Oi/README.md) |
 | [dsh-anchored-standard](dsh-anchored-standard/) | 第三方收录：双阶段 DSH 代理预设，首轮锚定 Minimal、晋升后按需解锁 Standard 工具（MIT License） | [README](dsh-anchored-standard/README.zh-CN.md) |
 
@@ -25,6 +30,83 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 ## 装配到 DSH
 
 插件、代理预设与技能在 DSH 里的装配方式不同，分开说明。
+
+### DeepSeek Security（原生安全审计插件）
+
+请注意，本插件只用于防御性网络安全目的，任何人与企业使用本插件进行骇入活动等非法行为时，本插件作者不负任何责任。
+
+Codex Security 的来源、复用范围与许可证见 [许可证与来源声明](DeepSeekSecurity/LICENSE-DECLARATION.md)。
+
+验证基线为 **DSH 0.2.1-alpha.2**，需要 Node.js 和可用的 Python 3。先在仓库根目录构建：
+
+```powershell
+npm --prefix DeepSeekSecurity ci --ignore-scripts
+npm --prefix DeepSeekSecurity run build
+```
+
+然后通过目标 DSH 运行时的原生插件管理命令安装。以下以 Web profile 为例，将路径改为实际绝对目录：
+
+```powershell
+dsh plugin --profile web add "link:C:/path/to/better-dsh/DeepSeekSecurity" --ignore-scripts
+```
+
+桌面安装须使用桌面版附带的 `dsh` 命令，将 profile 改为 `desktop`，安装前完整退出桌面，安装后重新打开。
+本机已接入的 **DeepSeek Harness Alpha** 源码桌面入口及其依赖见
+[桌面安装记录](DeepSeekSecurity/DESKTOP.md)；它是独立开发构建，克隆仓库不会自动安装该桌面运行时。
+
+使用方法：
+
+1. 在目标工作区的输入框输入 `@`，选择 **deepseek-security**，插入插件引用。
+2. 在引用后写自己的需求，例如 **`@deepseek-security 帮我扫描这段仓库`**，然后发送。
+3. 模型按需求调用扫描工具后，输入框上方自动出现进度框。完成后进度框收起，报告返回聊天；进度框或聊天中的 **停止** 均可取消扫描。
+
+没有专用启动面板或“开始扫描”按钮。仅插入插件引用不启动扫描，**发送审计请求后会消耗当前模型账号的额度**。
+引用后的需求、关注点和排除项会传给扫描 Agent。需要已有结果时，直接说“查看上次安全扫描报告”。
+同一工作区的活动任务会去重，切换聊天不会自动重启扫描；中断后保留检查点，不自动继续调用模型。
+
+当前支持 Standard 静态源码审计，包括威胁模型、候选漏洞核对和报告生成；
+尚未实现 Deep Scan、PR/diff 扫描和动态漏洞复现。复用 Codex Security 的公开审计流程、语义草稿与
+Python 工作台，模型执行适配 DSH 原生 AgentLoop，不调用 Codex Security CLI。
+
+插件引用、需求传递、任务进度和报告链路已通过 13 项本地测试（scripted adapter，不消费模型额度）；此前版本另有真实 DSH 小样例扫描记录，验证范围见 [验证记录](DeepSeekSecurity/VERIFICATION.md)。
+DeepSeek Security 与 RichThinking 位于独立目录，可分别安装，不互相依赖。
+开发其他原生插件时，可参考 [插件 UI 规范](DeepSeekSecurity/UI-GUIDE.md)。
+
+### Rich Thinking（原生组合包）
+
+支持 DSH **0.2.0-rc.2 / 0.2.1-alpha.2 的 Web 客户端**，用原生插件管理器安装独立包（将路径改为实际绝对目录）：
+
+```powershell
+dsh plugin --profile web add "file:C:/path/to/better-dsh/RichThinking"
+```
+
+默认每 5 秒轮播中文状态词，例如「叽里呱啦中」「琢磨中」；英文独立成组，手动选择才启用。
+源码和构建产物均随仓库交付，设置遵循 DSH 原生配置；不依赖 DeepSeek Security。
+支持版本、安装开关、配置示例及标题兼容层限制见 [RichThinking/README](RichThinking/README.md)。
+
+### MoonSeek（原生外观插件）
+
+将「设置 → 通用 → 外观」中的浅色、深色改为 **月之亮面 / 月之暗面**，
+使用满月 / 弯月图标，卡片沿用 DSH 原生 UI 规范；保留跟随系统与原生主题持久化。
+适配 DSH **0.2.1-alpha.2 Web 客户端**，构建产物已随仓库提供：
+
+```powershell
+dsh plugin --profile web add "file:C:/path/to/better-dsh/MoonSeek" --ignore-scripts
+```
+
+重启目标 profile 后生效。桌面安装与验证范围见 [MoonSeek/README](MoonSeek/README.md)。
+
+### DSHKey（原生快捷键扩展）
+
+在 **设置 → 快捷键 · DSHKey** 中录制、修改、解除绑定和恢复默认键位；新增输入框聚焦、复制回复与草稿、停止生成、会话切换和置顶等 9 个动作。沿用 DSH 官方快捷键服务，插件选项通过 Host settings 保存。
+
+适配 DSH **0.2.1-alpha.2**，构建产物随仓库提供：
+
+```powershell
+dsh plugin --profile web add "link:C:/path/to/better-dsh/DSHKey" --ignore-scripts
+```
+
+默认键位、桌面安装方式和验证边界见 [DSHKey/README](DSHKey/README.md)。
 
 ### 插件（TokenMeter / BetterManager）
 
@@ -72,6 +154,8 @@ dsh web --patch ./anchored-standard.patch.yml
 
 ### 更新
 
+- **DeepSeek Security**：更新 `DeepSeekSecurity/` 后重新安装锁定依赖并构建，再重启 DSH 以加载 Host 代码；
+  `link:` 安装会继续引用本地目录。同步 Codex Security 核心时遵循 [上游同步说明](DeepSeekSecurity/UPSTREAM.md)
 - **插件**：替换仓库内 `TokenMeter/`、`BetterManager/` 源码后重新 `cordis_define`
 - **Oi**：从上游重新拉取覆盖 `Oi/`，并把 `Oi/plugins/oi/skills/` 下的 7 个技能目录
   重新复制到 `.agents/skills/`（详见 [NOTICE.md](NOTICE.md)）
@@ -140,14 +224,20 @@ Standard 工具（`web_search`、`subagent`、`workflow` 等）通过 `dev_tool_
 node --test "test/*.test.mjs"
 node --test "dsh-anchored-standard/test/*.test.mjs"
 node dsh-anchored-standard/scripts/sync-modes.mjs --check
+npm --prefix DeepSeekSecurity run typecheck
+npm --prefix DeepSeekSecurity test
 ```
 
+Security 测试需要先安装其依赖；模型路由测试使用 scripted adapter，不调用真实模型或消耗账号额度。
 兼容接口与验证范围见 [DSH 0.2 适配说明](docs/dsh-compatibility.md)。
 
 ## 著作权与许可
 
-- 本仓库原创插件（TokenMeter、BetterManager）遵循 [LICENSE](LICENSE)
+- 本仓库原创插件（TokenMeter、BetterManager、RichThinking、MoonSeek、DSHKey）遵循 [LICENSE](LICENSE)
   （Apache License 2.0）
+- MoonSeek 的原生外观布局参考保留 DeepSeek MIT 声明，见 [MoonSeek/NOTICE.md](MoonSeek/NOTICE.md)
+- DeepSeek Security 的适配代码和所复用的 Codex Security 核心遵循 Apache License 2.0；
+  DSH 原生组件及布局参考另保留 MIT 声明，见 [DeepSeekSecurity/NOTICE.md](DeepSeekSecurity/NOTICE.md)
 - 第三方收录的 Oi 遵循其自身 MIT License（见 [Oi/LICENSE](Oi/LICENSE)），
   完整著作权声明见 [NOTICE.md](NOTICE.md)
 - 第三方收录的 dsh-anchored-standard 遵循其自身 MIT License（见

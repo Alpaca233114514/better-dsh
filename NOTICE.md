@@ -9,6 +9,10 @@
   为本仓库原创的 DeepSeek Harness 动态 Cordis 插件，遵循仓库根目录
   [LICENSE](LICENSE)（Apache License 2.0）。
 
+- `RichThinking/`（DSH Rich Thinking）为本仓库原创的 DSH 原生 UI 组合包，
+  遵循 [LICENSE](LICENSE)（Apache License 2.0）。测试可只读加载指定版本的 DSH 官方源码；
+  插件安装包不收录该源码，也不复制第三方 Spinner 插件实现。
+
 ## 第三方收录：dsh-anchored-standard
 
 - **项目名称**：dsh-anchored-standard — 双阶段 DeepSeek Harness 代理 preset

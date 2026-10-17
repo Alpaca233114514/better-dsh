@@ -1,0 +1,83 @@
+{
+  "name": "@better-dsh/deepseek-security",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "DSH native Security plugin using the Codex Security audit and artifact core",
+  "exports": {
+    ".": "./dist/host.js",
+    "./client": "./dist/client.js",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-api-gateway",
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-input-trigger"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc -p tsconfig.host.json && tsc -p tsconfig.client.json",
+    "test": "node scripts/test.mjs"
+  },
+  "dependencies": {
+    "zod": "4.6.6"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.4 || 4.0.5-alpha.1",
+    "@deepseek-ai/dsh-agent": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-agent-default-model": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-api-gateway": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-api-session-controller": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-client-ui-conversation": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-client-ui-primitives": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-client-ui-renderer": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-client-ui-session": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-llm": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-sandbox-policy": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-session": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-session-projection": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-tools": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-typert-protocol": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-typert-registry": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "react": "^18.3.1",
+    "@deepseek-ai/dsh-client-ui-input-trigger": "0.2.0-rc.2 || 0.2.1-alpha.2",
+    "@deepseek-ai/dsh-agent-preset-registry": "0.2.0-rc.2 || 0.2.1-alpha.2"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "@types/react": "18.3.27",
+    "esbuild": "0.25.12",
+    "typescript": "5.9.3",
+    "@deepseek-ai/dsh-agent-loop": "0.2.1-alpha.2"
+  },
+  "files": [
+    "dist/host.js",
+    "dist/client.js",
+    "vendor/codex-security/**/*.py",
+    "vendor/codex-security/**/*.json",
+    "vendor/codex-security/**/*.md",
+    "vendor/codex-security/**/*.ts",
+    "vendor/codex-security/LICENSE",
+    "vendor/codex-security/.codex-plugin/plugin.json",
+    "cordis.patch.yml",
+    "README.md",
+    "UI-GUIDE.md",
+    "UPSTREAM.md",
+    "NOTICE.md",
+    "LICENSE-DECLARATION.md",
+    "LICENSE",
+    "DSH-LICENSE"
+  ]
+}

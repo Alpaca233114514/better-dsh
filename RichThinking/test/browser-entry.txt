@@ -1,0 +1,22 @@
+const nativeRoot = createRoot(document.getElementById('native'));
+const overlayRoot = createRoot(document.getElementById('overlay'));
+let frame = { running: true, text: '**原生推理内容**\n\n保留原文、原生折叠与流式更新。' };
+let config = { status: 'ready', value: { language: 'zh', intervalMs: 2000,
+  vocabularyMode: 'replace', chineseVerbs: ['叽里呱啦中', '琢磨中', '串起线索中'] } };
+const callbacks = new Set(), effects = [];
+const render = () => nativeRoot.render(React.createElement(NativeConversation, frame));
+const start = () => apply({
+  effect: callback => effects.push(callback()),
+  configForms: { get: () => ({ getSnapshot: () => config,
+    subscribe: callback => { callbacks.add(callback); return () => callbacks.delete(callback); } }) },
+  slots: { inject: (_name, callback) => callback(), register: (_options, Controller) => {
+    if (_options.name === 'shell.overlay') overlayRoot.render(React.createElement(Controller)); return () => overlayRoot.render(null);
+  } },
+});
+render(); start();
+window.fixture = {
+  setFrame(next) { frame = { ...frame, ...next }; render(); },
+  settings(next) { config = { status: 'ready', value: { ...config.value, ...next } }; for (const callback of callbacks) callback(); },
+  stop() { for (const dispose of effects.splice(0).reverse()) dispose(); overlayRoot.render(null); },
+  start,
+};
