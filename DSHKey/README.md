@@ -1,6 +1,6 @@
 # DSHKey
 
-面向 **DeepSeek Harness 0.2.1-alpha.2** 的原生快捷键扩展。安装后在 **设置 → 快捷键 · DSHKey** 中管理键位。
+面向 **DeepSeek Harness 0.2.0-rc.2 / 0.2.1-alpha.2** 的原生快捷键扩展。安装后在 **设置 → 快捷键 · DSHKey** 中管理键位。
 
 ![DSHKey 浅色设置页（独立演示预览）](docs/preview-light.png)
 
@@ -32,7 +32,7 @@ Linux 的官方快捷键规则更严格，因此扩展动作默认不绑定，�
 
 ## 安装
 
-要求 Node.js 24+，使用 DSH **0.2.1-alpha.2** 对应运行时。仓库提供 `lib/` 构建产物，可直接安装；将路径替换为实际位置：
+要求 Node.js 24+，使用 DSH **0.2.0-rc.2 或 0.2.1-alpha.2** 对应运行时。仓库提供 `lib/` 构建产物，可直接安装；将路径替换为实际位置：
 
 ```powershell
 dsh plugin --profile web add "link:C:/path/to/better-dsh/DSHKey" --ignore-scripts
@@ -70,6 +70,6 @@ npm --prefix DSHKey run preview
 node DSHKey/test/upstream.mjs C:/path/to/deepseek-harness C:/path/to/dsh-runtime/node_modules
 ```
 
-当前验证：15 项自动化测试、TypeScript 检查、生产构建通过；官方注册器的 Web / Desktop × Windows / macOS / Linux 六组合通过。浏览器预览验证了录制、保存、恢复默认和亮暗主题。**尚未完成安装后真实 DSH 桌面 / Electron 键盘桥的端到端验证**，也未执行真实模型生成。来源、接口基线和具体范围见 [兼容性记录](docs/compatibility.md)。
+当前验证：15 项自动化测试、TypeScript 检查、生产构建通过；官方注册器的 Web / Desktop × Windows / macOS / Linux 六组合通过。浏览器预览验证了录制、保存、恢复默认和亮暗主题。2026-10-17 已在正式 Windows 桌面版 0.2.0-rc.2 完成安装、设置页加载和 Host 开关保存验证；自动化键盘事件缺少物理键码，**实体快捷键触发及重启后改键保留仍待核验**。详见 [桌面实测记录](docs/desktop-verification-20261017.md) 与 [兼容性记录](docs/compatibility.md)。未执行真实模型生成。
 
 原创代码采用 [Apache License 2.0](LICENSE)。

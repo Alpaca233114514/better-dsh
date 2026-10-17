@@ -56,7 +56,7 @@ function Editor({ row, shortcuts, close }: { row: CatalogRow; shortcuts: Shortcu
     } catch { if (alive.current) setMessage('保存失败，请重试') }
     finally { saving.current = false; if (alive.current) setBusy(false) }
   }
-  return <div className="dk-editor" role="group" aria-label={`编辑 ${row.label}`} data-shortcut-modal="shortcut-edit">
+  return <div className="dk-editor" role="group" aria-label={`编辑 ${row.label}`} aria-busy={busy} data-shortcut-modal="shortcut-edit">
     <div className="dk-editor-main">
       <button ref={recorder} type="button" className="dk-recorder" aria-label="录制组合键" disabled={busy}
         onClick={() => { setMessage(''); if (!recording) { setReady(false); setRecording(true) } }}
@@ -73,7 +73,7 @@ function Editor({ row, shortcuts, close }: { row: CatalogRow; shortcuts: Shortcu
             const modifiers = (['control', 'alt', 'shift', 'meta'] as const).filter(key => ({ control: event.ctrlKey, alt: event.altKey, shift: event.shiftKey, meta: event.metaKey })[key])
             const next = shortcuts.describeBinding({ code: event.code, modifiers }).binding
             setCandidate(next); setMessage(''); setRecording(false); setReady(false)
-          } catch { setMessage('不支持这个按键，请换一个组合键') }
+          } catch (error) { setMessage(`无法录制 ${event.code || event.key}：${error instanceof Error ? error.message : '不支持这个按键'}`) }
         }}>
         {recording ? (ready ? '请按下组合键…' : '准备录制…') : <Keycaps keys={description.keys} />}
       </button>
@@ -81,10 +81,11 @@ function Editor({ row, shortcuts, close }: { row: CatalogRow; shortcuts: Shortcu
     </div>
     {description.issue && <p role="alert">{failureMessage(description.issue)}</p>}
     {conflicts.length > 0 && <p role="alert">与「{conflictLabels.join('、')}」冲突，请换一个组合键。</p>}
-    {stale && <p role="alert">{failureMessage('stale')}</p>}
+    {/* DSH may publish our accepted revision before edit() resolves. Classify it only after the reply. */}
+    {stale && !busy && <p role="alert">{failureMessage('stale')}</p>}
     {message && <p role="alert">{message}</p>}
     <div className="dk-actions">
-      <button className="dk-primary" disabled={busy || stale || invalid || config.status !== 'ready'} onClick={() => void save({ type: 'set', id: row.id, binding: candidate })}>保存键位</button>
+      <button className="dk-primary" disabled={busy || stale || invalid || config.status !== 'ready'} onClick={() => void save({ type: 'set', id: row.id, binding: candidate })}>{busy ? '保存中…' : '保存键位'}</button>
       <button disabled={busy || stale || config.status !== 'ready'} onClick={() => void save({ type: 'set', id: row.id, binding: null })}>解除绑定</button>
       <button disabled={busy || stale || config.status !== 'ready'} onClick={() => void save({ type: 'reset', id: row.id })}>恢复默认</button>
       <button disabled={busy} onClick={close}>取消</button>

@@ -74,3 +74,31 @@ test('Host preferences respect writable state and submit exact namespace revisio
     assert.equal(document.querySelector('[role=switch]').disabled, true)
   } finally { await f.cleanup() }
 })
+
+test('accepted revision arriving before the save reply does not flash an external-edit error', async () => {
+  const f = await mount()
+  try {
+    let finish
+    f.shortcuts.edit = () => new Promise(resolve => { finish = resolve })
+    await f.open(); await f.click(f.button('保存键位'))
+    await act(async () => f.shortcuts.config.set({ status: 'ready', revision: 'r2' }))
+    assert.ok(!document.querySelector('.dk-editor [role=alert]'), 'pending own save must not show an external-edit error')
+    assert.match(document.querySelector('.dk-editor').textContent, /保存中/)
+    await act(async () => finish({ status: 'saved', snapshot: f.shortcuts.config.getSnapshot() }))
+    assert.equal(document.querySelector('.dk-editor'), null)
+  } finally { await f.cleanup() }
+})
+
+test('a genuine stale save still reports the conflict after the pending request ends', async () => {
+  const f = await mount()
+  try {
+    let finish
+    f.shortcuts.edit = () => new Promise(resolve => { finish = resolve })
+    await f.open(); await f.click(f.button('保存键位'))
+    await act(async () => f.shortcuts.config.set({ status: 'ready', revision: 'r2' }))
+    await act(async () => finish({ status: 'stale', snapshot: f.shortcuts.config.getSnapshot() }))
+    assert.match(document.querySelector('.dk-editor').textContent, /其他窗口/)
+    assert.equal(f.button('保存键位').disabled, true)
+    assert.ok(f.button('取消'))
+  } finally { await f.cleanup() }
+})

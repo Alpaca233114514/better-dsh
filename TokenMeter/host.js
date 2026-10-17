@@ -17,6 +17,11 @@ return {
     let rootSource = null
     let dirty = false
     let targetPromise = null
+    let saveQueue = Promise.resolve()
+    let revision = 0
+    let loadError = null
+    let saveError = null
+    let nativeReady = false
 
     const state = {
       totalInput: 0,          // 输入（含缓存命中）
@@ -45,6 +50,7 @@ return {
       const push = (r) => {
         if (r && !seen.has(r)) { seen.add(r); roots.push(r) }
       }
+      if (harness.storageRoot) push(harness.storageRoot)
       try {
         const sessions = ctx.get('sessions')
         if (sessions) {
@@ -156,12 +162,29 @@ return {
 
     function ensureTarget(preferred) {
       if (targetPromise) return targetPromise
-      targetPromise = resolveTarget(preferred).finally(() => { targetPromise = null })
+      targetPromise = resolveTarget(preferred).catch((err) => {
+        loadError = '历史数据读取失败，已暂停写入以保留原文件。'
+        console.error('[token-meter] storage unavailable:', err && err.message ? err.message : err)
+      }).finally(() => { targetPromise = null })
       return targetPromise
     }
 
     async function resolveTarget(preferred) {
-      if (fileTarget || !fs) return
+      if (!fs || (fileTarget && (!harness.storageRoot || nativeReady))) return
+      // 原生插件固定保存在 DSH_HOME；首次启动只导入一份旧汇总，原文件保留。
+      if (harness.storageRoot) {
+        root = harness.storageRoot
+        rootSource = 'dsh-home'
+        fileTarget = await fs.resolve('.dsh-token-meter.json', { cwd: root })
+        if (await fs.stat(fileTarget)) {
+          await load()
+          nativeReady = true
+        } else {
+          const legacy = (await findExistingTarget()).find((entry) => entry.root !== root)
+          if (legacy) { await absorbFrom(legacy); nativeReady = true }
+        }
+        return
+      }
       // 1) 已有数据文件 → 主用第一个（新会话优先），其余文件只吸收增量后弃用
       const files = await findExistingTarget()
       if (files.length > 0) {
@@ -196,7 +219,7 @@ return {
         if (!info) return
         const text = await fs.readText(fileTarget)
         const parsed = JSON.parse(text)
-        if (!parsed || typeof parsed !== 'object') return
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Invalid meter data')
         state.totalInput = Number(parsed.totalInput) || 0
         state.totalCacheRead = Number(parsed.totalCacheRead) || 0
         state.totalCacheWrite = Number(parsed.totalCacheWrite) || 0
@@ -220,23 +243,31 @@ return {
         }
         prune()
       } catch (err) {
+        loadError = '历史数据读取失败，已暂停写入以保留原文件。'
         console.error('[token-meter] load failed:', err && err.message ? err.message : err)
       }
     }
 
     async function save() {
-      if (!fs || !fileTarget || !root) return
-      try {
-        const sessions = ctx.get('sessions')
-        const session = sessions && sessions.list().find((s) => s.header.cwd === root)
-        const policy = sandboxPolicy.resolve(session ? { session } : {})
-        await fs.writeText(fileTarget, JSON.stringify(state), undefined, undefined, {
-          ...policy, mode: policy.mode === 'read-only' ? 'read-only' : 'workspace-write', workspaceRoot: root,
-        })
-        dirty = false
-      } catch (err) {
-        console.error('[token-meter] save failed:', err && err.message ? err.message : err)
+      const operation = async () => {
+        if (!fs || !fileTarget || !root || loadError) return
+        const savedRevision = revision
+        try {
+          const sessions = ctx.get('sessions')
+          const session = sessions && sessions.list().find((s) => s.header.cwd === root)
+          const policy = sandboxPolicy.resolve(session ? { session } : {})
+          await fs.writeText(fileTarget, JSON.stringify(state), undefined, undefined, {
+            ...policy, mode: policy.mode === 'read-only' ? 'read-only' : 'workspace-write', workspaceRoot: root,
+          })
+          dirty = revision !== savedRevision
+          saveError = null
+        } catch (err) {
+          saveError = '计量数据保存失败，将自动重试。'
+          console.error('[token-meter] save failed:', err && err.message ? err.message : err)
+        }
       }
+      saveQueue = saveQueue.then(operation, operation)
+      return saveQueue
     }
 
     function prune() {
@@ -270,6 +301,7 @@ return {
         if (round) round.tokens += input + output
       }
       dirty = true
+      revision++
       if (!fileTarget) ensureTarget()
       scheduleSave()
     }
@@ -292,7 +324,7 @@ return {
         }
       }
       return wrapped()
-    })
+    }, { global: true })
 
     // ---- 2. 轮次起点：用户消息被领取 ----
     ctx.on('agent/inbox/claimed', (payload) => {
@@ -301,10 +333,11 @@ return {
       if (!cur || cur.turn !== payload.turn) {
         activeRounds.set(id, { turn: payload.turn, startedAt: Date.now(), tokens: 0 })
       }
-    })
+    }, { global: true })
 
     // ---- 3. 轮次终点：更新最长时长与单轮峰值 ----
-    ctx.on('agent/turn-stopping', (payload) => {
+    ctx.on('agent/turn-stopping', async (payload) => {
+      await ensureTarget()
       const id = payload.agent.id
       const round = activeRounds.get(id)
       if (round && round.turn === payload.turn) {
@@ -320,22 +353,23 @@ return {
         }
         activeRounds.delete(id)
         dirty = true
+        revision++
         scheduleSave()
       }
-    })
+    }, { global: true })
 
     // agent 出现后补解析可写根目录
     ctx.on('agent/created', (payload) => {
       const cwd = payload && payload.agent && payload.agent.session && payload.agent.session.header && payload.agent.session.header.cwd
       if (cwd) ensureTarget(cwd)
-    })
+    }, { global: true })
 
     // ---- 4. 心跳：有变更时才落盘（保证异常退出不丢数据） ----
     ctx.interval(() => {
       if (dirty) {
-        save()
+        return save()
       } else if (!fileTarget) {
-        ensureTarget()
+        return ensureTarget()
       }
     }, 10000)
 
@@ -359,6 +393,7 @@ return {
         longestRoundDate: state.longestRoundDate,
         daily: state.daily,
         generatedAt: Date.now(),
+        persistenceError: loadError || saveError,
       }
     }
 
@@ -389,7 +424,9 @@ return {
       state.daily = {}
       activeRounds.clear()
       dirty = true
-      save()
+      revision++
+      await save()
+      if (loadError || saveError) throw new Error(loadError || saveError)
       return buildState()
     })
 
@@ -398,7 +435,7 @@ return {
       ensureTarget()
       return () => {
         scheduleSave.dispose()
-        if (dirty) save()
+        if (dirty) return save()
       }
     })
   },

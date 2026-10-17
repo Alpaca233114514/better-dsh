@@ -108,7 +108,11 @@ dsh plugin --profile web add "link:C:/path/to/better-dsh/DSHKey" --ignore-script
 
 默认键位、桌面安装方式和验证边界见 [DSHKey/README](DSHKey/README.md)。
 
-### 插件（TokenMeter / BetterManager）
+### TokenMeter（原生 Token 计量）
+
+TokenMeter 现提供适配 **DSH 0.2.0-rc.2 桌面版**的原生包，随桌面启动加载，跨会话计量并保存到 DSH 数据目录；保留累计 / 今日 / 峰值 / 最长任务和热力图。安装方法、旧数据继承和验证范围见 [TokenMeter/README](TokenMeter/README.md)。旧动态入口仍保留。
+
+### 旧动态插件（TokenMeter / BetterManager）
 
 DSH 动态插件在会话内通过 `cordis_define` 注册、`cordis_run` 激活。下载仓库后，
 在 DSH 会话中让 Agent 读取仓库文件并注册：

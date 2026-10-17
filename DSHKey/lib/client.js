@@ -244,7 +244,7 @@ function Editor({ row, shortcuts, close }) {
       if (alive.current) setBusy(false);
     }
   }
-  return /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-editor", role: "group", "aria-label": `\u7F16\u8F91 ${row.label}`, "data-shortcut-modal": "shortcut-edit" }, /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-editor-main" }, /* @__PURE__ */ import_react.default.createElement(
+  return /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-editor", role: "group", "aria-label": `\u7F16\u8F91 ${row.label}`, "aria-busy": busy, "data-shortcut-modal": "shortcut-edit" }, /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-editor-main" }, /* @__PURE__ */ import_react.default.createElement(
     "button",
     {
       ref: recorder,
@@ -281,13 +281,13 @@ function Editor({ row, shortcuts, close }) {
           setMessage("");
           setRecording(false);
           setReady(false);
-        } catch {
-          setMessage("\u4E0D\u652F\u6301\u8FD9\u4E2A\u6309\u952E\uFF0C\u8BF7\u6362\u4E00\u4E2A\u7EC4\u5408\u952E");
+        } catch (error) {
+          setMessage(`\u65E0\u6CD5\u5F55\u5236 ${event.code || event.key}\uFF1A${error instanceof Error ? error.message : "\u4E0D\u652F\u6301\u8FD9\u4E2A\u6309\u952E"}`);
         }
       }
     },
     recording ? ready ? "\u8BF7\u6309\u4E0B\u7EC4\u5408\u952E\u2026" : "\u51C6\u5907\u5F55\u5236\u2026" : /* @__PURE__ */ import_react.default.createElement(Keycaps, { keys: description.keys })
-  ), /* @__PURE__ */ import_react.default.createElement("span", { className: "dk-muted" }, "\u70B9\u51FB\u5F55\u5236 \xB7 Esc \u53D6\u6D88")), description.issue && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, failureMessage(description.issue)), conflicts.length > 0 && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, "\u4E0E\u300C", conflictLabels.join("\u3001"), "\u300D\u51B2\u7A81\uFF0C\u8BF7\u6362\u4E00\u4E2A\u7EC4\u5408\u952E\u3002"), stale && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, failureMessage("stale")), message && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, message), /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-actions" }, /* @__PURE__ */ import_react.default.createElement("button", { className: "dk-primary", disabled: busy || stale || invalid || config.status !== "ready", onClick: () => void save({ type: "set", id: row.id, binding: candidate }) }, "\u4FDD\u5B58\u952E\u4F4D"), /* @__PURE__ */ import_react.default.createElement("button", { disabled: busy || stale || config.status !== "ready", onClick: () => void save({ type: "set", id: row.id, binding: null }) }, "\u89E3\u9664\u7ED1\u5B9A"), /* @__PURE__ */ import_react.default.createElement("button", { disabled: busy || stale || config.status !== "ready", onClick: () => void save({ type: "reset", id: row.id }) }, "\u6062\u590D\u9ED8\u8BA4"), /* @__PURE__ */ import_react.default.createElement("button", { disabled: busy, onClick: close }, "\u53D6\u6D88")));
+  ), /* @__PURE__ */ import_react.default.createElement("span", { className: "dk-muted" }, "\u70B9\u51FB\u5F55\u5236 \xB7 Esc \u53D6\u6D88")), description.issue && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, failureMessage(description.issue)), conflicts.length > 0 && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, "\u4E0E\u300C", conflictLabels.join("\u3001"), "\u300D\u51B2\u7A81\uFF0C\u8BF7\u6362\u4E00\u4E2A\u7EC4\u5408\u952E\u3002"), stale && !busy && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, failureMessage("stale")), message && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, message), /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-actions" }, /* @__PURE__ */ import_react.default.createElement("button", { className: "dk-primary", disabled: busy || stale || invalid || config.status !== "ready", onClick: () => void save({ type: "set", id: row.id, binding: candidate }) }, busy ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58\u952E\u4F4D"), /* @__PURE__ */ import_react.default.createElement("button", { disabled: busy || stale || config.status !== "ready", onClick: () => void save({ type: "set", id: row.id, binding: null }) }, "\u89E3\u9664\u7ED1\u5B9A"), /* @__PURE__ */ import_react.default.createElement("button", { disabled: busy || stale || config.status !== "ready", onClick: () => void save({ type: "reset", id: row.id }) }, "\u6062\u590D\u9ED8\u8BA4"), /* @__PURE__ */ import_react.default.createElement("button", { disabled: busy, onClick: close }, "\u53D6\u6D88")));
 }
 function Settings({ form, shortcuts }) {
   const state = useSnapshot(form);

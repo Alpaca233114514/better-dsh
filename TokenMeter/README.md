@@ -1,6 +1,28 @@
 # Token Meter 计量插件
 
-DeepSeek Harness 动态 Cordis 插件：统计 token 使用量并以 GitHub 风格热力图展示。适配基线：**DSH 0.2.1-alpha.2**，详见 [适配说明](../docs/dsh-compatibility.md)。
+DeepSeek Harness 原生桌面插件：统计 token 使用量并以 GitHub 风格热力图展示。支持本机正式桌面 **DSH 0.2.0-rc.2**，同时保留 **0.2.1-alpha.2** 和旧动态插件入口。
+
+## 桌面安装（推荐）
+
+构建产物在 `lib/`，通过目标桌面版附带的 `dsh` 安装，关闭桌面后执行：
+
+```powershell
+dsh plugin --profile desktop add "file:C:/path/to/dsh-token-meter-dashboard-0.2.0-desktop.1.tgz" --ignore-scripts
+```
+
+正式 rc.2 桌面安装包在此目录运行 `npm run pack:desktop` 生成，输出到仓库 `.cache/token-meter-desktop-0.2.0-1/`；它锁定 rc.2 的 Cordis / Typert peer，避免解析到 Alpha。安装后重新打开桌面，在 **设置 → Token 计量** 查看；无需每个会话重新 `cordis_define`。Web 使用目标 Web 运行时并将 profile 改为 `web`。
+
+开发构建：`npm ci --ignore-scripts`，`npm run build`，`npm test`。`esbuild` 是构建工具；构建时使用 npm 下载的对应平台可执行包，不执行远程安装脚本。
+
+原生版监听整个 Host 的模型流和轮次，包括辅助模型调用；输入为非缓存输入、缓存读取、缓存写入之和，推理属于输出，不重复计入。统计从启用插件开始，不回放全部聊天记录。
+
+数据固定保存在 **`$DSH_HOME/state/token-meter-dashboard/.dsh-token-meter.json`**（默认 `~/.dsh/state/token-meter-dashboard/`），切换工作区不会改变保存位置。首次启动时若主数据不存在，从当前已加载会话工作区中优先取最新一份旧 `.dsh-token-meter.json` 作为基线；旧文件保留。多份旧汇总无法判断是否相互重叠，因此原生版不自动相加或逐项合并。已有原生主文件后始终沿用主文件。
+
+原生插件仅写自己的数据文件，旧工作区数据通过 DSH `fs` 服务读取。保存使用串行队列和临时文件替换；读取失败会停止覆盖并在页面提示，保存失败会显示错误并重试。此目录属于应用自身计量数据，不改变会话沙箱权限。
+
+同一个 Host 只启用一个计量实例。迁移到原生版后应停止原来的动态 TokenMeter，避免出现重复设置入口。不要同时启动共用一个 `DSH_HOME` 的两个桌面宿主。
+
+接口参考：[官方 DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)。本次沿用官方公开 Cordis / Typert / `settings.section` 接口，没有复制第三方插件代码。验证范围见 [桌面验证记录](DESKTOP.md)。
 
 ## 功能
 
@@ -20,7 +42,7 @@ DeepSeek Harness 动态 Cordis 插件：统计 token 使用量并以 GitHub 风�
 | `host.js` | Host 半区源码（cordis_define 的 `code.host` 函数体）|
 | `client.js` | Client 半区源码（cordis_define 的 `code.client` 函数体）|
 
-## 使用方法
+## 旧动态插件使用方法
 
 在 DeepSeek Harness 会话中，让模型通过 `cordis_define` 注册动态插件：
 
