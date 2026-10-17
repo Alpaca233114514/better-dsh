@@ -45,4 +45,3 @@ fs.mkdirSync(process.argv[3], { recursive: true });
   const saved = JSON.parse(fs.readFileSync(process.env.DSH_HOME + '/state/token-meter-dashboard/.dsh-token-meter.json'))
   fs.writeFileSync(output, JSON.stringify({ ok: true, runtime: JSON.parse(fs.readFileSync(root + '@deepseek-ai/dsh/package.json')).version, totalDelta: 26, peak: state.peakRoundTokens, savedInput: saved.totalInput, descriptors: descriptors[0].descriptors.length }, null, 2))
 })().catch(error => { fs.writeFileSync(output, JSON.stringify({ ok: false, error: error.stack }, null, 2)); process.exitCode = 1 })
-
