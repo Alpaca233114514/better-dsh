@@ -75,4 +75,61 @@ test('Escape closes commit surface and restores focus', async () => {
   assert.equal(document.querySelector('.dg-commit-card'), null)
   assert.equal(document.activeElement, trigger)
 })
+
+test('third commit-menu action opens the PR form without pushing or creating', async () => {
+  const calls = await mount()
+  await click(byText('提交与推送'))
+  const buttons = [...document.querySelectorAll('.dg-commit-actions button')]
+  assert.equal(buttons[2].textContent.trim(), '创建 Pull Request')
+  assert.ok(buttons[2].querySelector('svg[viewBox="0 0 16 16"]'))
+  await click(buttons[2])
+  assert.equal(document.querySelector('.dg-commit-card'), null)
+  assert.ok(document.querySelector('.dg-pr form'))
+  assert.equal(document.activeElement, document.querySelector('.dg-pr-heading h2'))
+  assert.equal(calls.some(call => ['push', 'commit', 'commitPush', 'createPR'].includes(call.action)), false)
+})
+test('third commit-menu action shows an existing PR without creating a duplicate', async () => {
+  const calls = await mount({}, request => request.action === 'prInfo' ? { ok: true, value: { pr: { number: 7, title: 'Existing PR', url: 'https://github.com/example/repo/pull/7' }, base: 'main' } } : null)
+  await click(byText('提交与推送'))
+  const entry = document.querySelectorAll('.dg-commit-actions button')[2]
+  assert.equal(entry.textContent.trim(), '查看 Pull Request')
+  await click(entry)
+  assert.equal(document.querySelector('.dg-pr form'), null)
+  assert.match(document.querySelector('.dg-pr-existing').textContent, /Existing PR/)
+  assert.equal(calls.some(call => call.action === 'createPR'), false)
+})
+
+
+test('a clean worktree only offers push and PR with no commit inputs', async () => {
+  const calls = await mount({ files: [], ahead: 2, upstream: 'origin/codex/test' })
+  await click(byText('提交与推送'))
+  assert.deepEqual([...document.querySelectorAll('.dg-commit-actions button')].map(button => button.textContent.trim()), ['推送', '创建 Pull Request'])
+  assert.equal(document.querySelector('.dg-message'), null)
+  assert.equal(document.querySelector('.dg-include'), null)
+  await act(async () => { document.querySelector('.dg-commit-card').dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true, cancelable: true })); await tick() })
+  assert.equal(calls.some(call => ['commit', 'commitPush'].includes(call.action)), false)
+})
+test('commit completion changes a reopened clean menu to push and PR only', async () => {
+  let committed = false
+  const calls = await mount({}, request => request.action === 'commit' || request.action === 'state' && committed ? { ok: true, value: { state: { root: '/project', name: 'project', branch: 'codex/test', upstream: '', ahead: 1, behind: 0, additions: 0, deletions: 0, protected: false, writable: true, files: [] } } } : null)
+  await click(byText('提交与推送'))
+  committed = true
+  await click(document.querySelector('.dg-commit-actions button'))
+  await click(byText('提交与推送'))
+  assert.deepEqual([...document.querySelectorAll('.dg-commit-actions button')].map(button => button.textContent.trim()), ['推送', '创建 Pull Request'])
+  assert.equal(calls.filter(call => call.action === 'commit').length, 1)
+  committed = false
+})
+test('rapid repeat push clicks dispatch one mutation while an operation is pending', async () => {
+  let finish
+  const pending = new Promise(resolve => { finish = resolve })
+  const calls = await mount({ files: [], ahead: 1 }, request => request.action === 'push' ? pending : null)
+  await click(byText('提交与推送'))
+  const push = document.querySelector('.dg-commit-actions button')
+  await act(async () => { push.click(); push.click(); push.click(); await tick() })
+  assert.equal(calls.filter(call => call.action === 'push').length, 1)
+  assert.ok([...document.querySelectorAll('.dg-commit-actions button')].every(button => button.disabled))
+  await act(async () => { finish({ ok: true, value: { notice: '推送成功' } }); await tick() })
+})
+
 test.after(async () => { await act(async () => root.unmount()); dom.window.close() })
