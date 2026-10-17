@@ -1,0 +1,7 @@
+- insert:
+    - id: dshkey
+      name: dshkey
+      config:
+        enabled: true
+        sameWorkspace: true
+        wrapSessions: true
