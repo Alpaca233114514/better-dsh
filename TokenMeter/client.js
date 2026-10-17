@@ -30,6 +30,8 @@ return {
 .tm-unit button:hover{color:var(--dsw-alias-label-primary)}
 .tm-unit button.on{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);font-weight:600}
 .tm-loading{color:var(--dsw-alias-label-secondary);font-size:13px;padding:24px 0;text-align:center}
+.tm-error{color:var(--dsw-alias-state-error-primary);font-size:13px}
+@media(max-width:600px){.tm-page-head{align-items:flex-start;flex-wrap:wrap}.tm-head-right{flex-wrap:wrap}.tm-reset{flex-wrap:wrap}}
 .tm-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .tm-stat{background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
 .tm-stat-label{font-size:12px;color:var(--dsw-alias-label-secondary)}
@@ -220,6 +222,11 @@ button:has(.tm-nav-label)>svg{display:none}
     function TokenMeterPage() {
       const [data, setData] = React.useState(null)
       const [confirming, setConfirming] = React.useState(false)
+      const [error, setError] = React.useState(null)
+      const [resetting, setResetting] = React.useState(false)
+      const requestVersion = React.useRef(0)
+      const resetInFlight = React.useRef(false)
+      const loadInFlight = React.useRef(false)
       // 计量单位：'M' = K/M/B，'CN' = 万/亿；localStorage 记忆上次选择
       const [unitMode, setUnitMode] = React.useState(() => {
         try { return localStorage.getItem('tkmtr:unit') === 'CN' ? 'CN' : 'M' } catch (err) { return 'M' }
@@ -230,18 +237,28 @@ button:has(.tm-nav-label)>svg{display:none}
         try { localStorage.setItem('tkmtr:unit', m) } catch (err) { /* ignore */ }
       }, [])
       const load = React.useCallback(() => {
+        if (resetInFlight.current || loadInFlight.current) return
+        loadInFlight.current = true
+        const version = ++requestVersion.current
         host.call('meter:state')
-          .then((res) => { if (res) setData(res) })
-          .catch(() => {})
+          .then((res) => { if (version !== requestVersion.current) return; if (res) setData(res); setError(null) })
+          .catch((err) => { if (version === requestVersion.current) setError(err.message || '读取计量数据失败') })
+          .finally(() => { loadInFlight.current = false })
       }, [])
       React.useEffect(() => {
         load()
-        return ctx.interval(load, 3000)
+        const dispose = ctx.interval(load, 3000)
+        return () => { requestVersion.current++; dispose() }
       }, [load])
       const reset = React.useCallback(() => {
+        if (resetInFlight.current) return
+        resetInFlight.current = true
+        const version = ++requestVersion.current
+        setResetting(true)
         host.call('meter:reset')
-          .then((res) => { if (res) setData(res); setConfirming(false) })
-          .catch(() => { setConfirming(false) })
+          .then((res) => { if (version === requestVersion.current) { if (res) setData(res); setError(null) }; setConfirming(false) })
+          .catch((err) => { setError(err.message || '清空失败'); setConfirming(false) })
+          .finally(() => { resetInFlight.current = false; setResetting(false) })
       }, [])
 
       const cum = data ? data.cumulative : null
@@ -266,14 +283,15 @@ button:has(.tm-nav-label)>svg{display:none}
             confirming
               ? React.createElement('div', { className: 'tm-reset' },
                   React.createElement('span', { className: 'tm-reset-ask' }, '确认清空全部数据？'),
-                  React.createElement('button', { className: 'tm-btn tm-btn-danger', onClick: reset }, '确认'),
+                  React.createElement('button', { className: 'tm-btn tm-btn-danger', onClick: reset, disabled: resetting }, resetting ? '保存中…' : '确认'),
                   React.createElement('button', { className: 'tm-btn', onClick: () => setConfirming(false) }, '取消'),
                 )
               : React.createElement('button', { className: 'tm-btn', onClick: () => setConfirming(true) }, '清空数据'),
           ),
         ),
+        error || (data && data.persistenceError) ? React.createElement('div', { className: 'tm-error', role: 'alert' }, error || data.persistenceError) : null,
         data === null
-          ? React.createElement('div', { className: 'tm-loading' }, '加载中…')
+          ? React.createElement('div', { className: 'tm-loading' }, error ? '等待重试…' : '加载中…')
           : React.createElement(React.Fragment, null,
               React.createElement('div', { className: 'tm-stats' },
                 React.createElement(StatCard, {

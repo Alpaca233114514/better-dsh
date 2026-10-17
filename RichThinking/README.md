@@ -1,5 +1,7 @@
 # DSH Rich Thinking
 
+当前版本支持 **DSH 0.2.1-rc.1**，开发依赖固定到该版本。验证范围见仓库 `docs/dsh-0.2.1-rc.1.md`；以下旧版记录保留为历史证据。
+
 独立的 DeepSeek Harness UI 插件：在底部**鲸鱼尾巴旁的运行状态**轮播等待文案，替换「深度求索中」。鲸鱼尾巴和原生用时不变，推理折叠行恢复原生显示。无需 DeepSeek Security 或 BetterManager。
 
 **默认中文，只轮播中文。** 中文、英文分为两组：中文 24 条，包括「叽里呱啦中」「琢磨中」「想法冒泡中」；英文 30 条，包括 `Pondering`、`Connecting the dots`、`Untangling`。选择英文后只轮播英文，不混播，也不随 DSH 界面语言自动切换。

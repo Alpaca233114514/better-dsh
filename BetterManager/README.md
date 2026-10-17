@@ -1,4 +1,6 @@
-# Better Manager 插件管理器
+# Better Manager 插件管理器（已退役）
+
+2026-10-17 起停止更新，不参与 rc.1 适配及桌面安装。源码与历史数据保留，以下仅供历史参考。
 
 面向 DeepSeek Harness **0.2.1-alpha.2** 的动态 Cordis 插件，以卡片网格管理插件。
 入口：设置 → Better Manager。完整基线与验证范围见 [DSH 适配说明](../docs/dsh-compatibility.md)。
