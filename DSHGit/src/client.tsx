@@ -19,7 +19,7 @@ export function GitLauncher({ sessionId, remote }: { sessionId: string; remote: 
     if (open) dialog.current?.showModal()
     else dialog.current?.close()
   }, [open])
-  return <><button ref={trigger} type="button" className="dg-launcher" title="打开 DSHGit" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)} accessKey="g"><Icon name="branch"/><span>DSHGit</span></button>
+  return <><button ref={trigger} type="button" className="dg-launcher" title="打开 DSHGit" aria-label="打开 DSHGit" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)} accessKey="g"><Icon name="branch"/></button>
     {createPortal(<dialog ref={dialog} className="dg-dialog" aria-label="DSHGit Git 面板" onCancel={event => { event.preventDefault(); close() }} onClick={event => { if (event.target === dialog.current) close() }}>
       {open && <GitPanel key={sessionId} sessionId={sessionId} remote={remote} onClose={close}/>}
     </dialog>, document.body)}

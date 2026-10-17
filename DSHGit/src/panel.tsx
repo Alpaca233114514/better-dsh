@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { unwrap, type GitRemote, type GitState, type Request, type Result } from './contracts.ts'
 
-export function Icon({ name }: { name: 'branch' | 'changes' | 'pr' | 'commit' | 'push' | 'close' | 'refresh' | 'chevron' }) {
+export function Icon({ name }: { name: 'branch' | 'changes' | 'pr' | 'commit' | 'push' | 'close' | 'refresh' | 'chevron' | 'github' }) {
+  // GitHub mark: https://github.com/primer/octicons (MIT; docs/OCTICONS-LICENSE.txt).
+  if (name === 'github') return <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656"/></svg>
   const paths = {
     branch: <><circle cx="6" cy="5" r="2"/><circle cx="18" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><path d="M6 7v10M18 7c0 6-12 3-12 9"/></>,
     changes: <><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M9 9h6m-3-3v6m-3 4h6"/></>,
@@ -26,6 +28,7 @@ export function GitPanel({ sessionId, remote, onClose }: { sessionId: string; re
   const [pr, setPR] = useState<Result['pr']>(), [prError, setPRError] = useState('')
   const [base, setBase] = useState(''), [title, setTitle] = useState(''), [body, setBody] = useState(''), [draft, setDraft] = useState(false)
   const alive = useRef(true), operation = useRef(false), generation = useRef(0), diffGeneration = useRef(0)
+  const prHeading = useRef<HTMLHeadingElement>(null)
   const commitTrigger = useRef<HTMLButtonElement>(null), messageInput = useRef<HTMLTextAreaElement>(null)
   const call = useCallback(async (action: Request['action'], extra: Partial<Request> = {}) =>
     unwrap(await remote.run({ ...extra, sessionId, action })), [remote, sessionId])
@@ -51,6 +54,8 @@ export function GitPanel({ sessionId, remote, onClose }: { sessionId: string; re
     return () => { alive.current = false; clearInterval(timer); generation.current++; diffGeneration.current++ }
   }, [load, loadPR, call])
   useEffect(() => { if (commitOpen) messageInput.current?.focus() }, [commitOpen])
+  useEffect(() => { if (view === 'pr') prHeading.current?.focus() }, [view])
+  const openPR = () => { if (operation.current) return; setCommitOpen(false); setView('pr'); void loadPR() }
   const act = async (action: Request['action'], extra: Partial<Request> = {}) => {
     if (operation.current) return
     operation.current = true; generation.current++; diffGeneration.current++
@@ -79,6 +84,7 @@ export function GitPanel({ sessionId, remote, onClose }: { sessionId: string; re
       if (alive.current && version === diffGeneration.current) setDiff(result.text ?? '')
     } catch (e) { if (alive.current && version === diffGeneration.current) setDiff((e as Error).message) }
   }
+  const hasChanges = !!state?.files.length
   const writable = !!state && state.writable !== false && !busy && !loadError
   const canCommit = writable && !state.protected && !!state.branch && state.files.some(f => include || isStaged(f.index))
   const canPush = writable && !state.protected && !!state.branch
@@ -100,7 +106,7 @@ export function GitPanel({ sessionId, remote, onClose }: { sessionId: string; re
         <div className="dg-card">
           <div className="dg-card-title"><span title={state.root}>{state.name}</span><span className="dg-muted">{state.files.length} 个文件</span></div>
           <button className="dg-row" data-active={view === 'changes'} onClick={() => setView('changes')}><Icon name="changes"/><span>变更</span><span className="dg-stats" title="已跟踪文件的暂存区与工作区行数；未跟踪文件暂存后计入"><b>+{state.additions.toLocaleString()}</b><em>-{state.deletions.toLocaleString()}</em></span></button>
-          <button className="dg-row" data-active={view === 'pr'} onClick={() => { setView('pr'); void loadPR() }}><Icon name="pr"/><span>{pr ? '现有 Pull Request' : '创建 Pull Request'}</span><span className="dg-muted">{pr ? `#${pr.number}` : '→'}</span></button>
+          <button className="dg-row" data-active={view === 'pr'} onClick={openPR}><Icon name="github"/><span>{pr ? '现有 Pull Request' : '创建 Pull Request'}</span><span className="dg-muted">{pr ? `#${pr.number}` : '→'}</span></button>
         </div>
         <div className="dg-branch-info"><span><Icon name="branch"/>{state.branch || 'Detached HEAD'}</span>
           <span className="dg-muted">{state.upstream ? `↑ ${state.ahead}  ↓ ${state.behind}` : '尚未关联上游'}</span>
@@ -124,7 +130,7 @@ export function GitPanel({ sessionId, remote, onClose }: { sessionId: string; re
         </div>
         <div className="dg-diff"><div className="dg-diff-title">{selected ? selected.slice(selected.indexOf(':') + 1) : '文件差异'}</div><pre aria-label="文件差异内容">{diff.split('\n').map((line, i) => <span key={i} className={line.startsWith('+') ? 'dg-added' : line.startsWith('-') ? 'dg-removed' : line.startsWith('@@') ? 'dg-hunk' : ''}>{line}{'\n'}</span>)}</pre></div>
       </div> : <div className="dg-pr">
-        <div className="dg-pr-heading"><Icon name="pr"/><h2>{pr ? 'Pull Request' : '创建 Pull Request'}</h2></div>
+        <div className="dg-pr-heading"><Icon name="github"/><h2 ref={prHeading} tabIndex={-1}>{pr ? 'Pull Request' : '创建 Pull Request'}</h2></div>
         {prError && <div className="dg-alert" role="alert">{prError}</div>}
         {pr ? <div className="dg-pr-existing"><span className="dg-muted">#{pr.number}</span><h3>{pr.title}</h3><a href={safeUrl(pr.url)} target="_blank" rel="noreferrer">在 GitHub 中打开 ↗</a></div> : <form onSubmit={event => { event.preventDefault(); void act('createPR', { title, body, base, draft }) }}>
           <label>目标分支<input required value={base} onChange={e => setBase(e.target.value)} placeholder="main"/></label>
@@ -140,11 +146,13 @@ export function GitPanel({ sessionId, remote, onClose }: { sessionId: string; re
       {commitOpen && <div className="dg-commit-shade" onClick={closeCommit}><section id="dshgit-commit" className="dg-commit-card" aria-label="提交与推送" onClick={e => e.stopPropagation()}>
         <div className="dg-branch-select"><Icon name="branch"/><select aria-label="当前分支" value={state.branch} disabled={!writable} onChange={e => { void act('switch', { branch: e.target.value }) }}>{!state.branch && <option value="">Detached HEAD</option>}{Array.from(new Set([state.branch, ...branches])).filter(Boolean).map(branch => <option key={branch}>{branch}</option>)}</select></div>
         <div className="dg-new-branch"><input aria-label="新分支名称" value={newBranch} onChange={e => setNewBranch(e.target.value)} placeholder="codex/新分支"/><button disabled={!writable || !newBranch.trim()} onClick={() => { void act('createBranch', { branch: newBranch }) }}>创建分支</button></div>
-        <textarea ref={messageInput} className="dg-message" aria-label="提交信息" value={message} onChange={e => setMessage(e.target.value)} placeholder="提交信息（留空将按文件名自动生成）…" rows={4}/>
-        <div className="dg-include"><label className="dg-check"><input type="checkbox" checked={include} disabled={!!busy} onChange={e => setInclude(e.target.checked)}/>包含未暂存的更改</label><span className="dg-stats"><b>+{state.additions.toLocaleString()}</b><em>-{state.deletions.toLocaleString()}</em></span></div>
-        <div className="dg-commit-actions"><button disabled={!canCommit} onClick={() => { void act('commit', { message, includeUnstaged: include }) }}><Icon name="commit"/><span>提交</span><kbd>Ctrl/⌘ ↵</kbd></button>
-          <button disabled={!canCommit} onClick={() => { void act('commitPush', { message, includeUnstaged: include }) }}><Icon name="push"/><span>提交并推送</span><kbd>Ctrl/⌘ ⇧ ↵</kbd></button>
-          <button disabled={!canPush} onClick={() => { void act('push') }}><Icon name="push"/><span>推送</span></button></div>
+        {hasChanges && <><textarea ref={messageInput} className="dg-message" aria-label="提交信息" value={message} onChange={e => setMessage(e.target.value)} placeholder="提交信息（留空将按文件名自动生成）…" rows={4}/>
+        <div className="dg-include"><label className="dg-check"><input type="checkbox" checked={include} disabled={!!busy} onChange={e => setInclude(e.target.checked)}/>包含未暂存的更改</label><span className="dg-stats"><b>+{state.additions.toLocaleString()}</b><em>-{state.deletions.toLocaleString()}</em></span></div></>}
+        <div className="dg-commit-actions">{hasChanges && <><button disabled={!canCommit} onClick={() => { void act('commit', { message, includeUnstaged: include }) }}><Icon name="commit"/><span>提交</span><kbd>Ctrl/⌘ ↵</kbd></button>
+          <button disabled={!canCommit} onClick={() => { void act('commitPush', { message, includeUnstaged: include }) }}><Icon name="push"/><span>提交并推送</span><kbd>Ctrl/⌘ ⇧ ↵</kbd></button></>}
+          {!hasChanges && <button disabled={!canPush} onClick={() => { void act('push') }}><Icon name="push"/><span>推送</span></button>}
+          <button disabled={!!busy} onClick={openPR}><Icon name="github"/><span>{pr ? '查看 Pull Request' : '创建 Pull Request'}</span></button>
+          {hasChanges && <button disabled={!canPush} onClick={() => { void act('push') }}><Icon name="push"/><span>推送</span></button>}</div>
       </section></div>}
     </>}
   </section>
