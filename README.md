@@ -14,8 +14,8 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 | [DeepSeek Security](DeepSeekSecurity/) | 原生安全审计插件：通过 @ 引用和聊天需求调用，执行期间显示进度 | [README](DeepSeekSecurity/README.md) |
 | [RichThinking](RichThinking/) | 底部运行状态词轮播，保留原生鲸鱼、用时、推理折叠与正文 | [README](RichThinking/README.md) |
 | [MoonSeek](MoonSeek/) | 月面外观插件：月之亮面 / 月之暗面，统一原生卡片与月相图标 | [README](MoonSeek/README.md) |
-| [DSHKey](DSHKey/) | 原生快捷键与设置，支持 DSH 0.2.1-rc.1 | [README](DSHKey/README.md) |
-| [DSHGit](DSHGit/) | 原生 Git 面板，支持 DSH 0.2.1-rc.1 | [README](DSHGit/README.md) |
+| [DSHKey](DSHKey/) | 原生快捷键与设置，支持 DSH 0.2.1-rc.2 | [README](DSHKey/README.md) |
+| [DSHGit](DSHGit/) | 原生 Git 面板，支持 DSH 0.2.1-rc.2 | [README](DSHGit/README.md) |
 | [Oi](Oi/) | 第三方收录：面向 Agent Skills 的 agent-native 语言（MIT License） | [README](Oi/README.md) |
 | [dsh-anchored-standard](dsh-anchored-standard/) | 第三方收录：双阶段 DSH 代理预设，首轮锚定 Minimal、晋升后按需解锁 Standard 工具（MIT License） | [README](dsh-anchored-standard/README.zh-CN.md) |
 
@@ -29,7 +29,7 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 
 ## 装配到 DSH
 
-六个原生插件的 DSH **0.2.1-rc.1** 交付与验证见 [兼容说明](docs/dsh-0.2.1-rc.1.md)。TokenMeter 已提供原生安装包；BetterManager 已退役，旧动态安装方式仅供历史参考。
+六个原生插件的 DSH **0.2.1-rc.2** 交付与验证见 [兼容说明](docs/dsh-0.2.1-rc.2.md)。TokenMeter 已提供原生安装包；BetterManager 已退役，旧动态安装方式仅供历史参考。
 
 插件、代理预设与技能在 DSH 里的装配方式不同，分开说明。
 
@@ -39,7 +39,7 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 
 Codex Security 的来源、复用范围与许可证见 [许可证与来源声明](DeepSeekSecurity/LICENSE-DECLARATION.md)。
 
-验证基线为 **DSH 0.2.1-alpha.2**，需要 Node.js 和可用的 Python 3。先在仓库根目录构建：
+验证基线为 **DSH 0.2.1-rc.2**，需要 Node.js 和可用的 Python 3。先在仓库根目录构建：
 
 ```powershell
 npm --prefix DeepSeekSecurity ci --ignore-scripts
@@ -70,12 +70,12 @@ dsh plugin --profile web add "link:C:/path/to/better-dsh/DeepSeekSecurity" --ign
 尚未实现 Deep Scan、PR/diff 扫描和动态漏洞复现。复用 Codex Security 的公开审计流程、语义草稿与
 Python 工作台，模型执行适配 DSH 原生 AgentLoop，不调用 Codex Security CLI。
 
-插件引用、需求传递、任务进度和报告链路已通过 13 项本地测试（scripted adapter，不消费模型额度）；此前版本另有真实 DSH 小样例扫描记录，验证范围见 [验证记录](DeepSeekSecurity/VERIFICATION.md)。
+插件引用、需求传递、任务进度和报告链路已通过 15 项本地测试（scripted adapter，不消费模型额度）；此前版本另有真实 DSH 小样例扫描记录，验证范围见 [验证记录](DeepSeekSecurity/VERIFICATION.md)。
 开发其他原生插件时，可参考 [插件 UI 规范](DeepSeekSecurity/UI-GUIDE.md)。
 
 ### Rich Thinking（原生组合包）
 
-支持 DSH **0.2.0-rc.2 / 0.2.1-alpha.2 的 Web 客户端**，用原生插件管理器安装独立包（将路径改为实际绝对目录）：
+支持 DSH **0.2.1-rc.2 的 Web 客户端**，同时保留 0.2.0-rc.2 / 0.2.1-alpha.2 / 0.2.1-rc.1 的兼容范围，用原生插件管理器安装独立包（将路径改为实际绝对目录）：
 
 ```powershell
 dsh plugin --profile web add "file:C:/path/to/better-dsh/RichThinking"
@@ -89,7 +89,7 @@ dsh plugin --profile web add "file:C:/path/to/better-dsh/RichThinking"
 
 将「设置 → 通用 → 外观」中的浅色、深色改为 **月之亮面 / 月之暗面**，
 使用满月 / 弯月图标，卡片沿用 DSH 原生 UI 规范；保留跟随系统与原生主题持久化。
-适配 DSH **0.2.1-alpha.2 Web 客户端**，构建产物已随仓库提供：
+适配 DSH **0.2.1-rc.2 Web 客户端**，构建产物已随仓库提供：
 
 ```powershell
 dsh plugin --profile web add "file:C:/path/to/better-dsh/MoonSeek" --ignore-scripts
@@ -213,7 +213,7 @@ node --test "dsh-anchored-standard/test/*.test.mjs"
 node dsh-anchored-standard/scripts/sync-modes.mjs --check
 ```
 
-兼容接口与验证范围见 [DSH 0.2 适配说明](docs/dsh-compatibility.md)。
+兼容接口与验证范围见 [DSH 0.2 适配说明](docs/dsh-compatibility.md) 与 [DSH 0.2.1-rc.2 交付记录](docs/dsh-0.2.1-rc.2.md)。
 
 ## 著作权与许可
 

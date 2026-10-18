@@ -10,7 +10,7 @@ const names = ['@better-dsh/deepseek-security', 'dshgit', 'dshkey', 'dsh-rich-th
 ;(async () => {
   const official = name => pathToFileURL(join(runtime, 'node_modules/@deepseek-ai', name, 'lib/index.js')).href
   const { loadProfileDirectory, createRuntimeResolution, PluginPackages, evaluatePluginCompatibility, getDshRuntimeVersion } = await import(official('dsh-app-boot'))
-  assert.equal(getDshRuntimeVersion(), '0.2.1-rc.1')
+  assert.equal(getDshRuntimeVersion(), '0.2.1-rc.2')
   const { Context } = await import(official('cordis'))
   const installAnchor = join(runtime, 'node_modules/@deepseek-ai/dsh/package.json')
   const profile = loadProfileDirectory('dsh', profileDir, installAnchor)
@@ -24,7 +24,7 @@ const names = ['@better-dsh/deepseek-security', 'dshgit', 'dshkey', 'dsh-rich-th
   for (const name of names) {
     const dir = join(profileDir, 'node_modules', name)
     const manifest = JSON.parse(fs.readFileSync(join(dir, 'package.json'), 'utf8'))
-    assert.equal(evaluatePluginCompatibility(manifest, {}, '0.2.1-rc.1'), undefined)
+    assert.equal(evaluatePluginCompatibility(manifest, {}, '0.2.1-rc.2'), undefined)
     // ESM uses the real importer path for linked plugins; inspect that same path.
     const hostUrl = pathToFileURL(fs.realpathSync(join(dir, manifest.exports['.']))).href
     const host = await import(hostUrl)
@@ -40,7 +40,7 @@ const names = ['@better-dsh/deepseek-security', 'dshgit', 'dshkey', 'dsh-rich-th
     results.push({ name, version: manifest.version, host: 'imported-with-official-resolution',
       ...(singleton ? { [singleton]: dependency.version, singleton: 'desktop-owned' } : {}) })
   }
-  fs.writeFileSync(output, JSON.stringify({ ok: true, runtime: '0.2.1-rc.1', skippedBundles: [], autoReview: 'preserved', results }, null, 2) + '\n')
+  fs.writeFileSync(output, JSON.stringify({ ok: true, runtime: '0.2.1-rc.2', skippedBundles: [], autoReview: 'preserved', results }, null, 2) + '\n')
 })().catch(error => {
   fs.writeFileSync(output, JSON.stringify({ ok: false, error: error.stack }, null, 2) + '\n')
   process.exitCode = 1

@@ -1,5 +1,8 @@
 # DSH 0.2 适配（2026-10-12）
 
+> 更新：2026-10-18 的本机 DSH 0.2.1-rc.2 兼容交付见
+> [dsh-0.2.1-rc.2.md](dsh-0.2.1-rc.2.md)；本文保留 0.2.1-alpha.2 基线记录。
+
 本轮接口基线是官方 `0.2.1-alpha.2`，源码提交
 [`d743267388641bc76f17c45ce8b4c231aed1d32c`](https://github.com/deepseek-ai/deepseek-harness/commit/d743267388641bc76f17c45ce8b4c231aed1d32c)，
 发布时间为 2026-10-09。适配源码和本地回归验证已完成，未在新版 DSH 浏览器或真实模型会话中联调。

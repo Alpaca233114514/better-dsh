@@ -1,6 +1,6 @@
 {
   "name": "dsh-token-meter-dashboard",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Persistent Token Meter dashboard for DeepSeek Harness desktop",
   "type": "module",
   "license": "Apache-2.0",
@@ -37,12 +37,12 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "4.0.4 || 4.0.5-alpha.1 || 4.0.5",
-    "@deepseek-ai/dsh-typert-protocol": "0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-rc.1",
+    "@deepseek-ai/dsh-typert-protocol": "0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-rc.1 || 0.2.1-rc.2",
     "react": "^18.3.1"
   },
   "devDependencies": {
     "esbuild": "0.25.12",
     "@deepseek-ai/cordis": "4.0.5",
-    "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.1"
+    "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.2"
   }
 }

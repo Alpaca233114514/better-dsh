@@ -17,7 +17,7 @@ registerHooks({ resolve(specifier, context, next) {
 } })
 const { evaluatePluginCompatibility, getDshRuntimeVersion } = await import('@deepseek-ai/dsh-app-boot')
 const version = getDshRuntimeVersion()
-assert.equal(version, '0.2.1-rc.1', 'This compatibility receipt targets rc.1')
+assert.equal(version, '0.2.1-rc.2', 'This compatibility receipt targets rc.2')
 const directories = ['DeepSeekSecurity', 'DSHGit', 'DSHKey', 'RichThinking', 'MoonSeek', 'TokenMeter']
 const results = []
 for (const directory of directories) {
