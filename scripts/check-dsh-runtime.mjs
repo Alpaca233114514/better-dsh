@@ -17,8 +17,8 @@ registerHooks({ resolve(specifier, context, next) {
 } })
 const { evaluatePluginCompatibility, getDshRuntimeVersion } = await import('@deepseek-ai/dsh-app-boot')
 const version = getDshRuntimeVersion()
-assert.equal(version, '0.2.1-rc.1', 'This compatibility receipt targets rc.1')
-const directories = ['DeepSeekSecurity', 'DSHGit', 'DSHKey', 'RichThinking', 'MoonSeek', 'TokenMeter']
+const policy = JSON.parse(await readFile(join(root, 'scripts/dsh-compatibility.json'), 'utf8'))
+const directories = Object.keys(policy.plugins)
 const results = []
 for (const directory of directories) {
   const sourceManifest = JSON.parse(await readFile(join(root, directory, 'package.json'), 'utf8'))
@@ -31,11 +31,13 @@ for (const directory of directories) {
   const host = await import(pathToFileURL(resolve(base, manifest.exports['.'])))
   assert.equal(typeof host.apply, 'function', `${manifest.name}: Host entry`)
   let registered
-  vm.runInNewContext(await readFile(resolve(base, manifest.exports['./client']), 'utf8'), {
-    window: { __ModuleLoader__: { load(value) { assert.equal(registered, undefined); registered = value } } },
-  }, { filename: `${manifest.name}/client.js` })
-  assert.equal(registered?.id, manifest.name)
-  assert.equal(typeof registered.factory, 'function')
-  results.push({ name: manifest.name, version: manifest.version, compatibility: 'passed', host: 'imported', client: 'factory-registered' })
+  if (manifest.exports['./client']) {
+    vm.runInNewContext(await readFile(resolve(base, manifest.exports['./client']), 'utf8'), {
+      window: { __ModuleLoader__: { load(value) { assert.equal(registered, undefined); registered = value } } },
+    }, { filename: `${manifest.name}/client.js` })
+    assert.equal(registered?.id, manifest.name)
+    assert.equal(typeof registered.factory, 'function')
+  }
+  results.push({ name: manifest.name, version: manifest.version, compatibility: 'passed', host: 'imported', client: registered ? 'factory-registered' : 'not-provided' })
 }
 console.log(JSON.stringify({ runtime: version, results }, null, 2))

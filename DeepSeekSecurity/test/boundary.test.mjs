@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, mkdir, writeFile, symlink } from 'node:fs/promises'
+import { mkdtemp, mkdir, writeFile, symlink, realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -19,7 +19,9 @@ import { DshScanDriver } from '../dist/test-runtime.js'
 // The provider is scripted and never connects to a model or network service.
 for (const preset of ['minimal-windows', 'standard']) {
   test(`workspace boundary reaches the real model-input path with ${preset} parent`, async () => {
-    const root = await mkdtemp(join(tmpdir(), 'security-boundary-'))
+    // Windows TEMP may use an 8.3 alias; keep valid absolute probes canonical.
+    // Windows 临时目录可能使用短路径，合法绝对路径探针须使用规范路径。
+    const root = await realpath(await mkdtemp(join(tmpdir(), 'security-boundary-')))
     const workspace = join(root, 'workspace'), outside = join(root, 'workspace-neighbor')
     await mkdir(workspace); await mkdir(outside)
     await mkdir(join(workspace, 'nested'))

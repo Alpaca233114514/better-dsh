@@ -1,0 +1,46 @@
+name: DSH plugins
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  plugins:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: [DeepSeekSecurity, DSHGit, DSHKey, RichThinking, MoonSeek, TokenMeter, DSHObserver, Qwen]
+    defaults:
+      run:
+        working-directory: ${{ matrix.plugin }}
+    env:
+      DSH_SOURCE: ${{ github.workspace }}/.cache/dsh-source
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        if: matrix.plugin == 'RichThinking' || matrix.plugin == 'MoonSeek'
+        with:
+          repository: deepseek-ai/deepseek-harness
+          ref: 1f81c047fc48fa190a683e469daa699857e9afe8
+          path: .cache/dsh-source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install locked dependencies
+        if: matrix.plugin != 'DSHObserver'
+        run: npm ci --ignore-scripts
+      - run: npm run build --if-present
+      - run: npm run typecheck --if-present
+      - run: npm test
+      - name: Check all compatibility declarations and official gate
+        if: matrix.plugin == 'DeepSeekSecurity'
+        working-directory: .
+        run: |
+          node scripts/sync-dsh-compatibility.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --test test/dsh-compatibility.test.mjs

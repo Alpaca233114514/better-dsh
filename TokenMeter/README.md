@@ -1,8 +1,10 @@
 # Token Meter 计量插件
 
-当前版本已适配 **DSH 0.2.1-rc.1**，开发依赖锁定到该版本。2026-10-17 已完成本地构建与接口测试；真实桌面交互由用户手动验收。下文较早版本的验证记录保留为历史证据。
+> 2026-10-25：已适配 DSH **0.2.1-rc.3**，保留原有旧版范围。统一策略、安装版本和验证边界见 [rc.3 兼容记录](../docs/dsh-0.2.1-rc.3.md)。
 
-DeepSeek Harness 原生桌面插件：统计 token 使用量并以 GitHub 风格热力图展示。支持本机正式桌面 **DSH 0.2.0-rc.2**，同时保留 **0.2.1-alpha.2** 和旧动态插件入口。
+当前版本已适配 **DSH 0.2.1-rc.2**，开发依赖锁定到该版本。2026-10-18 已完成本地构建与接口测试；真实桌面交互由用户手动验收。下文较早版本的验证记录保留为历史证据。
+
+DeepSeek Harness 原生桌面插件：统计 token 使用量并以 GitHub 风格热力图展示。支持本机正式桌面 **DSH 0.2.1-rc.2**，同时保留 **0.2.0-rc.2 / 0.2.1-alpha.2 / 0.2.1-rc.1** 的兼容范围。
 
 ## 桌面安装（推荐）
 
@@ -12,7 +14,7 @@ DeepSeek Harness 原生桌面插件：统计 token 使用量并以 GitHub 风格
 dsh plugin --profile desktop add "file:C:/path/to/dsh-token-meter-dashboard-0.2.0-desktop.1.tgz" --ignore-scripts
 ```
 
-正式 rc.2 桌面安装包在此目录运行 `npm run pack:desktop` 生成，输出到仓库 `.cache/token-meter-desktop-0.2.0-1/`；它锁定 rc.2 的 Cordis / Typert peer，避免解析到 Alpha。安装后重新打开桌面，在 **设置 → Token 计量** 查看；无需每个会话重新 `cordis_define`。Web 使用目标 Web 运行时并将 profile 改为 `web`。
+正式桌面安装包在此目录运行 `npm run pack:desktop` 生成，输出到仓库 `.cache/token-meter-desktop-0.2.0-1/`；它锁定目标运行时的 Cordis / Typert peer，避免解析到 Alpha。安装后重新打开桌面，在 **设置 → Token 计量** 查看；无需每个会话重新 `cordis_define`。Web 使用目标 Web 运行时并将 profile 改为 `web`。
 
 开发构建：`npm ci --ignore-scripts`，`npm run build`，`npm test`。`esbuild` 是构建工具；构建时使用 npm 下载的对应平台可执行包，不执行远程安装脚本。
 
