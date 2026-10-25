@@ -6,16 +6,16 @@ import { dirname, join, resolve } from 'node:path'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const policy = JSON.parse(readFileSync(join(root, 'scripts/dsh-compatibility.json'), 'utf8'))
 const write = process.argv.includes('--write')
-for (const [directory, versions] of Object.entries(policy.plugins)) {
-  assert.ok(versions.includes(policy.runtime), `${directory}: missing target runtime`)
+for (const [directory, { minimumVersion, legacyVersions }] of Object.entries(policy.plugins)) {
+  const range = [...legacyVersions, `>=${minimumVersion} <${policy.seriesUpperExclusive}`].join(' || ')
   const path = join(root, directory, 'package.json')
   const manifest = JSON.parse(readFileSync(path, 'utf8'))
   assert.equal(manifest.engines?.dsh, undefined, `${directory}: engines.dsh would override peer checks`)
   const peers = Object.keys(manifest.peerDependencies).filter(name => /^@deepseek-ai\/dsh(?:$|-)/u.test(name))
   assert.ok(peers.length, `${directory}: no DSH compatibility declaration`)
   for (const name of peers) {
-    if (write) manifest.peerDependencies[name] = versions.join(' || ')
-    else assert.equal(manifest.peerDependencies[name], versions.join(' || '), `${directory}: ${name}`)
+    if (write) manifest.peerDependencies[name] = range
+    else assert.equal(manifest.peerDependencies[name], range, `${directory}: ${name}`)
   }
   if (write) writeFileSync(path, JSON.stringify(manifest, null, 2) + '\n')
   const lockPath = join(root, directory, 'package-lock.json')
@@ -30,4 +30,4 @@ for (const [directory, versions] of Object.entries(policy.plugins)) {
   assert.equal(lock.version, manifest.version, `${directory}: lockfile version`)
   assert.deepEqual(lock.packages[''].peerDependencies, manifest.peerDependencies, `${directory}: lockfile peers`)
 }
-console.log(`${write ? 'Updated' : 'Checked'} ${Object.keys(policy.plugins).length} plugins for DSH ${policy.runtime}`)
+console.log(`${write ? 'Updated' : 'Checked'} ${Object.keys(policy.plugins).length} plugins for DSH ${policy.verifiedRuntime}`)

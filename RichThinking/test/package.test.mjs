@@ -9,7 +9,7 @@ import { Config, apply } from '../lib/index.js'
 test('installable bundle uses DSH client loader with shared React and no host work', () => {
   const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url)))
   assert.equal(manifest.dsh.bundle.patch, './cordis.patch.yml')
-  assert.equal(manifest.peerDependencies['@deepseek-ai/dsh'], '0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-rc.1 || 0.2.1-rc.2 || 0.2.1-rc.3')
+  assert.equal(manifest.peerDependencies['@deepseek-ai/dsh'], '0.2.0-rc.2 || 0.2.1-alpha.2 || >=0.2.1-rc.1 <0.3.0-0')
   let plugin, id
   const required = []
   vm.runInNewContext(readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8'), {

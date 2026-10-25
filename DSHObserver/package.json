@@ -1,6 +1,6 @@
 {
   "name": "dsh-observer",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Per-attempt DSH context and streaming performance research recorder",
   "type": "module",
   "license": "Apache-2.0",
@@ -22,7 +22,7 @@
     }
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-llm": "0.2.1-rc.2 || 0.2.1-rc.3"
+    "@deepseek-ai/dsh-llm": ">=0.2.1-rc.2 <0.3.0-0"
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",
