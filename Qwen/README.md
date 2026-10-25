@@ -1,6 +1,6 @@
-# dsh-qwen 0.2.1
+# dsh-qwen 0.2.2
 
-> 2026-10-25：已适配 DSH **0.2.1-rc.3**，保留原有旧版范围。统一策略、安装版本和验证边界见 [rc.3 兼容记录](../docs/dsh-0.2.1-rc.3.md)。
+> 2026-10-25：按 **DSH 0.2.x 系列**兼容，后续 rc、正式版与补丁版不再逐个添加版本号；原有最低版本和旧版例外保留。详见 [系列兼容说明](../docs/dsh-series-compatibility.md)。
 
 面向 **DeepSeek Harness 0.2.1-rc.2** 的 Qwen Chat Completions 提供方。重新实现配置解析、模型目录和 Host 注册，使用 DSH 官方 `PiAiAdapter` 处理消息、图片、工具调用、用量与历史回放。
 

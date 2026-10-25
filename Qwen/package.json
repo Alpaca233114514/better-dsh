@@ -1,6 +1,6 @@
 {
   "name": "dsh-qwen",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Qwen Chat Completions provider for DSH 0.2.1-rc.2 with gateway aliases, thinking modes and native replay",
   "type": "module",
   "license": "Apache-2.0",
@@ -29,12 +29,12 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "~4.0.5",
-    "@deepseek-ai/dsh": "0.2.1-rc.1 || 0.2.1-rc.2 || 0.2.1-rc.3",
-    "@deepseek-ai/dsh-llm": "0.2.1-rc.1 || 0.2.1-rc.2 || 0.2.1-rc.3",
-    "@deepseek-ai/dsh-llm-pi-ai": "0.2.1-rc.1 || 0.2.1-rc.2 || 0.2.1-rc.3",
+    "@deepseek-ai/dsh": ">=0.2.1-rc.1 <0.3.0-0",
+    "@deepseek-ai/dsh-llm": ">=0.2.1-rc.1 <0.3.0-0",
+    "@deepseek-ai/dsh-llm-pi-ai": ">=0.2.1-rc.1 <0.3.0-0",
     "@deepseek-ai/schemastery": "3.18.5",
     "@earendil-works/pi-ai": "1.1.0",
-    "@deepseek-ai/dsh-launch-environment": "0.2.1-rc.1 || 0.2.1-rc.2 || 0.2.1-rc.3"
+    "@deepseek-ai/dsh-launch-environment": ">=0.2.1-rc.1 <0.3.0-0"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/dsh": {

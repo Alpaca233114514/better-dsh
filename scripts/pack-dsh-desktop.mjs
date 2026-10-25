@@ -9,7 +9,7 @@ const policy = JSON.parse(await readFile(resolve(root, 'scripts/dsh-compatibilit
 const directories = Object.keys(policy.plugins)
 const selected = process.argv.slice(2)
 if (selected.some(dir => !directories.includes(dir))) throw new Error('Unknown plugin directory')
-const destination = resolve(root, `.cache/dsh-${policy.runtime}-release`)
+const destination = resolve(root, `.cache/dsh-${policy.verifiedRuntime}-release`)
 await mkdir(destination, { recursive: true })
 for (const directory of selected.length ? selected : directories) {
   const manifest = JSON.parse(await readFile(resolve(root, directory, 'package.json'), 'utf8'))

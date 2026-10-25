@@ -1,13 +1,54 @@
 {
-  "runtime": "0.2.1-rc.3",
+  "verifiedRuntime": "0.2.1-rc.3",
+  "seriesUpperExclusive": "0.3.0-0",
   "plugins": {
-    "DeepSeekSecurity": ["0.2.0-rc.2", "0.2.1-alpha.2", "0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3"],
-    "DSHGit": ["0.2.1-alpha.2", "0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3"],
-    "DSHKey": ["0.2.0-rc.2", "0.2.1-alpha.2", "0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3"],
-    "RichThinking": ["0.2.0-rc.2", "0.2.1-alpha.2", "0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3"],
-    "MoonSeek": ["0.2.1-alpha.2", "0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3"],
-    "TokenMeter": ["0.2.0-rc.2", "0.2.1-alpha.2", "0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3"],
-    "DSHObserver": ["0.2.1-rc.2", "0.2.1-rc.3"],
-    "Qwen": ["0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3"]
+    "DeepSeekSecurity": {
+      "minimumVersion": "0.2.1-rc.1",
+      "legacyVersions": [
+        "0.2.0-rc.2",
+        "0.2.1-alpha.2"
+      ]
+    },
+    "DSHGit": {
+      "minimumVersion": "0.2.1-rc.1",
+      "legacyVersions": [
+        "0.2.1-alpha.2"
+      ]
+    },
+    "DSHKey": {
+      "minimumVersion": "0.2.1-rc.1",
+      "legacyVersions": [
+        "0.2.0-rc.2",
+        "0.2.1-alpha.2"
+      ]
+    },
+    "RichThinking": {
+      "minimumVersion": "0.2.1-rc.1",
+      "legacyVersions": [
+        "0.2.0-rc.2",
+        "0.2.1-alpha.2"
+      ]
+    },
+    "MoonSeek": {
+      "minimumVersion": "0.2.1-rc.1",
+      "legacyVersions": [
+        "0.2.1-alpha.2"
+      ]
+    },
+    "TokenMeter": {
+      "minimumVersion": "0.2.1-rc.1",
+      "legacyVersions": [
+        "0.2.0-rc.2",
+        "0.2.1-alpha.2"
+      ]
+    },
+    "DSHObserver": {
+      "minimumVersion": "0.2.1-rc.2",
+      "legacyVersions": []
+    },
+    "Qwen": {
+      "minimumVersion": "0.2.1-rc.1",
+      "legacyVersions": []
+    }
   }
 }

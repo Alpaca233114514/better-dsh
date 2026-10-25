@@ -31,7 +31,7 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 
 ## 装配到 DSH
 
-八个插件的 DSH **0.2.1-rc.3** 交付、兼容策略与验证见 [兼容说明](docs/dsh-0.2.1-rc.3.md)。TokenMeter 已提供原生安装包；BetterManager 已退役，旧动态安装方式仅供历史参考。
+八个插件按 **DSH 0.2.x 系列**兼容，后续 rc、正式版与补丁版无需逐个添加版本号；范围与验证见 [系列兼容说明](docs/dsh-series-compatibility.md)。TokenMeter 已提供原生安装包；BetterManager 已退役，旧动态安装方式仅供历史参考。
 
 插件、代理预设与技能在 DSH 里的装配方式不同，分开说明。
 
