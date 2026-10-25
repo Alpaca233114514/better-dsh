@@ -1,6 +1,6 @@
 {
   "name": "dsh-moonseek",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "MoonSeek: lunar appearance names and icons for DSH",
   "type": "module",
   "license": "Apache-2.0",
@@ -37,7 +37,7 @@
     "prepack": "npm run build"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh": "0.2.1-alpha.2 || 0.2.1-rc.1 || 0.2.1-rc.2"
+    "@deepseek-ai/dsh": "0.2.1-alpha.2 || 0.2.1-rc.1 || 0.2.1-rc.2 || 0.2.1-rc.3"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/dsh": {

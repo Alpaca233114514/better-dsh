@@ -1,0 +1,17 @@
+- insert:
+    - id: qwen
+      name: dsh-qwen
+      config:
+        enabled: true
+        route: qwen-flash
+        displayName: Qwen Flash
+        baseURL: https://dashscope.aliyuncs.com/compatible-mode/v1
+        apiKeyEnv: QWEN_API_KEY
+        models:
+          - id: qwen3.8-flash
+        defaultReasoningEffort: high
+        thinkingBudgets:
+          minimal: 1024
+          low: 4096
+          medium: 16384
+          high: 32768

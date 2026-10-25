@@ -1,0 +1,68 @@
+{
+  "ok": true,
+  "runtime": "0.2.1-rc.3",
+  "skippedBundles": [],
+  "autoReview": "preserved",
+  "results": [
+    {
+      "name": "@better-dsh/deepseek-security",
+      "version": "0.1.4",
+      "client": "factory-registered",
+      "host": "imported-with-official-resolution",
+      "cordis": "4.0.5",
+      "singleton": "desktop-owned"
+    },
+    {
+      "name": "dshgit",
+      "version": "0.1.6",
+      "client": "factory-registered",
+      "host": "imported-with-official-resolution",
+      "cordis": "4.0.5",
+      "singleton": "desktop-owned"
+    },
+    {
+      "name": "dshkey",
+      "version": "0.1.4",
+      "client": "factory-registered",
+      "host": "imported-with-official-resolution",
+      "schemastery": "3.18.5",
+      "singleton": "desktop-owned"
+    },
+    {
+      "name": "dsh-rich-thinking",
+      "version": "0.1.8",
+      "client": "factory-registered",
+      "host": "imported-with-official-resolution",
+      "schemastery": "3.18.5",
+      "singleton": "desktop-owned"
+    },
+    {
+      "name": "dsh-moonseek",
+      "version": "0.1.3",
+      "client": "factory-registered",
+      "host": "imported-with-official-resolution"
+    },
+    {
+      "name": "dsh-token-meter-dashboard",
+      "version": "0.2.3",
+      "client": "factory-registered",
+      "host": "imported-with-official-resolution",
+      "cordis": "4.0.5",
+      "singleton": "desktop-owned"
+    },
+    {
+      "name": "dsh-observer",
+      "version": "0.1.1",
+      "client": "not-provided",
+      "host": "imported-with-official-resolution"
+    },
+    {
+      "name": "dsh-qwen",
+      "version": "0.2.1",
+      "client": "not-provided",
+      "host": "imported-with-official-resolution",
+      "cordis": "4.0.5",
+      "singleton": "desktop-owned"
+    }
+  ]
+}

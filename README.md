@@ -10,12 +10,14 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 | 组件 | 说明 | 详情 |
 | --- | --- | --- |
 | [TokenMeter](TokenMeter/) | Token 计量插件：统计 token 使用量并以 GitHub 风格热力图展示 | [README](TokenMeter/README.md) |
+| [DSHObserver](DSHObserver/) | 逐次请求研究采集：上下文、输出速度、缓存、并发、重试及工具耗时，支持 CSV 导出和相关分析 | [README](DSHObserver/README.md) |
 | [BetterManager](BetterManager/) | 已退役：停止更新和安装，保留历史源码与数据 | [README](BetterManager/README.md) |
 | [DeepSeek Security](DeepSeekSecurity/) | 原生安全审计插件：通过 @ 引用和聊天需求调用，执行期间显示进度 | [README](DeepSeekSecurity/README.md) |
 | [RichThinking](RichThinking/) | 底部运行状态词轮播，保留原生鲸鱼、用时、推理折叠与正文 | [README](RichThinking/README.md) |
 | [MoonSeek](MoonSeek/) | 月面外观插件：月之亮面 / 月之暗面，统一原生卡片与月相图标 | [README](MoonSeek/README.md) |
-| [DSHKey](DSHKey/) | 原生快捷键与设置，支持 DSH 0.2.1-rc.2 | [README](DSHKey/README.md) |
-| [DSHGit](DSHGit/) | 原生 Git 面板，支持 DSH 0.2.1-rc.2 | [README](DSHGit/README.md) |
+| [Qwen](Qwen/) | Qwen 提供方：适配 DSH 0.2.1-rc.3，支持思考预算/强度、Maas 模型别名与工具回放 | [README](Qwen/README.md) |
+| [DSHKey](DSHKey/) | 原生快捷键与设置，支持 DSH 0.2.1-rc.3 | [README](DSHKey/README.md) |
+| [DSHGit](DSHGit/) | 原生 Git 面板，支持 DSH 0.2.1-rc.3 | [README](DSHGit/README.md) |
 | [Oi](Oi/) | 第三方收录：面向 Agent Skills 的 agent-native 语言（MIT License） | [README](Oi/README.md) |
 | [dsh-anchored-standard](dsh-anchored-standard/) | 第三方收录：双阶段 DSH 代理预设，首轮锚定 Minimal、晋升后按需解锁 Standard 工具（MIT License） | [README](dsh-anchored-standard/README.zh-CN.md) |
 
@@ -29,7 +31,7 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 
 ## 装配到 DSH
 
-六个原生插件的 DSH **0.2.1-rc.2** 交付与验证见 [兼容说明](docs/dsh-0.2.1-rc.2.md)。TokenMeter 已提供原生安装包；BetterManager 已退役，旧动态安装方式仅供历史参考。
+八个插件的 DSH **0.2.1-rc.3** 交付、兼容策略与验证见 [兼容说明](docs/dsh-0.2.1-rc.3.md)。TokenMeter 已提供原生安装包；BetterManager 已退役，旧动态安装方式仅供历史参考。
 
 插件、代理预设与技能在 DSH 里的装配方式不同，分开说明。
 
