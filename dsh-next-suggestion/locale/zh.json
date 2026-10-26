@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "预测消息（Next Suggestion）",
+    "description": "在对话栏里用灰字预测你下一条要发的消息，按 Tab 直接接受。"
+  }
+}

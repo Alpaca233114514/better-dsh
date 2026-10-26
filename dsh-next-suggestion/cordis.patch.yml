@@ -1,0 +1,9 @@
+# dsh-next-suggestion bundle patch
+#
+# Installed through the official CLI (`dsh plugin --profile <name> add <dir|npm spec>`),
+# the command reconciles `dsh.profile.bundles` against installed packages and, seeing
+# this declaration, appends `dsh-next-suggestion` to the bundle stack. Boot then merges
+# this patch (a single `insert` of the plugin row) into the loader tree.
+- insert:
+    - id: next-suggestion
+      name: 'dsh-next-suggestion'

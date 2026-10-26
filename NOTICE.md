@@ -110,7 +110,21 @@
 
 ## 更新第三方收录
 
-如需升级 `Oi/` 或 `dsh-anchored-standard/` 目录内容，请从上游仓库重新复制，
+如需升级 `Oi/`、`dsh-anchored-standard/` 或 `dsh-next-suggestion/` 目录内容，请从上游仓库重新复制，
 并同步更新本文件中对应的收录版本（commit hash）与日期。
 `dsh-anchored-standard/` 升级时请一并核对上游 [`NOTICE`](dsh-anchored-standard/NOTICE)
 中 DeepSeek Harness 派生内容的著作权声明是否变化。
+
+## 第三方收录：dsh-next-suggestion
+
+- **项目名称**：dsh-next-suggestion — DeepSeek Harness 下一条消息预测插件
+- **作者 / 上游维护者**：[Makonike](https://github.com/Makonike)
+- **来源仓库**：<https://github.com/Makonike/dsh-next-suggestion>
+- **收录版本**：`0.5.0`，`master` 分支 commit `0e6c466cf5ba5098cdd80778edc63180e3caa455`
+- **收录日期**：2026-10-26
+- **收录方式**：该提交的完整源码原样复制至 `dsh-next-suggestion/`，保留文档、测试、安装脚本及 lockfile，不含 `.git`；未修改上游文件
+- **许可证**：MIT License，完整原文见 [dsh-next-suggestion/LICENSE](dsh-next-suggestion/LICENSE)
+- **著作权**：Copyright (c) 2026 dsh-next-suggestion contributors
+
+该目录遵循上游 MIT 许可证，不适用本仓库原创内容的 Apache-2.0 许可。
+作者账户与许可证中的著作权署名分别保留；再次分发时须随附原始许可证。

@@ -20,6 +20,7 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 | [DSHGit](DSHGit/) | 原生 Git 面板，支持 DSH 0.2.1-rc.3 | [README](DSHGit/README.md) |
 | [Oi](Oi/) | 第三方收录：面向 Agent Skills 的 agent-native 语言（MIT License） | [README](Oi/README.md) |
 | [dsh-anchored-standard](dsh-anchored-standard/) | 第三方收录：双阶段 DSH 代理预设，首轮锚定 Minimal、晋升后按需解锁 Standard 工具（MIT License） | [README](dsh-anchored-standard/README.zh-CN.md) |
+| [dsh-next-suggestion](dsh-next-suggestion/) | 第三方收录：Makonike 的下一条消息预测插件，灰字提示与快捷键采纳（MIT License） | [README](dsh-next-suggestion/README.md) |
 
 ## 下载
 
@@ -31,7 +32,7 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 
 ## 装配到 DSH
 
-八个插件按 **DSH 0.2.x 系列**兼容，后续 rc、正式版与补丁版无需逐个添加版本号；范围与验证见 [系列兼容说明](docs/dsh-series-compatibility.md)。TokenMeter 已提供原生安装包；BetterManager 已退役，旧动态安装方式仅供历史参考。
+原有八个插件按 **DSH 0.2.x 系列**兼容，后续 rc、正式版与补丁版无需逐个添加版本号；范围与验证见 [系列兼容说明](docs/dsh-series-compatibility.md)。新增第三方插件 dsh-next-suggestion 的兼容声明与使用方法见下文独立说明。TokenMeter 已提供原生安装包；BetterManager 已退役，旧动态安装方式仅供历史参考。
 
 插件、代理预设与技能在 DSH 里的装配方式不同，分开说明。
 
@@ -207,6 +208,28 @@ Standard 工具（`web_search`、`subagent`、`workflow` 等）通过 `dev_tool_
   Copyright (c) 2026 xiaobright；Portions Copyright (c) 2026 DeepSeek）
 - **收录版本**：commit `0a38616c1b7ce4219b6d94d95c89f34a90741616`（上游基线；本仓库另含 DSH 0.2 兼容修改）
 
+## dsh-next-suggestion（第三方收录）
+
+[dsh-next-suggestion](dsh-next-suggestion/) 在助手回复结束、输入框为空且窗口处于前台时，
+显示下一条消息的灰字建议；Tab / → / Enter 将建议填入草稿，由用户确认发送，Esc 忽略。
+
+- **作者 / 上游维护者**：[Makonike](https://github.com/Makonike)
+- **来源**：[Makonike/dsh-next-suggestion](https://github.com/Makonike/dsh-next-suggestion)
+- **版本**：`0.5.0`，`master` 分支 commit `0e6c466cf5ba5098cdd80778edc63180e3caa455`，原样收录
+- **许可证**：[MIT License](dsh-next-suggestion/LICENSE)，Copyright (c) 2026 dsh-next-suggestion contributors
+- **兼容性**：上游声明 Node.js ≥20、DSH `>=0.2.1-rc.2 <0.3.0-0`；本仓库尚未验证真实 DSH 运行效果
+
+使用目标 DSH 运行时的原生插件管理命令安装，将路径替换为实际绝对路径：
+
+```powershell
+dsh plugin --profile web add "file:C:/path/to/better-dsh/dsh-next-suggestion" --ignore-scripts
+```
+
+桌面安装使用桌面版附带的 `dsh` 命令和 `desktop` profile。安装后重启 DSH，
+在「设置 → 通用设置」启用「显示预测消息」。预测调用会话或 profile 配置的模型并产生相应费用。
+详细配置、上游 Bash 安装方式见 [组件 README](dsh-next-suggestion/README.md)。
+更新收录时同步维护 [NOTICE.md](NOTICE.md) 中的版本及著作权信息。
+
 ## 验证
 
 ```powershell
@@ -219,6 +242,7 @@ node dsh-anchored-standard/scripts/sync-modes.mjs --check
 
 ## 著作权与许可
 
+- 第三方收录的 dsh-next-suggestion 由 Makonike 维护，遵循其自身 [MIT License](dsh-next-suggestion/LICENSE)，完整来源与著作权声明见 [NOTICE.md](NOTICE.md)
 - 本仓库原创插件（TokenMeter、BetterManager、RichThinking、MoonSeek）遵循 [LICENSE](LICENSE)
   （Apache License 2.0）
 - MoonSeek 的原生外观布局参考保留 DeepSeek MIT 声明，见 [MoonSeek/NOTICE.md](MoonSeek/NOTICE.md)
