@@ -9,6 +9,7 @@ await mkdir('.test-build', { recursive: true })
 await build({ entryPoints: ['src/launcher.tsx'], outfile: '.test-build/launcher.mjs', bundle: true, platform: 'node', format: 'esm', jsx: 'automatic', external: ['react', 'react/*', 'react-dom', 'react-dom/*', 'zod'] })
 const dom = new JSDOM('<!doctype html><body><main data-phase="active"><div><header><div id="entry"></div></header></div><div id="body-slot"></div></main></body>', { url: 'http://localhost' })
 globalThis.window = dom.window; globalThis.document = dom.window.document
+Object.defineProperty(document, 'hidden', { value: false, configurable: true })
 globalThis.HTMLElement = dom.window.HTMLElement; globalThis.IS_REACT_ACT_ENVIRONMENT = true
 globalThis.MutationObserver = dom.window.MutationObserver
 let resize, disconnected = false

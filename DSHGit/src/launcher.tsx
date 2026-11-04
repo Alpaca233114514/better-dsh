@@ -1,3 +1,4 @@
+import { followChanges } from './refresh.ts'
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { unwrap, type GitRemote, type GitState } from './contracts.ts'
@@ -12,6 +13,10 @@ export function GitLauncher({ sessionId, remote }: { sessionId: string; remote: 
   const [state, setState] = useState<GitState>(), [error, setError] = useState('')
   const trigger = useRef<HTMLButtonElement>(null), changes = useRef<HTMLButtonElement>(null)
   const dialog = useRef<HTMLDialogElement>(null), id = useId()
+  // The host may pass a fresh service proxy on every parent render. Polling is
+  // keyed to the session, not to the proxy's identity.
+  const remoteRef = useRef(remote)
+  useEffect(() => { remoteRef.current = remote }, [remote])
   useEffect(() => {
     const header = trigger.current?.closest('header')
     const root = trigger.current?.closest<HTMLElement>('[data-phase]')
@@ -59,15 +64,14 @@ export function GitLauncher({ sessionId, remote }: { sessionId: string; remote: 
       if (pending) return
       pending = true
       try {
-        const result = unwrap(await remote.run({ sessionId, action: 'state' }))
+        const result = unwrap(await remoteRef.current.run({ sessionId, action: 'state' }))
         if (alive) { setState(result.state); setError('') }
       } catch (e) { if (alive) setError((e as Error).message) }
       finally { pending = false }
     }
-    void load()
-    const timer = setInterval(() => { if (!document.hidden) void load() }, 5000)
-    return () => { alive = false; clearInterval(timer) }
-  }, [remote, sessionId, visible, detail])
+    const stop = followChanges(() => remoteRef.current, sessionId, load, setError)
+    return () => { alive = false; stop() }
+  }, [sessionId, visible, detail])
   useEffect(() => {
     if (detail) dialog.current?.showModal()
     else dialog.current?.close()

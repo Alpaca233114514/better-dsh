@@ -9,6 +9,7 @@ await build({ entryPoints: ['src/panel.tsx'], outfile: '.test-build/panel.mjs', 
 const { GitPanel } = await import('../.test-build/panel.mjs')
 const dom = new JSDOM('<!doctype html><body><div id="root"></div></body>', { url: 'http://localhost' })
 globalThis.window = dom.window; globalThis.document = dom.window.document
+Object.defineProperty(document, 'hidden', { value: false, configurable: true })
 globalThis.HTMLElement = dom.window.HTMLElement; globalThis.IS_REACT_ACT_ENVIRONMENT = true
 const { createRoot } = await import('react-dom/client')
 const root = createRoot(document.getElementById('root'))

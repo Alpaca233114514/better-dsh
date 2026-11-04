@@ -19749,6 +19749,7 @@ function date4(params) {
 var requestSchema = external_exports.object({
   sessionId: external_exports.string().min(1),
   action: external_exports.enum(["state", "diff", "stage", "unstage", "commit", "commitPush", "push", "branches", "switch", "createBranch", "prInfo", "createPR"]),
+  refresh: external_exports.boolean().optional(),
   path: external_exports.string().optional(),
   staged: external_exports.boolean().optional(),
   message: external_exports.string().max(1e4).optional(),
@@ -19782,6 +19783,8 @@ var resultSchema = external_exports.object({
   pr: prSchema.nullable().optional(),
   notice: external_exports.string().optional()
 }).strict();
+var changeSchema = external_exports.object({ changed: external_exports.literal(true) }).strict();
+var sessionSchema = external_exports.string().min(1);
 var unwrap = (result) => {
   if (!result.ok) throw new Error(typeof result.error === "string" ? result.error : result.error.message);
   return result.value;
@@ -19798,8 +19801,96 @@ var contribution = {
     invocation: { kind: "direct" },
     parameters: [{ name: "request", wire: "request", source: "json", codec: { mode: "strict", typeSymbol: "GitRequest", create: () => requestSchema } }],
     result: { mode: "strict", typeSymbol: "GitResult", create: () => resultSchema }
+  }, {
+    id: "dshgit#changes",
+    service: "dshgit",
+    namespace: "dshgit",
+    method: "changes",
+    mode: "stream",
+    invocation: { kind: "direct" },
+    parameters: [{ name: "sessionId", wire: "sessionId", source: "json", codec: { mode: "strict", typeSymbol: "GitSession", create: () => sessionSchema } }],
+    cancellation: { parameter: "signal" },
+    result: { mode: "strict", typeSymbol: "GitChange", create: () => changeSchema }
   }]
 };
+
+// src/refresh.ts
+function followChanges(remote, sessionId, load, error62) {
+  let stopped = false, running = false, dirty = false, timer;
+  let controller, retry = 1e3;
+  const schedule = (delay = 300) => {
+    dirty = true;
+    if (stopped || document.hidden || running || timer) return;
+    timer = setTimeout(() => {
+      timer = void 0;
+      void flush();
+    }, delay);
+  };
+  const flush = async () => {
+    if (stopped || document.hidden) return;
+    if (running) {
+      dirty = true;
+      return;
+    }
+    dirty = false;
+    running = true;
+    try {
+      await load();
+    } finally {
+      running = false;
+      if (dirty) schedule();
+    }
+  };
+  const connect = async () => {
+    if (stopped || document.hidden) return;
+    const current = new AbortController();
+    controller = current;
+    try {
+      const changes = remote().changes;
+      if (!changes) {
+        await flush();
+        return;
+      }
+      let first = true;
+      for await (const _frame of changes(sessionId, current.signal)) {
+        if (current.signal.aborted || stopped) break;
+        retry = 1e3;
+        if (first) {
+          first = false;
+          await flush();
+        } else schedule();
+      }
+      if (!current.signal.aborted) throw new Error("\u6587\u4EF6\u76D1\u542C\u8FDE\u63A5\u5DF2\u65AD\u5F00\uFF0C\u6B63\u5728\u91CD\u8FDE\u3002");
+    } catch (e) {
+      if (!stopped && !current.signal.aborted) {
+        error62(e.message);
+        reconnect = setTimeout(() => {
+          reconnect = void 0;
+          void connect();
+        }, retry);
+        retry = Math.min(retry * 2, 3e4);
+      }
+    }
+  };
+  let reconnect;
+  const visibility = () => {
+    controller?.abort();
+    clearTimeout(reconnect);
+    reconnect = void 0;
+    clearTimeout(timer);
+    timer = void 0;
+    if (!document.hidden) void connect();
+  };
+  document.addEventListener("visibilitychange", visibility);
+  void connect();
+  return () => {
+    stopped = true;
+    controller?.abort();
+    clearTimeout(timer);
+    clearTimeout(reconnect);
+    document.removeEventListener("visibilitychange", visibility);
+  };
+}
 
 // src/launcher.tsx
 var import_react2 = require("react");
@@ -19852,11 +19943,15 @@ function GitPanel({ sessionId, remote, onClose }) {
   const alive = (0, import_react.useRef)(true), operation = (0, import_react.useRef)(false), generation = (0, import_react.useRef)(0), diffGeneration = (0, import_react.useRef)(0);
   const prHeading = (0, import_react.useRef)(null);
   const commitTrigger = (0, import_react.useRef)(null), messageInput = (0, import_react.useRef)(null);
-  const call = (0, import_react.useCallback)(async (action, extra = {}) => unwrap(await remote.run({ ...extra, sessionId, action })), [remote, sessionId]);
-  const load = (0, import_react.useCallback)(async () => {
+  const remoteRef = (0, import_react.useRef)(remote);
+  (0, import_react.useEffect)(() => {
+    remoteRef.current = remote;
+  }, [remote]);
+  const call = (0, import_react.useCallback)(async (action, extra = {}) => unwrap(await remoteRef.current.run({ ...extra, sessionId, action })), [sessionId]);
+  const load = (0, import_react.useCallback)(async (refresh = false) => {
     const version2 = generation.current;
     try {
-      const result = await call("state");
+      const result = await call("state", refresh ? { refresh: true } : {});
       if (alive.current && !operation.current && version2 === generation.current) {
         setState(result.state);
         setLoadError("");
@@ -19880,18 +19975,17 @@ function GitPanel({ sessionId, remote, onClose }) {
   }, [call]);
   (0, import_react.useEffect)(() => {
     alive.current = true;
-    void load();
     void loadPR();
     void call("branches").then((result) => {
       if (alive.current) setBranches(result.branches ?? []);
     }).catch(() => {
     });
-    const timer = setInterval(() => {
-      if (!document.hidden && !operation.current) void load();
-    }, 5e3);
+    const stop = followChanges(() => remoteRef.current, sessionId, async () => {
+      if (!operation.current) await load();
+    }, setLoadError);
     return () => {
       alive.current = false;
-      clearInterval(timer);
+      stop();
       generation.current++;
       diffGeneration.current++;
     };
@@ -19992,7 +20086,7 @@ function GitPanel({ sessionId, remote, onClose }) {
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-tools", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { title: "\u5237\u65B0", "aria-label": "\u5237\u65B0 Git \u72B6\u6001", disabled: !!busy, onClick: () => {
-          void load();
+          void load(true);
           void loadPR();
         }, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "refresh" }) }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { "aria-label": "\u5173\u95ED DSHGit", onClick: onClose, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "close" }) })
@@ -20204,6 +20298,10 @@ function GitLauncher({ sessionId, remote }) {
   const [state, setState] = (0, import_react2.useState)(), [error62, setError] = (0, import_react2.useState)("");
   const trigger = (0, import_react2.useRef)(null), changes = (0, import_react2.useRef)(null);
   const dialog = (0, import_react2.useRef)(null), id = (0, import_react2.useId)();
+  const remoteRef = (0, import_react2.useRef)(remote);
+  (0, import_react2.useEffect)(() => {
+    remoteRef.current = remote;
+  }, [remote]);
   (0, import_react2.useEffect)(() => {
     const header = trigger.current?.closest("header");
     const root = trigger.current?.closest("[data-phase]");
@@ -20255,7 +20353,7 @@ function GitLauncher({ sessionId, remote }) {
       if (pending) return;
       pending = true;
       try {
-        const result = unwrap(await remote.run({ sessionId, action: "state" }));
+        const result = unwrap(await remoteRef.current.run({ sessionId, action: "state" }));
         if (alive) {
           setState(result.state);
           setError("");
@@ -20266,15 +20364,12 @@ function GitLauncher({ sessionId, remote }) {
         pending = false;
       }
     };
-    void load();
-    const timer = setInterval(() => {
-      if (!document.hidden) void load();
-    }, 5e3);
+    const stop = followChanges(() => remoteRef.current, sessionId, load, setError);
     return () => {
       alive = false;
-      clearInterval(timer);
+      stop();
     };
-  }, [remote, sessionId, visible, detail]);
+  }, [sessionId, visible, detail]);
   (0, import_react2.useEffect)(() => {
     if (detail) dialog.current?.showModal();
     else dialog.current?.close();
@@ -20355,8 +20450,12 @@ async function apply(ctx) {
     return () => style.remove();
   });
   ctx.inject(["remote.dshgit"], (scope) => {
+    const remote = {
+      run: (request) => scope.remote.dshgit.run(request),
+      changes: (sessionId, signal) => scope.remote.dshgit.changes(sessionId, signal)
+    };
     function Entry({ sessionId }) {
-      return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(GitLauncher, { sessionId, remote: scope.remote.dshgit }, sessionId);
+      return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(GitLauncher, { sessionId, remote }, sessionId);
     }
     scope.slots.inject("conversation.session.header.utilities", () => scope.slots.register({
       name: "conversation.session.header.utilities",

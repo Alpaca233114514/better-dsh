@@ -1,0 +1,61 @@
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
+  color:var(--dsw-alias-label-primary);--accent:var(--dsw-static-deepseek-500);--muted:var(--dsw-alias-label-secondary);
+  --border:var(--dsw-alias-border-l2)}
+body[data-ds-dark-theme]{--accent:var(--dsw-static-deepseek-400)}
+button,a,input,textarea{-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.symbols{position:absolute;width:0;height:0}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+[hidden]{display:none!important}
+
+header{position:fixed;right:20px;top:16px;height:auto;padding:0;display:flex;align-items:center;justify-content:space-between}
+.wordmark,.demo-badge,.intro,footer,.under-composer>span:first-child{display:none}
+.preview-tools{display:flex;align-items:center;gap:0}
+.icon-button{width:32px;height:32px;display:grid;place-items:center;border-radius:8px;color:var(--muted)}
+.icon-button:hover{background:var(--dsw-alias-bg-overlay);color:var(--dsw-alias-label-primary)}
+
+main{min-height:100vh;display:grid;place-items:center}
+.workspace{width:min(740px,calc(100% - 40px));margin:150px auto 0}
+.composer{padding:22px 24px 16px;border:1px solid var(--border);border-radius:28px;
+  background:var(--dsw-specific-input-major);box-shadow:0 4px 24px #00000008}
+textarea{resize:none;width:100%;background:none;border:0;color:inherit;font:inherit;min-height:70px;padding:0 2px}
+textarea::placeholder{color:var(--dsw-alias-label-tertiary)}
+.toolbar{display:flex;align-items:center;gap:12px;min-height:36px}
+.attachment{display:grid;place-items:center;color:var(--muted);width:28px}
+.agent{color:var(--muted);font-size:13px}
+.divider{height:16px;width:1px;background:var(--border)}
+.anchor{position:relative}
+.rs-trigger-model{color:var(--dsw-alias-label-secondary)}
+.rs-models button span{font-size:11px;color:var(--dsw-alias-label-tertiary)}
+.send{margin-left:auto;border-radius:50%;width:32px;height:32px;display:grid;place-items:center;
+  background:var(--dsw-alias-bg-overlay);color:var(--muted)}
+.under-composer{display:flex;justify-content:space-between;gap:10px;margin:12px 8px;
+  color:var(--dsw-alias-label-tertiary);font-size:11px;min-height:20px}
+#feedback{color:var(--accent)}
+footer{text-align:center;margin:70px 0 30px;font-size:11px;color:var(--dsw-alias-label-tertiary)}
+footer span{margin:0 12px;opacity:.5}
+
+/* Demo-only placement: the plugin portals the panel to <body> and places it
+   from the trigger rect; the demo does the same with fixed coordinates so a
+   changing level label never drags the panel sideways. */
+.anchor .rs-panel{position:fixed;left:0;top:0;transform-origin:50% 100%;visibility:hidden}
+.anchor .rs-panel.rs-placed{visibility:visible}
+
+/* 参考图比例与留白 / Reference proportions and spacing. */
+body{background:#191919;--accent:#50b455;--muted:#aaa;--border:#454545}
+body[data-ds-dark-theme]{--accent:#50b455}
+.composer{background:#303030;border-color:#454545}
+body:not([data-ds-dark-theme]){background:#f7f7f7;--accent:#50b455;--muted:#737373;--border:#ddd}
+body:not([data-ds-dark-theme]) .composer{background:#fff;border-color:#ddd}
+
+@media(max-width:600px){
+  .workspace{width:calc(100% - 24px);margin-top:120px}
+  .composer{padding:18px 12px 12px}
+  .toolbar{gap:5px}
+  .anchor .rs-panel{width:min(344px,calc(100vw - 16px))}
+  .under-composer{margin:10px}
+  footer{margin-top:40px}
+}

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DSH · 推理滑条 Demo</title>
+  <link rel="stylesheet" href="vendor/dsh-theme.css">
+  <link rel="stylesheet" href="../src/style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-ds-dark-theme>
+  <svg class="symbols" aria-hidden="true"><defs>
+    <symbol id="reset-icon" viewBox="0 0 24 24"><path d="M3 10a9 9 0 1 1 2 8M3 4v6h6"/></symbol>
+    <symbol id="up" viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1 1m12 12 1 1M5 19l1-1M18 6l1-1"/></symbol>
+  </defs></svg>
+  <header><a class="wordmark" href="./index.html">deepseek <span>HARNESS</span></a><div class="preview-tools"><span class="demo-badge">交互 Demo</span><button class="icon-button" id="theme" aria-label="切换为浅色主题" title="切换主题"><svg><use href="#sun"/></svg></button></div></header>
+  <main>
+    <div class="intro"><div class="eyebrow">DSH / REASONING SLIDER</div><h1>让思考，恰到好处。</h1><p>轻轻一滑，调整这一轮的推理强度。</p></div>
+    <section class="workspace" aria-label="输入框预览">
+      <div class="composer">
+        <label class="sr-only" for="prompt">消息草稿</label><textarea id="prompt" placeholder="有什么可以帮你？" rows="2"></textarea>
+        <div class="toolbar"><span class="attachment" aria-hidden="true"><svg><use href="#plus"/></svg></span><span class="agent">Standard</span><span class="divider"></span>
+          <div class="anchor">
+            <button id="trigger" class="rs-trigger" aria-expanded="true" aria-controls="panel"><span id="trigger-model" class="rs-trigger-model">GPT-6 Astra</span><span id="trigger-effort" class="rs-trigger-level">中</span><span class="rs-trigger-chev" aria-hidden="true">⌄</span></button>
+            <section id="panel" class="rs-panel rs-in" aria-label="推理设置">
+              <button id="reset" class="rs-reset" aria-label="重置为默认设置" title="重置为默认设置"><svg><use href="#reset-icon"/></svg></button>
+              <span class="rs-level" aria-hidden="true"><span id="level" class="rs-level-text">中</span></span>
+              <button id="model-toggle" class="rs-model" aria-expanded="false" aria-controls="models"><span id="model-name" class="rs-model-name">GPT-6 Astra</span><span class="rs-chev" aria-hidden="true">›</span></button>
+              <div id="slider" class="rs-slider" role="slider" tabindex="0" aria-label="推理强度" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="5" aria-valuenow="2" aria-valuetext="中" style="--v:.4">
+                <span class="rs-track" aria-hidden="true"><span class="rs-fill"></span><span id="ticks" class="rs-ticks"></span></span>
+                <span class="rs-thumb" aria-hidden="true"></span>
+              </div>
+              <div id="models" class="rs-models" hidden aria-label="选择演示模型">
+                <div class="rs-group"><small>演示模型</small>
+                  <button data-model="astra">GPT-6 Astra<span>六档</span></button>
+                  <button data-model="sparse">自定义推理模型<span>三档</span></button>
+                  <button data-model="plain">普通对话模型<span>无推理档位</span></button>
+                </div>
+              </div>
+            </section>
+          </div>
+          <span class="send" aria-hidden="true"><svg><use href="#up"/></svg></span>
+        </div>
+      </div>
+      <div class="under-composer"><span>拖动或点击选择 · 点击 ↶ 恢复默认</span><span id="feedback" role="status" aria-live="polite"></span></div>
+    </section>
+    <footer>推理滑条 <span> / </span> 外观与交互预览</footer>
+  </main>
+  <script src="demo.js"></script>
+</body>
+</html>

@@ -4,7 +4,7 @@ import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
 export const requestSchema = z.object({
   sessionId: z.string().min(1),
   action: z.enum(['state', 'diff', 'stage', 'unstage', 'commit', 'commitPush', 'push', 'branches', 'switch', 'createBranch', 'prInfo', 'createPR']),
-  path: z.string().optional(), staged: z.boolean().optional(), message: z.string().max(10000).optional(),
+  refresh: z.boolean().optional(), path: z.string().optional(), staged: z.boolean().optional(), message: z.string().max(10000).optional(),
   includeUnstaged: z.boolean().optional(), branch: z.string().optional(),
   title: z.string().max(256).optional(), body: z.string().max(60000).optional(),
   base: z.string().optional(), draft: z.boolean().optional(),
@@ -25,7 +25,12 @@ export const resultSchema = z.object({
   pr: prSchema.nullable().optional(), notice: z.string().optional(),
 }).strict()
 export type Result = z.infer<typeof resultSchema>
-export interface GitRemote { run(request: Request): Promise<RemoteResult<Result>> }
+export const changeSchema = z.object({ changed: z.literal(true) }).strict()
+export const sessionSchema = z.string().min(1)
+export interface GitRemote {
+  run(request: Request): Promise<RemoteResult<Result>>
+  changes?(sessionId: string, signal: AbortSignal): AsyncIterable<{ changed: true }>
+}
 export const protectedBranch = (branch: string) => /^(main|master)$/i.test(branch)
 export const unwrap = <T,>(result: RemoteResult<T>): T => {
   if (!result.ok) throw new Error(typeof result.error === 'string' ? result.error : result.error.message)
