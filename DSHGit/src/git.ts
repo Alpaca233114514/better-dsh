@@ -14,18 +14,27 @@ export function parseStatus(raw: string): FileChange[] {
   }
   return files
 }
-export function numstat(raw: string) {
-  // With -z, renamed paths follow an empty name as two extra NUL records.
-  let additions = 0, deletions = 0
-  const chunks = raw.split('\0')
+export type LineStats = { additions: number; deletions: number }
+export function fileNumstat(raw: string): Map<string, LineStats> {
+  const result = new Map<string, LineStats>(), chunks = raw.split('\0')
   for (let i = 0; i < chunks.length; i++) {
     const match = /^(\d+|-)\t(\d+|-)\t(.*)$/s.exec(chunks[i])
     if (!match) continue
-    additions += Number(match[1]) || 0; deletions += Number(match[2]) || 0
-    if (!match[3]) i += 2
+    let path = match[3]
+    if (!path) { i++; path = chunks[++i] }
+    result.set(path, { additions: Number(match[1]) || 0, deletions: Number(match[2]) || 0 })
   }
+  return result
+}
+export function numstat(raw: string): LineStats {
+  return sumStats(fileNumstat(raw))
+}
+export function sumStats(stats: Map<string, LineStats>): LineStats {
+  let additions = 0, deletions = 0
+  for (const value of stats.values()) { additions += value.additions; deletions += value.deletions }
   return { additions, deletions }
 }
+export type GitSnapshot = { state: GitState; stats: Map<string, LineStats> }
 const required = (value: string | undefined, label: string) => {
   if (!value?.trim() || value.includes('\0')) throw new Error(`请填写${label}。`)
   return value.trim()
@@ -33,6 +42,7 @@ const required = (value: string | undefined, label: string) => {
 
 export class GitRepository {
   readonly run: Runner
+  lastSnapshot?: GitSnapshot
   private generate?: DescriptionGenerator
   constructor(run: Runner, generate?: DescriptionGenerator) { this.run = run; this.generate = generate }
   private async describe(input: DescriptionInput) {
@@ -42,23 +52,48 @@ export class GitRepository {
   private git(cwd: string, args: string[], input?: string, allowed?: number[]) {
     return this.run('git', ['--no-pager', '-c', 'color.ui=false', ...args], cwd, input, allowed)
   }
-  async state(cwd: string): Promise<GitState> {
-    const root = (await this.git(cwd, ['rev-parse', '--show-toplevel'])).trim()
+  async scan(root: string, paths?: string[]) {
+    const scope = paths ? ['--', ...paths] : []
+    const files = parseStatus(await this.git(root, ['status', '--porcelain=v1', '-z', '--untracked-files=all', ...scope]))
+    const stats = fileNumstat(await this.git(root, ['diff', '--cached', '--numstat', '-z', '--no-ext-diff', '--no-textconv', ...scope]))
+    for (const [path, value] of fileNumstat(await this.git(root, ['diff', '--numstat', '-z', '--no-ext-diff', '--no-textconv', ...scope]))) {
+      const staged = stats.get(path)
+      stats.set(path, { additions: value.additions + (staged?.additions ?? 0), deletions: value.deletions + (staged?.deletions ?? 0) })
+    }
+    return { files, stats }
+  }
+  async state(cwd: string, resolved = false): Promise<GitState> {
+    const root = resolved ? cwd : (await this.git(cwd, ['rev-parse', '--show-toplevel'])).trim()
     const branch = (await this.git(root, ['symbolic-ref', '--quiet', '--short', 'HEAD'], undefined, [0, 1])).trim()
-    const raw = await this.git(root, ['status', '--porcelain=v1', '-z', '--untracked-files=all'])
     const upstream = (await this.git(root, ['rev-parse', '--verify', '--quiet', '--abbrev-ref', '--symbolic-full-name', '@{upstream}'], undefined, [0, 1, 128])).trim()
     let ahead = 0, behind = 0
     if (upstream) [ahead, behind] = (await this.git(root, ['rev-list', '--left-right', '--count', 'HEAD...@{upstream}'])).trim().split(/\s+/).map(Number)
-    const staged = numstat(await this.git(root, ['diff', '--cached', '--numstat', '-z', '--no-ext-diff', '--no-textconv']))
-    const working = numstat(await this.git(root, ['diff', '--numstat', '-z', '--no-ext-diff', '--no-textconv']))
-    return { root, name: basename(root), branch, upstream, ahead, behind, files: parseStatus(raw),
-      additions: staged.additions + working.additions, deletions: staged.deletions + working.deletions,
-      protected: protectedBranch(branch) }
+    const { files, stats } = await this.scan(root)
+    const state = { root, name: basename(root), branch, upstream, ahead, behind, files,
+      ...sumStats(stats), protected: protectedBranch(branch) }
+    this.lastSnapshot = { state, stats }
+    return state
   }
-  async execute(cwd: string, request: Request): Promise<Result> {
-    const state = await this.state(cwd), root = state.root
+  async incremental(snapshot: GitSnapshot, paths: string[]): Promise<GitSnapshot> {
+    const key = (path: string) => process.platform === 'win32' ? path.toLowerCase() : path
+    const affected = (path: string) => paths.some(prefix => key(path) === key(prefix) || key(path).startsWith(key(prefix) + '/'))
+    // Rename pairing can cross the path boundary; 重命名涉及路径外配对时全量校正。
+    if (snapshot.state.files.some(file => file.original && (affected(file.path) || affected(file.original)))) {
+      await this.state(snapshot.state.root, true); return this.lastSnapshot!
+    }
+    const next = await this.scan(snapshot.state.root, paths)
+    if (next.files.some(file => file.original)) {
+      await this.state(snapshot.state.root, true); return this.lastSnapshot!
+    }
+    const stats = new Map([...snapshot.stats].filter(([path]) => !affected(path)))
+    for (const [path, value] of next.stats) stats.set(path, value)
+    const files = [...snapshot.state.files.filter(file => !affected(file.path)), ...next.files].sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0)
+    return this.lastSnapshot = { state: { ...snapshot.state, files, ...sumStats(stats) }, stats }
+  }
+  async execute(cwd: string, request: Request, resolved = false, initialState?: GitState): Promise<Result> {
+    if (request.action === 'branches') return { branches: (await this.git(cwd, ['for-each-ref', '--format=%(refname:short)', 'refs/heads/'])).trim().split('\n').filter(Boolean) }
+    const state = initialState ?? await this.state(cwd, resolved), root = state.root
     if (request.action === 'state') return { state }
-    if (request.action === 'branches') return { branches: (await this.git(root, ['for-each-ref', '--format=%(refname:short)', 'refs/heads/'])).trim().split('\n').filter(Boolean) }
     if (request.action === 'diff' || request.action === 'stage' || request.action === 'unstage') {
       const file = state.files.find(f => f.path === request.path)
       if (!file) throw new Error('文件状态已变化，请刷新后重试。')
@@ -72,14 +107,14 @@ export class GitRepository {
         const head = (await this.git(root, ['rev-parse', '--verify', '--quiet', 'HEAD'], undefined, [0, 1, 128])).trim()
         await this.git(root, head ? ['restore', '--staged', '--', ...paths] : ['rm', '--cached', '--', ...paths])
       }
-      return { state: await this.state(root) }
+      return { state: await this.state(root, true) }
     }
     if (request.action === 'switch' || request.action === 'createBranch') {
       const branch = required(request.branch, '分支名称')
       if (branch.startsWith('-')) throw new Error('分支名称不能以 - 开头。')
       await this.git(root, ['check-ref-format', '--branch', branch])
       await this.git(root, ['switch', ...(request.action === 'createBranch' ? ['-c'] : []), branch])
-      return { state: await this.state(root), notice: `已切换到 ${branch}` }
+      return { state: await this.state(root, true), notice: `已切换到 ${branch}` }
     }
     if (!state.branch) throw new Error('当前为 detached HEAD，请先创建或切换到功能分支。')
     if (['commit', 'commitPush', 'push', 'createPR'].includes(request.action) && state.protected) throw new Error('main / master 为保护分支，请先创建功能分支。')
@@ -95,21 +130,21 @@ export class GitRepository {
         const diff = await this.git(root, ['diff', '--cached', '--no-ext-diff', '--no-textconv', '--unified=3'])
         const summary = await this.git(root, ['diff', '--cached', '--stat', '--no-ext-diff', '--no-textconv'])
         message = required((await this.describe({ kind: 'commit', branch: state.branch, diff, summary })).message, '模型生成的提交说明')
-        const current = await this.state(root)
+        const current = await this.state(root, true)
         if (current.branch !== state.branch || tree !== (await this.git(root, ['write-tree'])).trim()
           || head !== (await this.git(root, ['rev-parse', '--verify', '--quiet', 'HEAD'], undefined, [0, 1, 128])).trim()) {
           throw new Error('生成期间分支或暂存内容已变化，请重新提交。')
         }
       }
       await this.git(root, ['commit', '--file=-'], message)
-      if (request.action === 'commit') return { state: await this.state(root), notice: '提交成功' }
+      if (request.action === 'commit') return { state: await this.state(root, true), notice: '提交成功' }
       try { await this.push(root, state.branch) }
-      catch (error) { return { state: await this.state(root), notice: `提交已成功，推送失败：${(error as Error).message}。可直接重试“推送”。` } }
-      return { state: await this.state(root), notice: '提交并推送成功' }
+      catch (error) { return { state: await this.state(root, true), notice: `提交已成功，推送失败：${(error as Error).message}。可直接重试“推送”。` } }
+      return { state: await this.state(root, true), notice: '提交并推送成功' }
     }
     if (request.action === 'push') {
       await this.push(root, state.branch)
-      return { state: await this.state(root), notice: '推送成功' }
+      return { state: await this.state(root, true), notice: '推送成功' }
     }
     if (request.action === 'prInfo' || request.action === 'createPR') {
       const origin = (await this.git(root, ['remote', 'get-url', 'origin'])).trim()

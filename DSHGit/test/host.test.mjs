@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, mkdtemp } from 'node:fs/promises'
 import { build } from 'esbuild'
 import { Context } from '@deepseek-ai/cordis'
 import { remoteMethods } from '@deepseek-ai/dsh-typert-protocol'
@@ -8,7 +8,11 @@ import { TypertGatewayService } from '@deepseek-ai/dsh-api-gateway'
 await mkdir('.test-build', { recursive: true })
 await build({ entryPoints: ['src/host.ts'], outfile: '.test-build/host.mjs', bundle: true, platform: 'node', format: 'esm', target: 'es2022', external: ['@deepseek-ai/*', 'zod'] })
 const plugin = await import('../.test-build/host.mjs')
-async function bench(mode = 'workspace-write', deny = false, host = plugin) {
+async function bench(mode = 'workspace-write', deny = false, host = plugin, warm = false) {
+  const root = (await mkdtemp('../.cache/dshgit-host-')).replaceAll('\\', '/')
+  const { resolve } = await import('node:path')
+  const workspace = resolve(root).replaceAll('\\', '/')
+  await mkdir(workspace + '/.git')
   const ctx = new Context(), spawns = [], wrapped = [], descriptors = []
   ctx.provide('typert', {
     remotes: { register: contribution => descriptors.push(contribution) },
@@ -17,10 +21,10 @@ async function bench(mode = 'workspace-write', deny = false, host = plugin) {
     local: { get: () => undefined, hasSeen: () => false },
     lookups: { definitions: () => [] },
   })
-  ctx.provide('sessions', { get: () => ({ id: 'test', header: { cwd: '/workspace' } }) })
+  ctx.provide('sessions', { list: () => warm ? ['test', 'second'].map(id => ({ id, header: { cwd: workspace } })) : [], get: id => ({ id, header: { cwd: workspace } }) })
   ctx.provide('llm', { stream() { throw new Error('Unexpected model call') } })
   ctx.provide('sessionProjections', { snapshot: () => ({ values: {} }) })
-  ctx.provide('sandboxPolicy', { resolve: () => ({ mode, workspaceRoot: '/workspace', sessionId: 'test' }) })
+  ctx.provide('sandboxPolicy', { resolve: ({ session }) => ({ mode, workspaceRoot: workspace, sessionId: session.id }) })
   ctx.provide('sandbox', { async confine(argv, policy) {
     wrapped.push({ argv, policy })
     if (deny) throw new Error('sandbox denied')
@@ -32,7 +36,7 @@ async function bench(mode = 'workspace-write', deny = false, host = plugin) {
       spawns.push(spec)
       const args = spec.argv
       let text = ''
-      if (args.includes('--show-toplevel')) text = '/workspace\n'
+      if (args.includes('--show-toplevel')) text = args.includes('--git-common-dir') ? workspace + '\n' + workspace + '/.git\n' + workspace + '/.git\n' : workspace + '\n'
       if (args.includes('symbolic-ref')) text = 'codex/test\n'
       return { done: Promise.resolve({ exitCode: 0, signal: null }), collected: {
         stdout: { readFrom: () => ({ text, lossy: false }) }, stderr: { readFrom: () => ({ text: '', lossy: false }) },
@@ -45,7 +49,7 @@ async function bench(mode = 'workspace-write', deny = false, host = plugin) {
 test('native Cordis host registers strict Typert run and confines every managed process', async () => {
   const b = await bench()
   try {
-    assert.deepEqual(remoteMethods(b.service).map(m => m.method), ['run'])
+    assert.deepEqual(remoteMethods(b.service).map(m => m.method).sort(), ['changes', 'run'])
     assert.equal(b.descriptors[0].descriptors[0].parameters[0].codec.mode, 'strict')
     const result = await b.service.run({ sessionId: 'test', action: 'state' })
     assert.equal(result.state.branch, 'codex/test')
@@ -76,6 +80,14 @@ test('real Typert gateway accepts the Client request field from the installable 
     assert.equal(result.state.branch, 'codex/test')
     assert.ok(b.spawns.length > 0)
     assert.equal(b.spawns.length, b.wrapped.length)
+    const streamAbort = new AbortController()
+    const stream = await gateway.stream({ peer, namespace: 'dshgit', method: 'changes', args: { sessionId: 'test' }, signal: streamAbort.signal })
+    const iterator = stream[Symbol.asyncIterator]()
+    assert.deepEqual((await iterator.next()).value, { changed: true })
+    const waiting = iterator.next()
+    const cancelled = assert.rejects(waiting, /aborted/)
+    streamAbort.abort()
+    await cancelled
     const before = b.spawns.length
     await assert.rejects(invoke({ sessionId: 'test', action: 'invalid' }), /Invalid option/)
     assert.equal(b.spawns.length, before)
@@ -109,4 +121,90 @@ test('unloading the native plugin aborts its process signals', async () => {
   await b.service.run({ sessionId: 'test', action: 'state' })
   await b.fiber.dispose()
   assert.ok(b.spawns.every(spec => spec.signal.aborted))
+})
+
+test('cached state reads spawn no additional processes and concurrent readers share initialization', async () => {
+  const b = await bench()
+  try {
+    const states = await Promise.all(Array.from({ length: 20 }, () => b.service.run({ sessionId: 'test', action: 'state' })))
+    assert.ok(states.every(result => result.state.branch === 'codex/test'))
+    const before = b.spawns.length
+    assert.equal(b.spawns.filter(spec => spec.argv.includes('--show-toplevel')).length, 1)
+    for (let i = 0; i < 30; i++) await b.service.run({ sessionId: 'test', action: 'state' })
+    assert.equal(b.spawns.length, before)
+    await b.service.run({ sessionId: 'test', action: 'state', refresh: true })
+    assert.ok(b.spawns.length > before)
+  } finally { await b.fiber.dispose() }
+})
+
+test('startup sessions with the same workspace and confinement share one snapshot', async () => {
+  const b = await bench('workspace-write', false, plugin, true)
+  try {
+    await Promise.all(['test', 'second'].map(sessionId => b.service.run({ sessionId, action: 'state' })))
+    assert.equal(b.spawns.filter(spec => spec.argv.includes('--show-toplevel')).length, 1)
+    assert.equal(b.spawns.filter(spec => spec.argv.includes('status')).length, 1)
+  } finally { await b.fiber.dispose() }
+})
+
+test('idle cache expiration closes watches, clears data and rebuilds on demand', async () => {
+  const b = await bench()
+  try {
+    await b.service.run({ sessionId: 'test', action: 'state' })
+    const cache = (await [...b.service.caches.values()][0].cache)
+    const before = b.spawns.length
+    b.service.sweepCaches(Date.now() + 11 * 60_000)
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(b.service.caches.size, 0)
+    assert.equal(b.service.sessionKeys.size, 0)
+    assert.equal(b.service.watches.entries.size, 0)
+    assert.equal(cache.snapshot, undefined)
+    assert.equal(cache.tracked.size, 0)
+    assert.equal(b.spawns.length, before, 'eviction must not query Git')
+    await b.service.run({ sessionId: 'test', action: 'state' })
+    assert.equal(b.spawns.filter(spec => spec.argv.includes('--show-toplevel')).length, 2)
+  } finally { await b.fiber.dispose() }
+})
+
+test('active subscriptions survive expiry; idle capacity evicts least recently used records', async () => {
+  const b = await bench()
+  const controller = new AbortController()
+  try {
+    const stream = b.service.changes('test', controller.signal)[Symbol.asyncIterator]()
+    await stream.next()
+    b.service.sweepCaches(Date.now() + 60 * 60_000)
+    assert.equal(b.service.caches.size, 1)
+    const waiting = stream.next(); controller.abort(); await waiting
+    b.service.sweepCaches()
+    assert.equal(b.service.caches.size, 1, 'idle TTL starts after subscription closes')
+    const now = Date.now(), evicted = []
+    for (let i = 0; i < 20; i++) {
+      const abort = new AbortController()
+      abort.signal.addEventListener('abort', () => evicted.push(i))
+      b.service.caches.set('idle-' + i, { value: { idle: true }, abort, sessions: new Set(), lastUsed: now - 1000 + i })
+    }
+    b.service.sweepCaches(now)
+    assert.equal(b.service.caches.size, 16)
+    assert.deepEqual(evicted, [0, 1, 2, 3, 4])
+  } finally { controller.abort(); await b.fiber.dispose() }
+})
+
+test('cache hits renew idle expiry without sweeping, sorting or spawning Git', async () => {
+  const b = await bench()
+  try {
+    await b.service.run({ sessionId: 'test', action: 'state' })
+    const record = [...b.service.caches.values()][0]
+    record.lastUsed = Date.now() - 9 * 60_000
+    const before = b.spawns.length
+    const sweep = b.service.sweepCaches.bind(b.service)
+    let sweeps = 0
+    b.service.sweepCaches = (...args) => { sweeps++; return sweep(...args) }
+    for (let i = 0; i < 50; i++) await b.service.run({ sessionId: 'test', action: 'state' })
+    assert.equal(sweeps, 0)
+    assert.equal(b.spawns.length, before)
+    assert.ok(Date.now() - record.lastUsed < 1000)
+    sweep(record.lastUsed + 2 * 60_000)
+    assert.equal(b.service.caches.size, 1)
+    sweep(record.lastUsed + 11 * 60_000)
+    assert.equal(b.service.caches.size, 0)
+  } finally { await b.fiber.dispose() }
 })

@@ -1,3 +1,4 @@
+import { followChanges } from './refresh.ts'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { unwrap, type GitRemote, type GitState, type Request, type Result } from './contracts.ts'
 
@@ -30,12 +31,16 @@ export function GitPanel({ sessionId, remote, onClose }: { sessionId: string; re
   const alive = useRef(true), operation = useRef(false), generation = useRef(0), diffGeneration = useRef(0)
   const prHeading = useRef<HTMLHeadingElement>(null)
   const commitTrigger = useRef<HTMLButtonElement>(null), messageInput = useRef<HTMLTextAreaElement>(null)
+  // Parent renders can hand over a new service proxy; the load interval must
+  // survive that identity change instead of refetching state, branches and PR.
+  const remoteRef = useRef(remote)
+  useEffect(() => { remoteRef.current = remote }, [remote])
   const call = useCallback(async (action: Request['action'], extra: Partial<Request> = {}) =>
-    unwrap(await remote.run({ ...extra, sessionId, action })), [remote, sessionId])
-  const load = useCallback(async () => {
+    unwrap(await remoteRef.current.run({ ...extra, sessionId, action })), [sessionId])
+  const load = useCallback(async (refresh = false) => {
     const version = generation.current
     try {
-      const result = await call('state')
+      const result = await call('state', refresh ? { refresh: true } : {})
       if (alive.current && !operation.current && version === generation.current) { setState(result.state); setLoadError('') }
     } catch (e) { if (alive.current && !operation.current && version === generation.current) setLoadError((e as Error).message) }
   }, [call])
@@ -48,10 +53,10 @@ export function GitPanel({ sessionId, remote, onClose }: { sessionId: string; re
   }, [call])
   useEffect(() => {
     alive.current = true
-    void load(); void loadPR()
+    void loadPR()
     void call('branches').then(result => { if (alive.current) setBranches(result.branches ?? []) }).catch(() => {})
-    const timer = setInterval(() => { if (!document.hidden && !operation.current) void load() }, 5000)
-    return () => { alive.current = false; clearInterval(timer); generation.current++; diffGeneration.current++ }
+    const stop = followChanges(() => remoteRef.current, sessionId, async () => { if (!operation.current) await load() }, setLoadError)
+    return () => { alive.current = false; stop(); generation.current++; diffGeneration.current++ }
   }, [load, loadPR, call])
   useEffect(() => { if (commitOpen) messageInput.current?.focus() }, [commitOpen])
   useEffect(() => { if (view === 'pr') prHeading.current?.focus() }, [view])
@@ -96,7 +101,7 @@ export function GitPanel({ sessionId, remote, onClose }: { sessionId: string; re
     }
   }}>
     <header className="dg-top"><span className="dg-brand"><Icon name="branch"/>DSHGit</span>
-      <div className="dg-tools"><button title="刷新" aria-label="刷新 Git 状态" disabled={!!busy} onClick={() => { void load(); void loadPR() }}><Icon name="refresh"/></button>
+      <div className="dg-tools"><button title="刷新" aria-label="刷新 Git 状态" disabled={!!busy} onClick={() => { void load(true); void loadPR() }}><Icon name="refresh"/></button>
         <button aria-label="关闭 DSHGit" onClick={onClose}><Icon name="close"/></button></div>
     </header>
     {(error || loadError) && <div className="dg-alert" role="alert">{error || loadError}</div>}

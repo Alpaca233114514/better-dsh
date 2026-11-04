@@ -1,6 +1,6 @@
 {
   "name": "dshgit",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "DSHGit — native Git changes, commit, push and pull request panel for DSH",
   "type": "module",
   "license": "Apache-2.0",

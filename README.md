@@ -14,6 +14,7 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 | [BetterManager](BetterManager/) | 已退役：停止更新和安装，保留历史源码与数据 | [README](BetterManager/README.md) |
 | [DeepSeek Security](DeepSeekSecurity/) | 原生安全审计插件：通过 @ 引用和聊天需求调用，执行期间显示进度 | [README](DeepSeekSecurity/README.md) |
 | [RichThinking](RichThinking/) | 底部运行状态词轮播，保留原生鲸鱼、用时、推理折叠与正文 | [README](RichThinking/README.md) |
+| [thinking-level](ReasoningSlider/) | 原生推理滑条：读取真实模型档位，一键恢复当前模型默认设置 | [README](ReasoningSlider/README.md) |
 | [MoonSeek](MoonSeek/) | 月面外观插件：月之亮面 / 月之暗面，统一原生卡片与月相图标 | [README](MoonSeek/README.md) |
 | [Qwen](Qwen/) | Qwen 提供方：适配 DSH 0.2.1-rc.3，支持思考预算/强度、Maas 模型别名与工具回放 | [README](Qwen/README.md) |
 | [DSHKey](DSHKey/) | 原生快捷键与设置，支持 DSH 0.2.1-rc.3 | [README](DSHKey/README.md) |
