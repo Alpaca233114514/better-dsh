@@ -1,0 +1,93 @@
+{
+  "status": "passed",
+  "sessionId": "session-97b674af-d73a-41af-a46b-9d7957471d3a",
+  "requests": [
+    {
+      "sessionId": "session-97b674af-d73a-41af-a46b-9d7957471d3a",
+      "child": false,
+      "effort": "max",
+      "ultra": true
+    },
+    {
+      "sessionId": "session-97b674af-d73a-41af-a46b-9d7957471d3a",
+      "child": false,
+      "purpose": "session-title",
+      "effort": "low",
+      "ultra": false
+    },
+    {
+      "sessionId": "session-97b674af-d73a-41af-a46b-9d7957471d3a",
+      "child": false,
+      "effort": "max",
+      "ultra": true
+    },
+    {
+      "sessionId": "40bb3d05-c2cb-4e6f-b356-3d2915009c2e",
+      "child": true,
+      "effort": "max",
+      "ultra": true
+    },
+    {
+      "sessionId": "4c767123-6dc6-4429-a2cb-b0c6b7a0cea8",
+      "child": true,
+      "effort": "high",
+      "ultra": true
+    },
+    {
+      "sessionId": "session-97b674af-d73a-41af-a46b-9d7957471d3a",
+      "child": false,
+      "effort": "max",
+      "ultra": true
+    },
+    {
+      "sessionId": "40bb3d05-c2cb-4e6f-b356-3d2915009c2e",
+      "child": true,
+      "effort": "medium",
+      "ultra": true
+    },
+    {
+      "sessionId": "session-97b674af-d73a-41af-a46b-9d7957471d3a",
+      "child": false,
+      "effort": "max",
+      "ultra": true
+    },
+    {
+      "sessionId": "session-97b674af-d73a-41af-a46b-9d7957471d3a",
+      "child": false,
+      "effort": "high",
+      "ultra": false
+    }
+  ],
+  "streamFrames": 25,
+  "children": [
+    {
+      "id": "40bb3d05-c2cb-4e6f-b356-3d2915009c2e",
+      "runId": "e9ea52fc-a6e0-45b3-ae14-1db1539a989d",
+      "label": "接口检查",
+      "provider": "deepseek-ultra-test",
+      "model": "deepseek-ultra-fixture",
+      "effort": "medium",
+      "status": "completed"
+    },
+    {
+      "id": "4c767123-6dc6-4429-a2cb-b0c6b7a0cea8",
+      "runId": "d2afddfd-ecaa-43ef-92a9-0d91e7b5a006",
+      "label": "验证设计",
+      "provider": "deepseek-ultra-test",
+      "model": "deepseek-ultra-fixture",
+      "effort": "high",
+      "status": "completed"
+    }
+  ],
+  "checks": [
+    "native host load",
+    "max request",
+    "native parallel child lifecycle",
+    "child effort override and cold resume",
+    "stream updates",
+    "foreign-child rejection",
+    "ultra parameter rejection",
+    "standard mode exit",
+    "session flush"
+  ]
+}

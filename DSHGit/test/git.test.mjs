@@ -161,6 +161,7 @@ test('commit success is preserved and reported when push fails', async () => {
   await writeFile(join(root, 'file.txt'), 'new\n')
   const result = await repo.execute(root, { ...request('commitPush'), includeUnstaged: true, message: 'kept locally' })
   assert.match(result.notice, /提交已成功，推送失败/)
+  assert.equal(result.partialFailure, true)
   assert.match(await run('git', ['log', '-1', '--format=%s'], root), /kept locally/)
 })
 test('renaming and unstaging preserve both paths without deleting work', async () => {

@@ -87,7 +87,8 @@ var resultSchema = z.object({
   branches: z.array(z.string()).optional(),
   base: z.string().optional(),
   pr: prSchema.nullable().optional(),
-  notice: z.string().optional()
+  notice: z.string().optional(),
+  partialFailure: z.boolean().optional()
 }).strict();
 var changeSchema = z.object({ changed: z.literal(true) }).strict();
 var sessionSchema = z.string().min(1);
@@ -269,7 +270,7 @@ var GitRepository = class {
       try {
         await this.push(root, state.branch);
       } catch (error) {
-        return { state: await this.state(root, true), notice: `\u63D0\u4EA4\u5DF2\u6210\u529F\uFF0C\u63A8\u9001\u5931\u8D25\uFF1A${error.message}\u3002\u53EF\u76F4\u63A5\u91CD\u8BD5\u201C\u63A8\u9001\u201D\u3002` };
+        return { state: await this.state(root, true), partialFailure: true, notice: `\u63D0\u4EA4\u5DF2\u6210\u529F\uFF0C\u63A8\u9001\u5931\u8D25\uFF1A${error.message}\u3002\u53EF\u76F4\u63A5\u91CD\u8BD5\u201C\u63A8\u9001\u201D\u3002` };
       }
       return { state: await this.state(root, true), notice: "\u63D0\u4EA4\u5E76\u63A8\u9001\u6210\u529F" };
     }

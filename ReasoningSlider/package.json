@@ -1,6 +1,6 @@
 {
   "name": "thinking-level",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "DSH 推理滑条：读取真实模型档位并重置为模型默认设置",
   "private": true,
   "type": "module",

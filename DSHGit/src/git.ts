@@ -139,7 +139,7 @@ export class GitRepository {
       await this.git(root, ['commit', '--file=-'], message)
       if (request.action === 'commit') return { state: await this.state(root, true), notice: '提交成功' }
       try { await this.push(root, state.branch) }
-      catch (error) { return { state: await this.state(root, true), notice: `提交已成功，推送失败：${(error as Error).message}。可直接重试“推送”。` } }
+      catch (error) { return { state: await this.state(root, true), partialFailure: true, notice: `提交已成功，推送失败：${(error as Error).message}。可直接重试“推送”。` } }
       return { state: await this.state(root, true), notice: '提交并推送成功' }
     }
     if (request.action === 'push') {

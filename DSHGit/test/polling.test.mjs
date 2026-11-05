@@ -96,20 +96,50 @@ test('detail ticks with a fresh remote proxy do not refetch state, branches or P
   element.remove()
 })
 
+test('retained sidebar tabs unsubscribe while hidden and refresh when revealed', async () => {
+  const rec = recorder()
+  const element = document.createElement('div')
+  document.body.append(element)
+  const root = createRoot(element)
+  const render = active => act(async () => {
+    root.render(React.createElement(GitPanel, { sessionId: 'retained', remote: rec.remote(), active, onClose() {} }))
+    await tick(); await tick()
+  })
+  await render(true)
+  assert.equal(rec.subscriptions, 1)
+  await render(false)
+  assert.equal(rec.closed, 1)
+  const count = rec.calls.length
+  await render(false)
+  assert.equal(rec.calls.length, count)
+  await render(true)
+  assert.equal(rec.subscriptions, 2)
+  await act(async () => root.unmount())
+  assert.equal(rec.closed, 2)
+  element.remove()
+})
+
 test('client resolves the service proxy once instead of on every header render', async () => {
-  let Entry, serviceGets = 0
+  let Entry, Tab, definition, opened, serviceGets = 0
+  const cleanups = []
   const service = { async *changes(_sessionId, signal) { yield { changed: true }; await new Promise(resolve => signal.addEventListener('abort', resolve, { once: true })) }, async run() { return { ok: true, value: { state: structuredClone(state) } } } }
   const scope = {
     remote: new Proxy({}, { get(_target, property) { if (property === 'dshgit') { serviceGets++; return service } } }),
-    slots: { inject(_name, setup) { setup() }, register(_meta, component) { Entry = component } },
+    slots: { inject(_name, setup) { setup() }, register(meta, component) { if (meta.name === 'conversation.session.header.utilities') Entry = component; else if (meta.name === 'sidebar.right.pane.tab') Tab = component } },
   }
   const ctx = {
     remote: { async $mount() {} },
-    effect(setup) { setup(); return () => {} },
+    effect(setup) { const dispose = setup(); if (dispose) cleanups.push(dispose); return () => {} },
+    sidebarRightTabs: { register(value) { definition = value; return () => {} } },
+    sidebarRight: { openTab(kind) { opened = kind } },
     inject(_deps, setup) { setup(scope) },
   }
-  await apply(ctx)
+  await act(async () => { await apply(ctx); await tick() })
   assert.equal(typeof Entry, 'function')
+  assert.equal(typeof Tab, 'function')
+  assert.equal(definition.kind, 'dshgit')
+  assert.equal(definition.guide[0].title(), 'DSHGit')
+  assert.equal(definition.keepMounted, true)
   const element = document.createElement('div')
   document.getElementById('entry').append(element)
   const root = createRoot(element)
@@ -118,7 +148,11 @@ test('client resolves the service proxy once instead of on every header render',
   const afterMount = serviceGets
   for (let i = 0; i < 3; i++) await render()
   assert.equal(serviceGets, afterMount, 'header renders must not re-read the service proxy')
+  await act(async () => document.querySelector('.dg-sidebar-changes').click())
+  assert.equal(opened, 'dshgit')
+  assert.equal(document.querySelector('dialog'), null)
   await act(async () => root.unmount())
+  await act(async () => { for (const dispose of cleanups.reverse()) dispose() })
   element.remove()
 })
 

@@ -24,7 +24,7 @@ async function mount(overrides = {}, handler) {
     const custom = handler?.(request); if (custom) return custom
     if (request.action === 'prInfo') return { ok: true, value: { pr: null, base: 'main' } }
     if (request.action === 'branches') return { ok: true, value: { branches: ['main', 'codex/test'] } }
-    if (request.action === 'diff') return { ok: true, value: { text: '+new\n-old\n' } }
+    if (request.action === 'diff') return { ok: true, value: { text: '@@ -8,2 +8,2 @@\n unchanged\n-old\n+new\n' } }
     return { ok: true, value: { state: structuredClone(state) } }
   } }
   await act(async () => { root.render(null); await tick() })
@@ -34,8 +34,11 @@ async function mount(overrides = {}, handler) {
 test('changes entry displays real statistics and opens per-file diff', async () => {
   await mount()
   assert.match(document.body.textContent, /\+10/)
+  await click(document.querySelector('[aria-label="文件列表"]'))
   await click(document.querySelector('.dg-file-name'))
-  assert.match(document.querySelector('pre').textContent, /\+new\n-old/)
+  assert.match([...document.querySelectorAll('pre code')].map(line => line.textContent).join('\n'), /-old\n\+new/)
+  assert.deepEqual([...document.querySelectorAll('.dg-removed .dg-line-number')].map(n => n.textContent), ['9', ''])
+  assert.deepEqual([...document.querySelectorAll('.dg-added .dg-line-number')].map(n => n.textContent), ['', '9'])
 })
 test('Ctrl+Enter commits with the current include-unstaged selection', async () => {
   const calls = await mount()
@@ -62,7 +65,7 @@ test('protected and read-only repositories disable commit and push', async () =>
 })
 test('PR entry exposes title, description, base and draft form', async () => {
   const calls = await mount()
-  await click([...document.querySelectorAll('button')].find(b => b.textContent.includes('创建 Pull Request')))
+  await click(document.querySelector('[aria-label="创建 Pull Request"]'))
   assert.ok(document.querySelector('form'))
   assert.equal(document.querySelector('input').value, 'main')
   assert.ok(document.querySelector('textarea'))
@@ -134,8 +137,31 @@ test('rapid repeat push clicks dispatch one mutation while an operation is pendi
   const push = document.querySelector('.dg-commit-actions button')
   await act(async () => { push.click(); push.click(); push.click(); await tick() })
   assert.equal(calls.filter(call => call.action === 'push').length, 1)
-  assert.ok([...document.querySelectorAll('.dg-commit-actions button')].every(button => button.disabled))
+  assert.equal(document.querySelector('.dg-commit-card'), null, 'menu closes before the request finishes')
+  assert.equal(byText('提交与推送').disabled, true)
   await act(async () => { finish({ ok: true, value: { notice: '推送成功' } }); await tick() })
 })
+
+for (const action of ['commit', 'commitPush']) {
+  test(`${action} closes immediately and preserves the draft after failure`, async () => {
+    let finish
+    const pending = new Promise(resolve => { finish = resolve })
+    const calls = await mount({}, request => request.action === action ? pending : null)
+    await click(byText('提交与推送'))
+    const input = document.querySelector('.dg-message')
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(dom.window.HTMLTextAreaElement.prototype, 'value').set.call(input, 'keep this draft')
+      input.dispatchEvent(new dom.window.Event('input', { bubbles: true }))
+      await tick()
+    })
+    await click(document.querySelectorAll('.dg-commit-actions button')[action === 'commit' ? 0 : 1])
+    assert.equal(document.querySelector('.dg-commit-card'), null)
+    assert.equal(calls.filter(call => call.action === action).length, 1)
+    await act(async () => { finish({ ok: false, error: { message: 'hook rejected' } }); await tick() })
+    assert.match(document.querySelector('[role="alert"]').textContent, /hook rejected/)
+    await click(byText('提交与推送'))
+    assert.equal(document.querySelector('.dg-message').value, 'keep this draft')
+  })
+}
 
 test.after(async () => { await act(async () => root.unmount()); dom.window.close() })

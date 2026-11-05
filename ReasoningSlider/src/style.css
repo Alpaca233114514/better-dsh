@@ -63,9 +63,9 @@
 .rs-slider:focus-visible .rs-track{box-shadow:0 0 0 2px var(--dsw-focus-ring-color,var(--rs-accent))}
 
 /* 从右端档位向左展开，保留左侧品牌蓝。 Reveal from the right stop, leaving the left blue. */
-.rs-panel{--rs-max-color:#4941cf;--rs-max-glint:#effcff}
-body[data-ds-dark-theme] .rs-panel{--rs-max-color:#a5a0ff;--rs-max-glint:#f1fdff}
-.rs-panel[data-max] .rs-level{color:var(--rs-max-color)}
+.rs-panel,.rs-trigger{--rs-max-color:#4941cf;--rs-max-glint:#effcff}
+body[data-ds-dark-theme] .rs-panel,body[data-ds-dark-theme] .rs-trigger{--rs-max-color:#a5a0ff;--rs-max-glint:#f1fdff}
+.rs-panel[data-max] .rs-level,.rs-trigger .rs-trigger-level[data-max]{color:var(--rs-max-color)}
 .rs-max-field{position:absolute;top:0;bottom:0;right:calc((100% - var(--rs-thumb)) * (1 - var(--max-v)) + var(--rs-thumb)/2 - 1px);width:calc(92% * var(--max-v));
   pointer-events:none;overflow:hidden;clip-path:inset(0);
   background:linear-gradient(90deg,transparent 0%,#4454d9dd 8%,#4340dfee 30%,#6551f5 100%);

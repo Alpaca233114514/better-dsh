@@ -22,7 +22,7 @@ export const prSchema = z.object({ number: z.number(), title: z.string(), url: z
 export const resultSchema = z.object({
   state: stateSchema.optional(), text: z.string().optional(),
   branches: z.array(z.string()).optional(), base: z.string().optional(),
-  pr: prSchema.nullable().optional(), notice: z.string().optional(),
+  pr: prSchema.nullable().optional(), notice: z.string().optional(), partialFailure: z.boolean().optional(),
 }).strict()
 export type Result = z.infer<typeof resultSchema>
 export const changeSchema = z.object({ changed: z.literal(true) }).strict()

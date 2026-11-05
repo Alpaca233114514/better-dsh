@@ -1,0 +1,10 @@
+import { build, common } from './build.mjs';
+import { fileURLToPath } from 'node:url';
+import { mkdir } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+const output = new URL('../../.cache/ultra-tests/', import.meta.url);
+await mkdir(output, { recursive: true });
+const file = fileURLToPath(new URL('state.test.mjs', output));
+await build({ ...common, entryPoints: [fileURLToPath(new URL('../tests/state.test.ts', import.meta.url))], outfile: file, format: 'esm', platform: 'node' });
+const child = spawn(process.execPath, ['--test', fileURLToPath(new URL('../tests/policy.test.cjs', import.meta.url)), file], { stdio: 'inherit', windowsHide: true });
+process.exitCode = await new Promise(resolve => child.once('exit', resolve));

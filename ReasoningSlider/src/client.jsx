@@ -1,11 +1,12 @@
 import React, { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import css from './style.css';
+import effectPolicy from './effect-policy.cjs';
 
 export const inject = ['slots', 'modelDirectories', 'sessions', 'remote', 'remote.session'];
 
 const STEP_KEYS = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1, PageDown: -1, PageUp: 1 };
-const isMaxEffort = level => /^(max|ultra|ultracode)$/i.test(level?.id ?? '');
+const isMaxEffort = effectPolicy.isEmphasized;
 const SPARKS = Array.from({ length: 20 }, (_, i) => ({
   left: `${12 + (i * 37 % 83)}%`, top: `${19 + (i * 29 % 64)}%`,
   '--delay': `${-(i * .31)}s`, '--duration': `${2.1 + (i % 4) * .3}s`,
@@ -21,7 +22,7 @@ function Range({ levels, value, label, disabled, onPreview, onCommit, onCancel }
   const index = Math.min(max, Math.max(0, Math.round(value)));
   const fraction = max === 0 ? 0 : index / max;
   const stepDisabled = disabled || levels.length < 2;
-  const maxEffect = isMaxEffort(levels[index]) && Math.abs(value - index) < .02;
+  const maxEffect = isMaxEffort(levels[index], levels) && Math.abs(value - index) < .02;
   const previousMax = useRef(maxEffect);
   const [revealMax, setRevealMax] = useState(false);
   const [leavingMax, setLeavingMax] = useState(false);
@@ -190,12 +191,12 @@ function Slider({ directory, available, locked }) {
   return <>
     <button ref={trigger} className="rs-trigger" disabled={!available || locked} aria-label="推理滑条" aria-expanded={open}
       onClick={() => { setOpen(!open); setPicking(!current); }}>
-      {current?.model.name ?? '请选择模型'} <span className="rs-trigger-level">{current && (levels[selected]?.name ?? '')}</span>
+      {current?.model.name ?? '请选择模型'} <span className="rs-trigger-level" data-max={isMaxEffort(levels[selected], levels) || undefined}>{current && (levels[selected]?.name ?? '')}</span>
       <svg className="rs-trigger-chev" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" focusable="false">
         <path d="m2.5 4.25 3.5 3.5 3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </button>
-    {open && createPortal(<section ref={panel} className={`rs-panel${placed ? ' rs-in' : ''}`} data-picking={picking || undefined} data-saving={state.pending !== null || undefined} data-max={isMaxEffort(levels[index]) || undefined} style={position} aria-label="推理设置">
+    {open && createPortal(<section ref={panel} className={`rs-panel${placed ? ' rs-in' : ''}`} data-picking={picking || undefined} data-saving={state.pending !== null || undefined} data-max={isMaxEffort(levels[index], levels) || undefined} style={position} aria-label="推理设置">
       <div className="rs-view" data-active={!picking || undefined} aria-hidden={picking || undefined} inert={picking ? '' : undefined}><div className="rs-view-inner">
       <button className="rs-reset" title="重置为默认设置" aria-label="重置为默认设置" disabled={!levels.length || busy} onClick={reset}>
         <svg viewBox="0 0 24 24"><path d="M3 10a9 9 0 1 1 2 8M3 4v6h6" /></svg>
@@ -225,4 +226,8 @@ export function apply(ctx) {
     name: 'conversation.input.model', priority: -10,
     inject: sessionId => ({ directory: ctx.modelDirectories.directoryFor(sessionId), available: ctx.sessions.subagentAddress(sessionId) === undefined }),
   }, Slider));
+  ctx.inject?.(['ultra', 'remote.dshUltra'], scope => scope.slots.inject('conversation.input.model', () => scope.slots.register({
+    name: 'conversation.input.model', priority: -20,
+    inject: sessionId => ({ directory: scope.ultra.directoryFor(sessionId), available: scope.sessions.subagentAddress(sessionId) === undefined }),
+  }, Slider)));
 }

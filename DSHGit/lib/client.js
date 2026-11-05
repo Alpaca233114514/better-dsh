@@ -27,6 +27,7 @@ __export(client_exports, {
   inject: () => inject
 });
 module.exports = __toCommonJS(client_exports);
+var import_client = require("react-dom/client");
 
 // node_modules/zod/v4/classic/external.js
 var external_exports = {};
@@ -16721,13 +16722,13 @@ var recordProcessor = (schema, ctx, _json, params) => {
         ...params,
         path: [...params.path, "propertyNames"]
       });
-      let pending = pendingRecords.get(ctx);
-      if (!pending) {
-        pending = [];
-        pendingRecords.set(ctx, pending);
+      let pending2 = pendingRecords.get(ctx);
+      if (!pending2) {
+        pending2 = [];
+        pendingRecords.set(ctx, pending2);
         ctx.deferred.push(() => rewriteKeyNames(ctx));
       }
-      pending.push(schema);
+      pending2.push(schema);
     }
     json2.additionalProperties = processSchema(def.valueType, ctx, {
       ...params,
@@ -19781,7 +19782,8 @@ var resultSchema = external_exports.object({
   branches: external_exports.array(external_exports.string()).optional(),
   base: external_exports.string().optional(),
   pr: prSchema.nullable().optional(),
-  notice: external_exports.string().optional()
+  notice: external_exports.string().optional(),
+  partialFailure: external_exports.boolean().optional()
 }).strict();
 var changeSchema = external_exports.object({ changed: external_exports.literal(true) }).strict();
 var sessionSchema = external_exports.string().min(1);
@@ -19898,6 +19900,51 @@ var import_react_dom = require("react-dom");
 
 // src/panel.tsx
 var import_react = require("react");
+
+// src/operations.ts
+var pending = /* @__PURE__ */ new Map();
+var listeners = /* @__PURE__ */ new Set();
+var notices = [];
+var sequence = 0;
+var labels = { commit: "\u63D0\u4EA4", commitPush: "\u63D0\u4EA4\u5E76\u63A8\u9001", push: "\u63A8\u9001", createPR: "\u521B\u5EFA PR" };
+var emit = () => {
+  for (const listener of listeners) listener();
+};
+var subscribeOperations = (listener) => {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+};
+var pendingOperation = (sessionId) => pending.get(sessionId) ?? "";
+var getNotices = () => notices;
+function dismissNotice(id) {
+  notices = notices.filter((item) => item.id !== id);
+  emit();
+}
+async function runOperation(remote, request, workspace) {
+  if (pending.has(request.sessionId)) throw new Error("\u8BE5\u4F1A\u8BDD\u6709 Git \u64CD\u4F5C\u6B63\u5728\u6267\u884C\u3002");
+  pending.set(request.sessionId, request.action);
+  emit();
+  const label = labels[request.action];
+  const notify = (message, error62) => {
+    notices = [...notices, { id: ++sequence, error: error62, message: `${workspace} \xB7 ${message}` }];
+    emit();
+  };
+  try {
+    const result = unwrap(await remote.run(request));
+    if (label) notify(result.notice || `${label}\u5B8C\u6210`, result.partialFailure === true);
+    return result;
+  } catch (error62) {
+    if (label) notify(`${label}\u5931\u8D25\uFF1A${error62 instanceof Error ? error62.message : String(error62)}`, true);
+    throw error62;
+  } finally {
+    pending.delete(request.sessionId);
+    emit();
+  }
+}
+
+// src/panel.tsx
 var import_jsx_runtime = require("react/jsx-runtime");
 function Icon({ name }) {
   if (name === "github") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", { width: "20", height: "20", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656" }) });
@@ -19925,22 +19972,48 @@ function Icon({ name }) {
     push: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m8 10 4-4 4 4m-4-4v15M6 16H5a4 4 0 0 1-1-8 8 8 0 0 1 15 0 4 4 0 0 1 0 8h-1" }) }),
     close: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m6 6 12 12M6 18 18 6" }),
     refresh: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M20 7v5h-5M4 17v-5h5m11-1A8 8 0 0 0 6 6m-2 7a8 8 0 0 0 14 5" }) }),
-    chevron: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m6 9 6 6 6-6" })
+    chevron: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m6 9 6 6 6-6" }),
+    files: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm3-2V3h6l2 2h5" })
   };
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: paths[name] });
 }
 var isStaged = (index) => index !== " " && index !== "?";
 var safeUrl = (url2) => /^https:\/\/[^/]+\//.test(url2) ? url2 : void 0;
-function GitPanel({ sessionId, remote, onClose }) {
+function DiffContent({ text }) {
+  let oldLine = 0, newLine = 0, inHunk = false;
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", { "aria-label": "\u6587\u4EF6\u5DEE\u5F02\u5185\u5BB9", children: text.split("\n").map((line, index) => {
+    const hunk = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line);
+    if (hunk) {
+      oldLine = Number(hunk[1]);
+      newLine = Number(hunk[2]);
+      inHunk = true;
+    }
+    if (line.startsWith("diff --git ")) inHunk = false;
+    if (/^(diff --git |index |--- |\+\+\+ )/.test(line) && !inHunk) return null;
+    const added = inHunk && line.startsWith("+"), removed = inHunk && line.startsWith("-");
+    const context = inHunk && line.startsWith(" ");
+    const before = removed || context ? oldLine++ : "", after = added || context ? newLine++ : "";
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: `dg-code-line${hunk ? " dg-hunk" : added ? " dg-added" : removed ? " dg-removed" : ""}`, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "dg-line-number", "aria-hidden": "true", children: before }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "dg-line-number", "aria-hidden": "true", children: after }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: line || " " })
+    ] }, index);
+  }) });
+}
+function GitPanel({ sessionId, remote, onClose, active = true }) {
   const [state, setState] = (0, import_react.useState)();
-  const [error62, setError] = (0, import_react.useState)(""), [loadError, setLoadError] = (0, import_react.useState)(""), [notice, setNotice] = (0, import_react.useState)(""), [busy, setBusy] = (0, import_react.useState)("");
+  const [error62, setError] = (0, import_react.useState)(""), [loadError, setLoadError] = (0, import_react.useState)("");
+  const busy = (0, import_react.useSyncExternalStore)(subscribeOperations, () => pendingOperation(sessionId));
+  const commitId = (0, import_react.useId)();
   const [view, setView] = (0, import_react.useState)("changes");
   const [commitOpen, setCommitOpen] = (0, import_react.useState)(false), [message, setMessage] = (0, import_react.useState)(""), [include, setInclude] = (0, import_react.useState)(true);
   const [branches, setBranches] = (0, import_react.useState)([]), [newBranch, setNewBranch] = (0, import_react.useState)("");
   const [diff, setDiff] = (0, import_react.useState)("\u9009\u62E9\u6587\u4EF6\u67E5\u770B\u5DEE\u5F02"), [selected, setSelected] = (0, import_react.useState)("");
+  const [filesOpen, setFilesOpen] = (0, import_react.useState)(false);
   const [pr, setPR] = (0, import_react.useState)(), [prError, setPRError] = (0, import_react.useState)("");
   const [base, setBase] = (0, import_react.useState)(""), [title, setTitle] = (0, import_react.useState)(""), [body, setBody] = (0, import_react.useState)(""), [draft, setDraft] = (0, import_react.useState)(false);
   const alive = (0, import_react.useRef)(true), operation = (0, import_react.useRef)(false), generation = (0, import_react.useRef)(0), diffGeneration = (0, import_react.useRef)(0);
+  const previousBusy = (0, import_react.useRef)(busy);
   const prHeading = (0, import_react.useRef)(null);
   const commitTrigger = (0, import_react.useRef)(null), messageInput = (0, import_react.useRef)(null);
   const remoteRef = (0, import_react.useRef)(remote);
@@ -19952,14 +20025,14 @@ function GitPanel({ sessionId, remote, onClose }) {
     const version2 = generation.current;
     try {
       const result = await call("state", refresh ? { refresh: true } : {});
-      if (alive.current && !operation.current && version2 === generation.current) {
+      if (alive.current && !pendingOperation(sessionId) && !operation.current && version2 === generation.current) {
         setState(result.state);
         setLoadError("");
       }
     } catch (e) {
-      if (alive.current && !operation.current && version2 === generation.current) setLoadError(e.message);
+      if (alive.current && !pendingOperation(sessionId) && !operation.current && version2 === generation.current) setLoadError(e.message);
     }
-  }, [call]);
+  }, [call, sessionId]);
   const loadPR = (0, import_react.useCallback)(async () => {
     const version2 = generation.current;
     try {
@@ -19975,6 +20048,14 @@ function GitPanel({ sessionId, remote, onClose }) {
   }, [call]);
   (0, import_react.useEffect)(() => {
     alive.current = true;
+    return () => {
+      alive.current = false;
+      generation.current++;
+      diffGeneration.current++;
+    };
+  }, []);
+  (0, import_react.useEffect)(() => {
+    if (!active) return;
     void call("branches").then((result) => {
       if (alive.current) setBranches(result.branches ?? []);
     }).catch(() => {
@@ -19983,12 +20064,18 @@ function GitPanel({ sessionId, remote, onClose }) {
       if (!operation.current) await load();
     }, setLoadError);
     return () => {
-      alive.current = false;
       stop();
       generation.current++;
       diffGeneration.current++;
     };
-  }, [load, call]);
+  }, [load, call, active]);
+  (0, import_react.useEffect)(() => {
+    if (previousBusy.current && !busy && active && !operation.current) void load();
+    previousBusy.current = busy;
+  }, [active, busy, load]);
+  (0, import_react.useEffect)(() => {
+    if (!active) setCommitOpen(false);
+  }, [active]);
   (0, import_react.useEffect)(() => {
     if (commitOpen) messageInput.current?.focus();
   }, [commitOpen]);
@@ -20002,25 +20089,25 @@ function GitPanel({ sessionId, remote, onClose }) {
     void loadPR();
   };
   const act = async (action, extra = {}) => {
-    if (operation.current) return;
+    if (operation.current || pendingOperation(sessionId)) return;
     operation.current = true;
     generation.current++;
     diffGeneration.current++;
-    setBusy(action);
     setError("");
-    setNotice("");
+    if (["commit", "commitPush", "push"].includes(action)) {
+      setCommitOpen(false);
+      commitTrigger.current?.focus();
+    }
     try {
-      const result = await call(action, extra);
+      const result = await runOperation(remoteRef.current, { ...extra, sessionId, action }, state?.name || "DSHGit");
       if (!alive.current) return;
       if (result.state) setState(result.state);
       if (result.pr) setPR(result.pr);
-      setNotice(result.notice ?? "\u64CD\u4F5C\u5B8C\u6210");
       if (action === "commit" || action === "commitPush") {
         setMessage("");
         setCommitOpen(false);
         setSelected("");
         setDiff("\u9009\u62E9\u6587\u4EF6\u67E5\u770B\u5DEE\u5F02");
-        commitTrigger.current?.focus();
       }
       if (["switch", "createBranch"].includes(action)) {
         setNewBranch("");
@@ -20041,10 +20128,7 @@ function GitPanel({ sessionId, remote, onClose }) {
       if (alive.current) setError(e.message);
     } finally {
       operation.current = false;
-      if (alive.current) {
-        setBusy("");
-        void load();
-      }
+      if (alive.current) void load();
     }
   };
   const showDiff = async (path, staged) => {
@@ -20058,6 +20142,11 @@ function GitPanel({ sessionId, remote, onClose }) {
       if (alive.current && version2 === diffGeneration.current) setDiff(e.message);
     }
   };
+  (0, import_react.useEffect)(() => {
+    if (!active || busy || !state || selected) return;
+    const first = state.files[0];
+    if (first) void showDiff(first.path, isStaged(first.index));
+  }, [active, busy, state, selected]);
   const hasChanges = !!state?.files.length;
   const writable = !!state && state.writable !== false && !busy && !loadError;
   const canCommit = writable && !state.protected && !!state.branch && state.files.some((f) => include || isStaged(f.index));
@@ -20078,62 +20167,41 @@ function GitPanel({ sessionId, remote, onClose }) {
       void act(event.shiftKey ? "commitPush" : "commit", { message, includeUnstaged: include });
     }
   }, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { className: "dg-top", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "dg-brand", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { className: "dg-toolbar", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", { className: "dg-summary-pill", title: "\u5DE5\u4F5C\u533A\u53D8\u66F4", "aria-pressed": view === "changes", onClick: () => setView("changes"), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "\u53D8\u66F4" }),
+        state && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "dg-stats", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("b", { children: [
+            "+",
+            state.additions.toLocaleString()
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("em", { children: [
+            "-",
+            state.deletions.toLocaleString()
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", { className: "dg-branch-pill", title: state ? `${state.name} \xB7 ${state.branch || "Detached HEAD"}${state.upstream ? ` \u2192 ${state.upstream}\uFF08\u2191 ${state.ahead} \u2193 ${state.behind}\uFF09` : " \xB7 \u5C1A\u672A\u5173\u8054\u4E0A\u6E38"}` : "\u6B63\u5728\u8BFB\u53D6\u5206\u652F", "aria-label": "\u9009\u62E9\u5206\u652F", disabled: !state || !!busy, onClick: () => setCommitOpen((value) => !value), children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "branch" }),
-        "DSHGit"
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: state?.branch || "\u5206\u652F" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "chevron" })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-tools", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { title: pr ? "\u67E5\u770B Pull Request" : "\u521B\u5EFA Pull Request", "aria-label": pr ? "\u67E5\u770B Pull Request" : "\u521B\u5EFA Pull Request", "aria-pressed": view === "pr", disabled: !state || !!busy, onClick: openPR, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "github" }) }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { title: "\u5237\u65B0", "aria-label": "\u5237\u65B0 Git \u72B6\u6001", disabled: !!busy, onClick: () => {
           void load(true);
           if (view === "pr") void loadPR();
         }, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "refresh" }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { "aria-label": "\u5173\u95ED DSHGit", onClick: onClose, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "close" }) })
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { title: "\u6587\u4EF6\u5217\u8868", "aria-label": "\u6587\u4EF6\u5217\u8868", "aria-expanded": filesOpen, onClick: () => {
+          setView("changes");
+          setFilesOpen((value) => !value);
+        }, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "files" }) })
       ] })
     ] }),
     (error62 || loadError) && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "dg-alert", role: "alert", children: error62 || loadError }),
-    notice && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "dg-notice", role: "status", children: notice }),
     !state ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "dg-empty", children: error62 || loadError ? "\u8BF7\u786E\u8BA4\u5F53\u524D\u5DE5\u4F5C\u533A\u4E3A Git \u4ED3\u5E93\u3002" : "\u6B63\u5728\u8BFB\u53D6\u5DE5\u4F5C\u533A\u2026" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-overview", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-card", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-card-title", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { title: state.root, children: state.name }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "dg-muted", children: [
-              state.files.length,
-              " \u4E2A\u6587\u4EF6"
-            ] })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", { className: "dg-row", "data-active": view === "changes", onClick: () => setView("changes"), children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "changes" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "\u53D8\u66F4" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "dg-stats", title: "\u5DF2\u8DDF\u8E2A\u6587\u4EF6\u7684\u6682\u5B58\u533A\u4E0E\u5DE5\u4F5C\u533A\u884C\u6570\uFF1B\u672A\u8DDF\u8E2A\u6587\u4EF6\u6682\u5B58\u540E\u8BA1\u5165", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("b", { children: [
-                "+",
-                state.additions.toLocaleString()
-              ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("em", { children: [
-                "-",
-                state.deletions.toLocaleString()
-              ] })
-            ] })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", { className: "dg-row", "data-active": view === "pr", onClick: openPR, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "github" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: pr ? "\u73B0\u6709 Pull Request" : "\u521B\u5EFA Pull Request" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "dg-muted", children: pr ? `#${pr.number}` : "\u2192" })
-          ] })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-branch-info", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "branch" }),
-            state.branch || "Detached HEAD"
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "dg-muted", children: state.upstream ? `\u2191 ${state.ahead}  \u2193 ${state.behind}` : "\u5C1A\u672A\u5173\u8054\u4E0A\u6E38" }),
-          state.protected && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "dg-muted", children: "\u8BF7\u5728\u63D0\u4EA4\u524D\u521B\u5EFA\u529F\u80FD\u5206\u652F" })
-        ] })
-      ] }),
-      view === "changes" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-workspace", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-files", children: [
+      view === "changes" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-workspace", "data-files-open": filesOpen, children: [
+        filesOpen && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-files", children: [
           ["staged", "working"].map((group) => {
             const files = state.files.filter((f) => group === "staged" ? isStaged(f.index) : f.worktree !== " ");
             return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { "aria-label": group === "staged" ? "\u5DF2\u6682\u5B58" : "\u672A\u6682\u5B58", children: [
@@ -20161,11 +20229,11 @@ function GitPanel({ sessionId, remote, onClose }) {
           ] })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-diff", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "dg-diff-title", children: selected ? selected.slice(selected.indexOf(":") + 1) : "\u6587\u4EF6\u5DEE\u5F02" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", { "aria-label": "\u6587\u4EF6\u5DEE\u5F02\u5185\u5BB9", children: diff.split("\n").map((line, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: line.startsWith("+") ? "dg-added" : line.startsWith("-") ? "dg-removed" : line.startsWith("@@") ? "dg-hunk" : "", children: [
-            line,
-            "\n"
-          ] }, i)) })
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-diff-title", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "changes" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { title: selected ? selected.slice(selected.indexOf(":") + 1) : "", children: selected ? selected.slice(selected.indexOf(":") + 1) : "\u6587\u4EF6\u5DEE\u5F02" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DiffContent, { text: diff })
         ] })
       ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-pr", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-pr-heading", children: [
@@ -20207,13 +20275,13 @@ function GitPanel({ sessionId, remote, onClose }) {
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("footer", { className: "dg-footer", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "dg-muted", role: "status", children: busy ? ["commit", "commitPush"].includes(busy) && !message.trim() ? "\u6B63\u5728\u751F\u6210\u8BF4\u660E\u5E76\u63D0\u4EA4\u2026" : "\u6B63\u5728\u6267\u884C Git \u64CD\u4F5C\u2026" : state.writable === false ? "\u53EA\u8BFB\u5DE5\u4F5C\u533A" : state.files.length ? `${state.files.length} \u4E2A\u53D8\u66F4\u6587\u4EF6` : "\u6CA1\u6709\u5F85\u63D0\u4EA4\u7684\u53D8\u66F4" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", { ref: commitTrigger, className: "dg-primary", "aria-expanded": commitOpen, "aria-controls": "dshgit-commit", disabled: !!busy, onClick: () => setCommitOpen((value) => !value), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", { ref: commitTrigger, className: "dg-primary", "aria-expanded": commitOpen, "aria-controls": commitId, disabled: !!busy, onClick: () => setCommitOpen((value) => !value), children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "commit" }),
           "\u63D0\u4EA4\u4E0E\u63A8\u9001",
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "chevron" })
         ] })
       ] }),
-      commitOpen && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "dg-commit-shade", onClick: closeCommit, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { id: "dshgit-commit", className: "dg-commit-card", "aria-label": "\u63D0\u4EA4\u4E0E\u63A8\u9001", onClick: (e) => e.stopPropagation(), children: [
+      commitOpen && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "dg-commit-shade", onClick: closeCommit, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { id: commitId, className: "dg-commit-card", "aria-label": "\u63D0\u4EA4\u4E0E\u63A8\u9001", onClick: (e) => e.stopPropagation(), children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-branch-select", children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "branch" }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", { "aria-label": "\u5F53\u524D\u5206\u652F", value: state.branch, disabled: !writable, onChange: (e) => {
@@ -20289,14 +20357,13 @@ function GitPanel({ sessionId, remote, onClose }) {
 
 // src/launcher.tsx
 var import_jsx_runtime2 = require("react/jsx-runtime");
-function GitLauncher({ sessionId, remote }) {
+function GitLauncher({ sessionId, remote, onOpen }) {
   const [expanded, setExpanded] = (0, import_react2.useState)(null), [wide, setWide] = (0, import_react2.useState)(true);
   const visible = expanded ?? wide;
-  const [detail, setDetail] = (0, import_react2.useState)(false);
   const [host, setHost] = (0, import_react2.useState)(null);
   const [state, setState] = (0, import_react2.useState)(), [error62, setError] = (0, import_react2.useState)("");
   const trigger = (0, import_react2.useRef)(null), changes = (0, import_react2.useRef)(null);
-  const dialog = (0, import_react2.useRef)(null), id = (0, import_react2.useId)();
+  const id = (0, import_react2.useId)();
   const remoteRef = (0, import_react2.useRef)(remote);
   (0, import_react2.useEffect)(() => {
     remoteRef.current = remote;
@@ -20346,11 +20413,11 @@ function GitLauncher({ sessionId, remote }) {
     };
   }, [host, visible]);
   (0, import_react2.useEffect)(() => {
-    if (!visible || detail) return;
-    let alive = true, pending = false;
+    if (!visible) return;
+    let alive = true, pending2 = false;
     const load = async () => {
-      if (pending) return;
-      pending = true;
+      if (pending2) return;
+      pending2 = true;
       try {
         const result = unwrap(await remoteRef.current.run({ sessionId, action: "state" }));
         if (alive) {
@@ -20360,7 +20427,7 @@ function GitLauncher({ sessionId, remote }) {
       } catch (e) {
         if (alive) setError(e.message);
       } finally {
-        pending = false;
+        pending2 = false;
       }
     };
     const stop = followChanges(() => remoteRef.current, sessionId, load, setError);
@@ -20368,15 +20435,7 @@ function GitLauncher({ sessionId, remote }) {
       alive = false;
       stop();
     };
-  }, [sessionId, visible, detail]);
-  (0, import_react2.useEffect)(() => {
-    if (detail) dialog.current?.showModal();
-    else dialog.current?.close();
-  }, [detail]);
-  const closeDetail = () => {
-    setDetail(false);
-    changes.current?.focus();
-  };
+  }, [sessionId, visible]);
   const closeCard = () => {
     setExpanded(false);
     trigger.current?.focus();
@@ -20395,7 +20454,7 @@ function GitLauncher({ sessionId, remote }) {
         /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { type: "button", "aria-label": "\u6536\u8D77 DSHGit", title: "\u6536\u8D77", onClick: closeCard, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { name: "close" }) })
       ] }),
       error62 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "dg-sidebar-error", role: "alert", children: error62 }) : /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { ref: changes, type: "button", className: "dg-sidebar-changes", "aria-haspopup": "dialog", onClick: () => setDetail(true), disabled: !state, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { ref: changes, type: "button", className: "dg-sidebar-changes", onClick: onOpen, disabled: !state, children: [
           /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { name: "changes" }),
           /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: "\u53D8\u66F4" }),
           state && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "dg-stats", children: [
@@ -20418,28 +20477,42 @@ function GitLauncher({ sessionId, remote }) {
             /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { name: "branch" }),
             /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: state.branch || "Detached HEAD" })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { type: "button", className: "dg-sidebar-open", onClick: () => setDetail(true), children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { type: "button", className: "dg-sidebar-open", onClick: onOpen, children: [
             "\u67E5\u770B\u5168\u90E8",
             /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { name: "chevron" })
           ] })
         ] })
       ] })
-    ] }), host ?? document.body),
-    (0, import_react_dom.createPortal)(/* @__PURE__ */ (0, import_jsx_runtime2.jsx)("dialog", { ref: dialog, className: "dg-dialog", "aria-label": "DSHGit Git \u9762\u677F", onCancel: (event) => {
-      event.preventDefault();
-      closeDetail();
-    }, onClick: (event) => {
-      if (event.target === dialog.current) closeDetail();
-    }, children: detail && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(GitPanel, { sessionId, remote, onClose: closeDetail }, sessionId) }), document.body)
+    ] }), host ?? document.body)
   ] });
 }
 
+// src/notifications.tsx
+var import_react3 = require("react");
+var import_jsx_runtime3 = require("react/jsx-runtime");
+function Toast({ notice }) {
+  (0, import_react3.useEffect)(() => {
+    if (notice.error) return;
+    const timer = setTimeout(() => dismissNotice(notice.id), 6e3);
+    return () => clearTimeout(timer);
+  }, [notice]);
+  return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "dg-toast", "data-error": notice.error, role: notice.error ? "alert" : "status", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "dg-toast-symbol", "aria-hidden": "true", children: notice.error ? "!" : "\u2713" }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: notice.message }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { type: "button", "aria-label": "\u5173\u95ED\u901A\u77E5", onClick: () => dismissNotice(notice.id), children: "\xD7" })
+  ] });
+}
+function GitNotifications() {
+  const notices2 = (0, import_react3.useSyncExternalStore)(subscribeOperations, getNotices);
+  return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "dg-toasts", "aria-label": "DSHGit \u64CD\u4F5C\u901A\u77E5", children: notices2.map((notice) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Toast, { notice }, notice.id)) });
+}
+
 // src/panel.css
-var panel_default = ".dshgit,.dg-launcher,.dg-dialog,.dg-sidebar {\r\n  --dg-bg: var(--dsw-alias-bg-base, light-dark(#fff,#202020));\r\n  --dg-card: var(--dsw-alias-bg-module-platform, light-dark(#f7f7f8,#2c2c2c));\r\n  --dg-text: var(--dsw-alias-label-primary, light-dark(#242424,#f1f1f1));\r\n  --dg-muted: var(--dsw-alias-label-tertiary, light-dark(#737373,#a1a1a1));\r\n  --dg-line: var(--dsw-alias-border-l2, light-dark(#e2e2e5,#434343));\r\n  --dg-hover: var(--dsw-alias-interactive-bg-hover, light-dark(#ededf0,#3b3b3b));\r\n  --dg-green: var(--dsw-alias-state-success-primary, light-dark(#148049,#33c97c));\r\n  --dg-red: var(--dsw-alias-state-error-primary, light-dark(#cb3939,#ff6262));\r\n  font: inherit; color: var(--dg-text); box-sizing: border-box;\r\n}\r\n.dg-launcher { display:inline-flex; align-items:center; gap:6px; border:0; border-radius:8px; padding:6px 9px; background:transparent; cursor:pointer; font-size:13px; }\r\n.dg-launcher:hover { background:var(--dg-hover); }\r\n.dg-host { position:relative; }\r\n.dg-host[data-dg-wide=true] .dg-conversation-body { margin-right:328px; min-width:0; }\r\n.dg-sidebar { position:absolute; top:calc(var(--dg-header-height,76px) + 18px); right:18px; width:292px; max-width:calc(100% - 36px); max-height:calc(100% - var(--dg-header-height,76px) - 36px); overflow:auto; padding:10px; border:1px solid var(--dg-line); border-radius:16px; background:var(--dg-card); font-size:13px; line-height:1.5; z-index:5; text-align:left; }\r\n.dg-sidebar-floating { position:fixed; top:90px; max-height:calc(100dvh - 110px); }\r\n.dg-sidebar * { box-sizing:border-box; }\r\n.dg-sidebar button { font:inherit; color:inherit; border:0; background:transparent; cursor:pointer; border-radius:8px; }\r\n.dg-sidebar button:hover { background:var(--dg-hover); }\r\n.dg-sidebar button:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary,#5787dc); outline-offset:2px; }\r\n.dg-sidebar button:disabled { cursor:default; opacity:.5; }\r\n.dg-sidebar-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 4px 6px 10px; color:var(--dg-muted); }\r\n.dg-sidebar-heading>span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-sidebar-heading button { display:grid; place-items:center; width:26px; height:26px; flex-shrink:0; }\r\n.dg-sidebar-heading svg { width:15px; height:15px; }\r\n.dg-sidebar .dg-sidebar-changes { display:flex; align-items:center; gap:10px; width:100%; padding:7px 10px; background:var(--dg-hover); text-align:left; }\r\n.dg-sidebar-changes>span:first-of-type { flex:1; }\r\n.dg-sidebar .dg-stats { font-size:12px; }\r\n.dg-sidebar svg { width:17px; height:17px; flex-shrink:0; }\r\n.dg-sidebar-section { display:flex; justify-content:space-between; gap:8px; margin:12px 10px 7px; padding-top:10px; border-top:1px solid var(--dg-line); color:var(--dg-muted); font-size:12px; }\r\n.dg-sidebar-branch { display:flex; gap:10px; align-items:center; padding:5px 10px; color:var(--dg-muted); }\r\n.dg-sidebar-branch span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-sidebar-open { display:flex; align-items:center; gap:8px; width:100%; padding:7px 10px; text-align:left; }\r\n.dg-sidebar-open svg { transform:rotate(-90deg); margin-left:auto; }\r\n.dg-sidebar-error { color:var(--dg-red); padding:8px 10px; overflow-wrap:anywhere; }\r\n.dg-dialog { padding:0; border:1px solid var(--dg-line); border-radius:22px; width:min(1060px,calc(100vw - 40px)); max-width:none; max-height:calc(100dvh - 40px); background:var(--dg-bg); overflow:hidden; box-shadow:0 20px 80px #0003; }\r\n.dg-dialog::backdrop { background:#0006; backdrop-filter:blur(4px); }\r\n.dshgit { display:flex; flex-direction:column; height:min(760px,calc(100dvh - 44px)); position:relative; text-align:left; font-size:14px; line-height:1.5; }\r\n.dshgit * { box-sizing:border-box; }\r\n.dshgit button,.dshgit input,.dshgit textarea,.dshgit select { font:inherit; color:inherit; }\r\n.dshgit button { cursor:pointer; border:0; background:transparent; border-radius:10px; }\r\n.dshgit button:hover:not(:disabled) { background:var(--dg-hover); }\r\n.dshgit button:disabled { opacity:.36; cursor:default; }\r\n.dshgit :is(button,input,textarea,select,a):focus-visible,.dg-launcher:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary,#5787dc); outline-offset:2px; }\r\n.dg-top { display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid var(--dg-line); flex-shrink:0; }\r\n.dg-brand { display:flex; align-items:center; gap:10px; font-weight:600; font-size:16px; }\r\n.dg-tools { display:flex; gap:6px; }\r\n.dg-tools button { display:grid; place-items:center; width:32px; height:32px; color:var(--dg-muted); }\r\n.dg-muted { color:var(--dg-muted); font-weight:400; }\r\n.dg-overview { padding:22px 24px; display:flex; gap:24px; align-items:center; flex-shrink:0; }\r\n.dg-card { border:1px solid var(--dg-line); border-radius:22px; background:var(--dg-card); padding:18px 20px 12px; width:420px; max-width:100%; }\r\n.dg-card-title { display:flex; align-items:center; justify-content:space-between; gap:12px; color:var(--dg-muted); margin:0 8px 12px; }\r\n.dg-card-title>span:first-child { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }\r\n.dg-card-title>span:last-child { font-size:12px; flex-shrink:0; }\r\n.dshgit .dg-row { display:flex; align-items:center; gap:14px; width:100%; padding:10px 8px; border-radius:10px; text-align:left; font-size:16px; }\r\n.dg-row>span:nth-child(2) { flex:1; }\r\n.dg-stats { display:inline-flex; align-items:center; gap:7px; font-size:14px; white-space:nowrap; font-variant-numeric:tabular-nums; }\r\n.dg-stats b { color:var(--dg-green); font-weight:400; }\r\n.dg-stats em { color:var(--dg-red); font-style:normal; }\r\n.dg-branch-info { display:flex; flex-direction:column; gap:7px; min-width:0; }\r\n.dg-branch-info>span:first-child { display:flex; align-items:center; gap:9px; overflow-wrap:anywhere; }\r\n.dg-workspace { display:grid; grid-template-columns:290px 1fr; flex:1; min-height:0; border-top:1px solid var(--dg-line); }\r\n.dg-files { overflow:auto; border-right:1px solid var(--dg-line); padding:10px; }\r\n.dg-files h3 { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--dg-muted); font-weight:500; margin:8px 10px; }\r\n.dg-files h3 span { font-variant-numeric:tabular-nums; }\r\n.dg-file { display:flex; border-radius:8px; margin:2px 0; }\r\n.dg-file[data-active=true] { background:var(--dg-hover); }\r\n.dshgit .dg-file-name { min-width:0; padding:8px; display:flex; align-items:center; flex:1; text-align:left; gap:8px; font-size:13px; }\r\n.dg-file-name>span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-status { font-size:11px; width:16px; flex-shrink:0; color:var(--dg-green); }\r\n.dshgit .dg-stage { width:30px; flex-shrink:0; color:var(--dg-muted); font-size:20px; }\r\n.dg-diff { display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--dg-bg); }\r\n.dg-diff-title { padding:14px 18px; font-size:12px; border-bottom:1px solid var(--dg-line); color:var(--dg-muted); overflow-wrap:anywhere; }\r\n.dg-diff pre { flex:1; overflow:auto; margin:0; padding:16px 20px; font:12px/1.8 ui-monospace,Consolas,monospace; tab-size:4; }\r\n.dg-diff pre>span { display:inline; }\r\n.dg-added { color:var(--dg-green); }\r\n.dg-removed { color:var(--dg-red); }\r\n.dg-hunk { color:var(--dsw-alias-state-business-primary,#7096d4); }\r\n.dg-empty { padding:38px 20px; text-align:center; color:var(--dg-muted); line-height:2; }\r\n.dg-footer { display:flex; justify-content:space-between; align-items:center; gap:12px; border-top:1px solid var(--dg-line); padding:14px 24px; flex-shrink:0; }\r\n.dshgit .dg-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:9px 15px; background:var(--dsw-alias-button-primary-fill,var(--dg-text)); color:var(--dsw-alias-label-primary-foreground,var(--dg-bg)); font-weight:500; white-space:nowrap; }\r\n.dshgit .dg-primary:hover:not(:disabled) { background:var(--dsw-alias-button-primary-hover,var(--dg-muted)); }\r\n.dg-alert,.dg-notice { margin:12px 24px 0; padding:10px 14px; border-radius:10px; overflow-wrap:anywhere; font-size:13px; max-height:110px; overflow:auto; flex-shrink:0; }\r\n.dg-alert { color:var(--dg-red); background:color-mix(in srgb,var(--dg-red) 9%,transparent); }\r\n.dg-notice { color:var(--dg-green); background:color-mix(in srgb,var(--dg-green) 8%,transparent); }\r\n.dg-pr { padding:20px 28px 28px; flex:1; min-height:0; overflow:auto; border-top:1px solid var(--dg-line); }\r\n.dg-pr-heading { display:flex; align-items:center; gap:10px; margin-bottom:18px; }\r\n.dg-pr h2 { font-size:18px; font-weight:500; margin:0; }\r\n.dg-pr form { max-width:680px; margin:auto; display:grid; grid-template-columns:150px minmax(0,1fr); gap:16px; }\r\n.dg-pr form>label:nth-child(3),.dg-form-footer { grid-column:1/-1; }\r\n.dg-pr label { display:flex; flex-direction:column; gap:7px; font-size:13px; }\r\n.dshgit :is(input:not([type=checkbox]),textarea,select) { border:1px solid var(--dg-line); border-radius:10px; background:var(--dg-bg); padding:9px 12px; min-width:0; }\r\n.dshgit input::placeholder,.dshgit textarea::placeholder { color:var(--dg-muted); opacity:1; }\r\n.dshgit textarea { resize:vertical; }\r\n.dg-pr .dg-alert { margin:0 0 18px; }\r\n.dg-form-footer { display:flex; align-items:center; justify-content:space-between; gap:16px; }\r\n.dshgit .dg-check { display:inline-flex; flex-direction:row; align-items:center; gap:9px; font-size:14px; cursor:pointer; }\r\n.dg-check input { width:17px; height:17px; accent-color:var(--dg-text); margin:0; }\r\n.dg-pr-existing { padding:18px 24px; border:1px solid var(--dg-line); border-radius:16px; background:var(--dg-card); }\r\n.dg-pr-existing h3 { font-size:18px; font-weight:500; }\r\n.dg-pr-existing a { color:var(--dg-text); text-underline-offset:4px; }\r\n.dg-commit-shade { position:absolute; inset:60px 0 65px; display:flex; align-items:flex-end; justify-content:flex-end; padding:16px 20px; background:color-mix(in srgb,var(--dg-bg) 35%,transparent); }\r\n.dg-commit-card { background:var(--dg-card); border:1px solid var(--dg-line); border-radius:24px; padding:18px 10px 10px; box-shadow:0 12px 44px #0002; width:470px; max-width:100%; max-height:100%; overflow:auto; animation:dg-appear 160ms ease-out; }\r\n.dg-branch-select { display:flex; align-items:center; gap:9px; margin:0 14px 12px; }\r\n.dshgit .dg-branch-select select { flex:1; border:0; background:transparent; padding:3px; font-size:17px; }\r\n.dg-new-branch { display:flex; gap:8px; margin:0 14px 10px; }\r\n.dg-new-branch input { flex:1; width:0; font-size:12px; }\r\n.dg-new-branch button { padding:5px 10px; color:var(--dg-muted); font-size:12px; flex-shrink:0; }\r\n.dshgit .dg-message { width:100%; display:block; border:0; background:transparent; padding:14px 18px; font-size:16px; resize:vertical; min-height:100px; }\r\n.dg-include { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:14px 18px 20px; }\r\n.dg-commit-actions { padding-top:6px; border-top:1px solid var(--dg-line); }\r\n.dg-commit-actions button { width:100%; display:flex; align-items:center; gap:13px; padding:12px 15px; text-align:left; font-size:17px; }\r\n.dg-commit-actions button:first-child { background:var(--dg-hover); }\r\n.dg-commit-actions button>span { flex:1; }\r\n.dg-commit-actions kbd { color:var(--dg-muted); background:color-mix(in srgb,var(--dg-text) 8%,transparent); padding:0 8px; border-radius:10px; font:12px/1.8 inherit; }\r\n@keyframes dg-appear { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }\r\n@media(max-width:680px) { .dg-dialog { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); border-radius:16px; } .dshgit { height:calc(100dvh - 20px); } .dg-overview { padding:14px; flex-direction:column; align-items:stretch; gap:10px; } .dg-card { width:100%; } .dg-branch-info { flex-direction:row; flex-wrap:wrap; font-size:12px; } .dg-workspace { grid-template-columns:42% 58%; } .dg-footer { padding:12px; font-size:12px; } .dg-commit-shade { padding:8px; } .dg-include { margin-left:10px; margin-right:10px; } .dg-include .dg-check { font-size:13px; } .dg-top { padding:12px 16px; } }\r\n@media(prefers-reduced-motion:reduce) { .dg-commit-card { animation:none; } }\r\n";
+var panel_default = ".dshgit,.dg-launcher,.dg-sidebar,.dg-toasts {\r\n  --dg-bg: var(--dsw-alias-bg-base, light-dark(#fff,#202020));\r\n  --dg-card: var(--dsw-alias-bg-module-platform, light-dark(#f7f7f8,#2c2c2c));\r\n  --dg-text: var(--dsw-alias-label-primary, light-dark(#242424,#f1f1f1));\r\n  --dg-muted: var(--dsw-alias-label-tertiary, light-dark(#737373,#a1a1a1));\r\n  --dg-line: var(--dsw-alias-border-l2, light-dark(#e2e2e5,#434343));\r\n  --dg-hover: var(--dsw-alias-interactive-bg-hover, light-dark(#ededf0,#3b3b3b));\r\n  --dg-green: var(--dsw-alias-state-success-primary, light-dark(#148049,#33c97c));\r\n  --dg-red: var(--dsw-alias-state-error-primary, light-dark(#cb3939,#ff6262));\r\n  font: inherit; color: var(--dg-text); box-sizing: border-box;\r\n}\r\n.dg-launcher { display:inline-flex; align-items:center; gap:6px; border:0; border-radius:8px; padding:6px 9px; background:transparent; cursor:pointer; font-size:13px; }\r\n.dg-launcher:hover { background:var(--dg-hover); }\r\n.dg-host { position:relative; }\r\n.dg-host[data-dg-wide=true] .dg-conversation-body { margin-right:328px; min-width:0; }\r\n.dg-sidebar { position:absolute; top:calc(var(--dg-header-height,76px) + 18px); right:18px; width:292px; max-width:calc(100% - 36px); max-height:calc(100% - var(--dg-header-height,76px) - 36px); overflow:auto; padding:10px; border:1px solid var(--dg-line); border-radius:16px; background:var(--dg-card); font-size:13px; line-height:1.5; z-index:5; text-align:left; }\r\n.dg-sidebar-floating { position:fixed; top:90px; max-height:calc(100dvh - 110px); }\r\n.dg-sidebar * { box-sizing:border-box; }\r\n.dg-sidebar button { font:inherit; color:inherit; border:0; background:transparent; cursor:pointer; border-radius:8px; }\r\n.dg-sidebar button:hover { background:var(--dg-hover); }\r\n.dg-sidebar button:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary,#5787dc); outline-offset:2px; }\r\n.dg-sidebar button:disabled { cursor:default; opacity:.5; }\r\n.dg-sidebar-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 4px 6px 10px; color:var(--dg-muted); }\r\n.dg-sidebar-heading>span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-sidebar-heading button { display:grid; place-items:center; width:26px; height:26px; flex-shrink:0; }\r\n.dg-sidebar-heading svg { width:15px; height:15px; }\r\n.dg-sidebar .dg-sidebar-changes { display:flex; align-items:center; gap:10px; width:100%; padding:7px 10px; background:var(--dg-hover); text-align:left; }\r\n.dg-sidebar-changes>span:first-of-type { flex:1; }\r\n.dg-sidebar .dg-stats { font-size:12px; }\r\n.dg-sidebar svg { width:17px; height:17px; flex-shrink:0; }\r\n.dg-sidebar-section { display:flex; justify-content:space-between; gap:8px; margin:12px 10px 7px; padding-top:10px; border-top:1px solid var(--dg-line); color:var(--dg-muted); font-size:12px; }\r\n.dg-sidebar-branch { display:flex; gap:10px; align-items:center; padding:5px 10px; color:var(--dg-muted); }\r\n.dg-sidebar-branch span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-sidebar-open { display:flex; align-items:center; gap:8px; width:100%; padding:7px 10px; text-align:left; }\r\n.dg-sidebar-open svg { transform:rotate(-90deg); margin-left:auto; }\r\n.dg-sidebar-error { color:var(--dg-red); padding:8px 10px; overflow-wrap:anywhere; }\r\n.dshgit { display:flex; flex-direction:column; height:min(760px,calc(100dvh - 44px)); position:relative; text-align:left; font-size:14px; line-height:1.5; }\r\n.dshgit * { box-sizing:border-box; }\r\n.dshgit button,.dshgit input,.dshgit textarea,.dshgit select { font:inherit; color:inherit; }\r\n.dshgit button { cursor:pointer; border:0; background:transparent; border-radius:10px; }\r\n.dshgit button:hover:not(:disabled) { background:var(--dg-hover); }\r\n.dshgit button:disabled { opacity:.36; cursor:default; }\r\n.dshgit :is(button,input,textarea,select,a):focus-visible,.dg-launcher:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary,#5787dc); outline-offset:2px; }\r\n.dg-tools { display:flex; gap:2px; flex-shrink:0; border-radius:18px; padding:3px; background:var(--dg-card); }\r\n.dg-tools button { display:grid; place-items:center; width:28px; height:28px; color:var(--dg-muted); }\r\n.dg-muted { color:var(--dg-muted); font-weight:400; }\r\n.dg-stats { display:inline-flex; align-items:center; gap:7px; font-size:14px; white-space:nowrap; font-variant-numeric:tabular-nums; }\r\n.dg-stats b { color:var(--dg-green); font-weight:400; }\r\n.dg-stats em { color:var(--dg-red); font-style:normal; }\r\n.dg-workspace { display:grid; grid-template-columns:minmax(0,1fr); flex:1; min-height:0; border-top:1px solid var(--dg-line); }\r\n.dg-files { overflow:auto; border-right:1px solid var(--dg-line); padding:10px; }\r\n.dg-files h3 { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--dg-muted); font-weight:500; margin:8px 10px; }\r\n.dg-files h3 span { font-variant-numeric:tabular-nums; }\r\n.dg-file { display:flex; border-radius:8px; margin:2px 0; }\r\n.dg-file[data-active=true] { background:var(--dg-hover); }\r\n.dshgit .dg-file-name { min-width:0; padding:8px; display:flex; align-items:center; flex:1; text-align:left; gap:8px; font-size:13px; }\r\n.dg-file-name>span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-status { font-size:11px; width:16px; flex-shrink:0; color:var(--dg-green); }\r\n.dshgit .dg-stage { width:30px; flex-shrink:0; color:var(--dg-muted); font-size:20px; }\r\n.dg-diff { display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--dg-bg); }\r\n.dg-diff-title { display:flex; align-items:center; gap:8px; padding:12px 16px; font-size:13px; border-bottom:1px solid var(--dg-line); color:var(--dg-muted); overflow-wrap:anywhere; }\r\n.dg-diff pre { flex:1; overflow:auto; margin:0; padding:0; font:12px/1.8 ui-monospace,Consolas,monospace; tab-size:4; }\r\n.dg-diff-title span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-diff-title svg { flex-shrink:0; width:16px; height:16px; }\r\n.dg-code-line { display:flex; min-width:100%; width:max-content; min-height:24px; }\r\n.dg-code-line code { padding-right:16px; font:inherit; white-space:pre; }\r\n.dg-line-number { flex:0 0 42px; padding-right:12px; color:var(--dg-muted); text-align:right; user-select:none; font-size:11px; }\r\n.dg-code-line.dg-added { background:color-mix(in srgb,var(--dg-green) 12%,transparent); }\r\n.dg-code-line.dg-removed { background:color-mix(in srgb,var(--dg-red) 12%,transparent); }\r\n.dg-code-line.dg-hunk { background:var(--dg-card); padding-block:5px; color:var(--dg-muted); }\r\n.dg-added { color:var(--dg-green); }\r\n.dg-removed { color:var(--dg-red); }\r\n.dg-hunk { color:var(--dsw-alias-state-business-primary,#7096d4); }\r\n.dg-empty { padding:38px 20px; text-align:center; color:var(--dg-muted); line-height:2; }\r\n.dg-footer { display:flex; justify-content:space-between; align-items:center; gap:12px; border-top:1px solid var(--dg-line); padding:14px 24px; flex-shrink:0; }\r\n.dshgit .dg-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:9px 15px; background:var(--dsw-alias-button-primary-fill,var(--dg-text)); color:var(--dsw-alias-label-primary-foreground,var(--dg-bg)); font-weight:500; white-space:nowrap; }\r\n.dshgit .dg-primary:hover:not(:disabled) { background:var(--dsw-alias-button-primary-hover,var(--dg-muted)); }\r\n.dg-alert,.dg-notice { margin:12px 24px 0; padding:10px 14px; border-radius:10px; overflow-wrap:anywhere; font-size:13px; max-height:110px; overflow:auto; flex-shrink:0; }\r\n.dg-alert { color:var(--dg-red); background:color-mix(in srgb,var(--dg-red) 9%,transparent); }\r\n.dg-notice { color:var(--dg-green); background:color-mix(in srgb,var(--dg-green) 8%,transparent); }\r\n.dg-pr { padding:20px 28px 28px; flex:1; min-height:0; overflow:auto; border-top:1px solid var(--dg-line); }\r\n.dg-pr-heading { display:flex; align-items:center; gap:10px; margin-bottom:18px; }\r\n.dg-pr h2 { font-size:18px; font-weight:500; margin:0; }\r\n.dg-pr form { max-width:680px; margin:auto; display:grid; grid-template-columns:150px minmax(0,1fr); gap:16px; }\r\n.dg-pr form>label:nth-child(3),.dg-form-footer { grid-column:1/-1; }\r\n.dg-pr label { display:flex; flex-direction:column; gap:7px; font-size:13px; }\r\n.dshgit :is(input:not([type=checkbox]),textarea,select) { border:1px solid var(--dg-line); border-radius:10px; background:var(--dg-bg); padding:9px 12px; min-width:0; }\r\n.dshgit input::placeholder,.dshgit textarea::placeholder { color:var(--dg-muted); opacity:1; }\r\n.dshgit textarea { resize:vertical; }\r\n.dg-pr .dg-alert { margin:0 0 18px; }\r\n.dg-form-footer { display:flex; align-items:center; justify-content:space-between; gap:16px; }\r\n.dshgit .dg-check { display:inline-flex; flex-direction:row; align-items:center; gap:9px; font-size:14px; cursor:pointer; }\r\n.dg-check input { width:17px; height:17px; accent-color:var(--dg-text); margin:0; }\r\n.dg-pr-existing { padding:18px 24px; border:1px solid var(--dg-line); border-radius:16px; background:var(--dg-card); }\r\n.dg-pr-existing h3 { font-size:18px; font-weight:500; }\r\n.dg-pr-existing a { color:var(--dg-text); text-underline-offset:4px; }\r\n.dg-commit-shade { position:absolute; inset:60px 0 65px; display:flex; align-items:flex-end; justify-content:flex-end; padding:16px 20px; background:color-mix(in srgb,var(--dg-bg) 35%,transparent); }\r\n.dg-commit-card { background:var(--dg-card); border:1px solid var(--dg-line); border-radius:24px; padding:18px 10px 10px; box-shadow:0 12px 44px #0002; width:470px; max-width:100%; max-height:100%; overflow:auto; animation:dg-appear 160ms ease-out; }\r\n.dg-branch-select { display:flex; align-items:center; gap:9px; margin:0 14px 12px; }\r\n.dshgit .dg-branch-select select { flex:1; border:0; background:transparent; padding:3px; font-size:17px; }\r\n.dg-new-branch { display:flex; gap:8px; margin:0 14px 10px; }\r\n.dg-new-branch input { flex:1; width:0; font-size:12px; }\r\n.dg-new-branch button { padding:5px 10px; color:var(--dg-muted); font-size:12px; flex-shrink:0; }\r\n.dshgit .dg-message { width:100%; display:block; border:0; background:transparent; padding:14px 18px; font-size:16px; resize:vertical; min-height:100px; }\r\n.dg-include { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:14px 18px 20px; }\r\n.dg-commit-actions { padding-top:6px; border-top:1px solid var(--dg-line); }\r\n.dg-commit-actions button { width:100%; display:flex; align-items:center; gap:13px; padding:12px 15px; text-align:left; font-size:17px; }\r\n.dg-commit-actions button:first-child { background:var(--dg-hover); }\r\n.dg-commit-actions button>span { flex:1; }\r\n.dg-commit-actions kbd { color:var(--dg-muted); background:color-mix(in srgb,var(--dg-text) 8%,transparent); padding:0 8px; border-radius:10px; font:12px/1.8 inherit; }\r\n@keyframes dg-appear { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }\r\n@media(prefers-reduced-motion:reduce) { .dg-commit-card { animation:none; } }\r\n\r\n.dg-docked { height:100%; min-height:0; min-width:0; container: dshgit / inline-size; }\r\n.dg-docked .dshgit { height:100%; min-height:0; background:var(--dg-bg); }\r\n.dg-toasts { position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:10000; width:min(560px,calc(100vw - 32px)); display:flex; flex-direction:column; gap:10px; pointer-events:none; max-height:calc(100dvh - 40px); overflow:auto; }\r\n.dg-toast { display:flex; align-items:flex-start; gap:10px; border:1px solid var(--dg-line); border-radius:14px; padding:14px 16px; background:var(--dg-card); box-shadow:0 8px 32px #0003; font-size:14px; line-height:1.5; pointer-events:auto; }\r\n.dg-toast>span:nth-child(2) { flex:1; min-width:0; overflow-wrap:anywhere; white-space:pre-wrap; max-height:35dvh; overflow:auto; }\r\n.dg-toast-symbol { color:var(--dg-green); font-weight:600; }\r\n.dg-toast[data-error=true] .dg-toast-symbol { color:var(--dg-red); }\r\n.dg-toast button { border:0; background:transparent; color:var(--dg-muted); cursor:pointer; font-size:20px; line-height:1; padding:2px; }\r\n.dg-toast button:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary,#5787dc); outline-offset:3px; }\r\n@container dshgit (max-width: 760px) {\r\n  .dg-workspace[data-files-open=true] { grid-template-columns:minmax(150px,38%) minmax(0,1fr); }\r\n  .dg-footer { padding:12px 16px; flex-wrap:wrap; font-size:12px; }\r\n  .dg-commit-shade { inset:52px 0 65px; padding:8px; }\r\n  .dg-pr { padding:16px; }\r\n  .dg-pr form { grid-template-columns:1fr; }\r\n  .dg-form-footer { flex-wrap:wrap; }\r\n}\r\n@container dshgit (max-width: 480px) {\r\n  .dg-workspace[data-files-open=true] { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(80px,38%) minmax(100px,1fr); }\r\n  .dg-files { border-right:0; border-bottom:1px solid var(--dg-line); padding:4px; }\r\n  .dg-include { flex-wrap:wrap; margin:10px; }\r\n  .dg-commit-actions button { font-size:15px; }\r\n  .dg-commit-card { border-radius:16px; }\r\n}\r\n\r\n.dg-toolbar { display:flex; align-items:center; gap:8px; padding:8px 10px; min-height:50px; flex-shrink:0; }\r\n.dshgit .dg-summary-pill,.dshgit .dg-branch-pill { display:flex; align-items:center; gap:8px; min-height:34px; padding:6px 12px; background:var(--dg-card); border-radius:18px; font-size:13px; white-space:nowrap; }\r\n.dg-summary-pill { flex-shrink:0; }\r\n.dg-summary-pill .dg-stats { font-size:12px; gap:4px; }\r\n.dg-branch-pill { flex:1; min-width:0; }\r\n.dg-branch-pill span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-branch-pill svg { width:14px; height:14px; flex-shrink:0; }\r\n.dg-branch-pill svg:last-child { margin-left:auto; }\r\n.dg-tools svg { width:17px; height:17px; }\r\n.dg-tools button[aria-pressed=true],.dg-tools button[aria-expanded=true] { color:var(--dg-text); background:var(--dg-hover); }\r\n.dg-workspace[data-files-open=true] { grid-template-columns:240px minmax(0,1fr); }\r\n@container dshgit (max-width: 760px) {\r\n  .dg-workspace[data-files-open=true] { grid-template-columns:minmax(150px,38%) minmax(0,1fr); }\r\n}\r\n@container dshgit (max-width: 480px) {\r\n  .dg-toolbar { gap:5px; padding:7px 6px; }\r\n  .dshgit .dg-summary-pill,.dshgit .dg-branch-pill { padding:6px 8px; gap:5px; }\r\n  .dg-branch-pill svg:first-child { display:none; }\r\n  .dg-workspace[data-files-open=true] { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(80px,38%) minmax(100px,1fr); }\r\n}\r\n";
 
 // src/client.tsx
-var import_jsx_runtime3 = require("react/jsx-runtime");
-var inject = ["slots", "remote"];
+var import_jsx_runtime4 = require("react/jsx-runtime");
+var inject = ["slots", "remote", "sidebarRight", "sidebarRightTabs"];
 async function apply(ctx) {
   await ctx.remote.$mount(contribution);
   ctx.effect(() => {
@@ -20448,14 +20521,43 @@ async function apply(ctx) {
     document.head.append(style);
     return () => style.remove();
   });
+  ctx.effect(() => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = (0, import_client.createRoot)(container);
+    root.render(/* @__PURE__ */ (0, import_jsx_runtime4.jsx)(GitNotifications, {}));
+    return () => {
+      root.unmount();
+      container.remove();
+    };
+  });
+  ctx.effect(() => ctx.sidebarRightTabs.register({
+    id: "dshgit",
+    kind: "dshgit",
+    title: () => "\u53D8\u66F4",
+    keepMounted: true,
+    guide: [{ id: "dshgit", order: 35, title: () => "DSHGit", description: () => "\u67E5\u770B\u53D8\u66F4\u3001\u63D0\u4EA4\u4E0E\u63A8\u9001", icon: () => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "branch" }) }]
+  }));
   ctx.inject(["remote.dshgit"], (scope) => {
     const remote = {
       run: (request) => scope.remote.dshgit.run(request),
       changes: (sessionId, signal) => scope.remote.dshgit.changes(sessionId, signal)
     };
     function Entry({ sessionId }) {
-      return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(GitLauncher, { sessionId, remote }, sessionId);
+      return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(GitLauncher, { sessionId, remote, onOpen: () => ctx.sidebarRight.openTab("dshgit") }, sessionId);
     }
+    function Tab({ sessionId, useTabInfo }) {
+      const { tab } = useTabInfo();
+      return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "dg-docked", children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(GitPanel, { sessionId, remote, active: tab.visible, onClose: () => tab.actions.close() }, sessionId) });
+    }
+    scope.slots.inject("sidebar.right.pane.tab", () => scope.slots.register({
+      name: "sidebar.right.pane.tab",
+      key: "dshgit"
+    }, Tab));
+    scope.slots.inject("sidebar.right.pane.tab.title", () => scope.slots.register({
+      name: "sidebar.right.pane.tab.title",
+      key: "dshgit"
+    }, () => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(import_jsx_runtime4.Fragment, { children: "\u53D8\u66F4" })));
     scope.slots.inject("conversation.session.header.utilities", () => scope.slots.register({
       name: "conversation.session.header.utilities",
       id: "dshgit",

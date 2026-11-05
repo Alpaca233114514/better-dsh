@@ -1,0 +1,16 @@
+{
+  "installed": {
+    "dsh-ultra": "0.1.2",
+    "thinking-level": "0.1.12"
+  },
+  "originalDependenciesPreserved": true,
+  "originalBundlesPreserved": true,
+  "autoReviewPreserved": true,
+  "profilePatchPreserved": true,
+  "installedCodeMatchesSource": true,
+  "testFixturesExcluded": true,
+  "backup": "C:\\Users\\Logan\\Documents\\GitHub\\better-dsh\\.cache\\ultra-required-before-install-20261105-152725",
+  "desktopRestartPending": false,
+  "desktopReopened": true,
+  "desktopProcessId": 16536
+}

@@ -29,6 +29,7 @@ let width = 0
 Object.defineProperty(host, 'clientWidth', { get: () => width })
 const root = createRoot(document.getElementById('entry'))
 const calls = []
+let opened = 0
 const remote = { async run(request) {
   calls.push(request)
   return { ok: true, value: { state: { root: '/project', name: 'project', branch: 'codex/test', upstream: '', ahead: 0, behind: 0, additions: 3, deletions: 1, protected: false, writable: true, files: [] }, branches: ['codex/test'], pr: null, base: 'main' } }
@@ -37,7 +38,7 @@ const tick = () => new Promise(resolve => setImmediate(resolve))
 const click = async selector => act(async () => { document.querySelector(selector).click(); await tick() })
 
 test('card reserves only its own conversation and collapses without losing the composer draft', async () => {
-  await act(async () => { root.render(React.createElement(GitLauncher, { sessionId: 'one', remote })); await tick() })
+  await act(async () => { root.render(React.createElement(GitLauncher, { sessionId: 'one', remote, onOpen() { opened++ } })); await tick() })
   await act(async () => { document.getElementById('body-slot').append(content); await tick() })
   width = 1200
   await act(async () => resize())
@@ -66,14 +67,13 @@ test('card reserves only its own conversation and collapses without losing the c
   assert.ok(document.querySelector('aside'))
 })
 
-test('detail opens from card; Escape returns focus and unmount releases host layout', async () => {
+test('card opens native sidebar without a dialog and unmount releases host layout', async () => {
   await click('.dg-sidebar-changes')
-  const dialog = document.querySelector('dialog')
-  assert.equal(dialog.hasAttribute('open'), true)
-  assert.ok(document.querySelector('.dg-workspace'))
-  await act(async () => { dialog.dispatchEvent(new dom.window.Event('cancel', { cancelable: true })); await tick() })
-  assert.equal(dialog.hasAttribute('open'), false)
-  assert.equal(document.activeElement, document.querySelector('.dg-sidebar-changes'))
+  assert.equal(opened, 1)
+  assert.equal(document.querySelector('dialog'), null)
+  assert.ok(document.querySelector('.dg-sidebar'))
+  await click('.dg-sidebar-open')
+  assert.equal(opened, 2)
   await act(async () => root.unmount())
   assert.equal(host.classList.contains('dg-host'), false)
   assert.equal(host.hasAttribute('data-dg-wide'), false)
