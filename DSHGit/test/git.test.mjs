@@ -161,6 +161,7 @@ test('commit success is preserved and reported when push fails', async () => {
   await writeFile(join(root, 'file.txt'), 'new\n')
   const result = await repo.execute(root, { ...request('commitPush'), includeUnstaged: true, message: 'kept locally' })
   assert.match(result.notice, /提交已成功，推送失败/)
+  assert.equal(result.partialFailure, true)
   assert.match(await run('git', ['log', '-1', '--format=%s'], root), /kept locally/)
 })
 test('renaming and unstaging preserve both paths without deleting work', async () => {
@@ -184,7 +185,7 @@ test('PR requests use origin identity, stdin body, explicit head/base and draft'
   })
   const result = await repo.execute(root, { ...request('createPR'), base: 'main', title: 'New panel', body: 'Literal $() and `code`\nsecond line', draft: true })
   assert.equal(result.pr.number, 42)
-  assert.equal(calls[0].args[2], 'example/project')
+  assert.equal(calls[0].args[calls[0].args.indexOf('--repo') + 1], 'example/project')
   assert.equal(calls.at(-1).input, 'Literal $() and `code`\nsecond line')
   assert.ok(calls.at(-1).args.includes('--draft'))
   assert.ok(calls.at(-1).args.includes('codex/test'))

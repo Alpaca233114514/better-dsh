@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ultra · DSH 插件 Demo</title>
+  <link rel="stylesheet" href="../../ReasoningSlider/demo/vendor/dsh-theme.css">
+  <link rel="stylesheet" href="../../ReasoningSlider/src/style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-ds-dark-theme>
+  <aside class="sidebar">
+    <a class="brand" href="./index.html"><span class="brand-mark">≈</span> deepseek <small>HARNESS</small></a>
+    <div class="side-label">工作区</div><div class="workspace-name">⌘ <span>better-dsh</span><span class="muted">⌄</span></div>
+    <div class="side-label chats-label">聊天 <span>＋</span></div><div class="active-chat">◌ <span>Ultra 模式预览</span></div>
+    <div class="side-foot"><span class="plugin-dot"></span> Ultra</div>
+  </aside>
+  <div class="app">
+    <header class="topbar"><span>Ultra Demo</span><div class="top-actions"><label class="availability">Ultra 插件 <input id="available" type="checkbox" role="switch" checked><span class="switch-track"></span></label><button id="theme" class="icon-btn" aria-label="切换浅色主题" title="切换主题">☼</button></div></header>
+    <main>
+      <section class="conversation" aria-label="演示对话">
+        <div class="user-message">检查登录流程，找出问题并给出修复方案。</div>
+        <div class="assistant-heading"><span class="assistant-mark">≈</span><strong>DeepSeek</strong><span id="mode-badge" class="mode-badge">Ultra</span></div>
+        <p id="intro">我会先梳理主流程，同时把接口检查、界面检查和验证设计交给子代理，最后统一核对结果。</p>
+        <section class="team" aria-label="代理编排预览">
+          <div class="team-header"><div><span class="team-symbol">⑂</span><strong id="team-title">准备并行探索</strong><span id="team-count" class="muted">3 个子代理</span></div><span id="run-state" class="status-pill">待开始</span></div>
+          <div class="lead-row"><span class="agent-icon lead">D</span><div><strong>主代理</strong><p>拆分任务、整合证据与最终答复</p></div><span id="parent-effort" class="effort-tag">Max</span></div>
+          <div id="agent-list" class="agent-list"></div>
+          <div class="team-bottom"><button id="restore" class="text-btn">全部恢复 Max</button></div>
+        </section>
+        <p id="result" class="result" role="status" aria-live="polite"></p>
+      </section>
+      <section class="composer-area" aria-label="消息输入">
+        <div class="composer">
+          <label class="sr-only" for="prompt">消息草稿</label><textarea id="prompt" rows="2" placeholder="继续这个任务，或输入新的想法…"></textarea>
+          <div class="composer-toolbar"><span class="attach" aria-hidden="true">＋</span><span class="standard">Standard</span><span class="toolbar-divider"></span><button id="trigger" class="rs-trigger" aria-label="推理与代理模式" aria-expanded="true" aria-controls="panel"><span>DeepSeek</span><span id="trigger-effort" class="rs-trigger-level">Ultra</span><span aria-hidden="true">⌄</span></button><button id="run" class="run-button">演示运行 <span>↑</span></button></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <section id="panel" class="rs-panel" aria-label="推理与代理设置">
+    <button id="reset" class="rs-reset" aria-label="恢复默认 Max" title="恢复默认 Max">↶</button>
+    <div class="rs-level"><span id="level" class="rs-level-text">Ultra</span></div><div class="model-caption">DeepSeek <span>⌄</span></div>
+    <div id="slider" class="rs-slider" role="slider" tabindex="0" aria-label="推理与代理模式" aria-valuemin="0" aria-valuemax="4" aria-valuenow="4" aria-valuetext="Ultra" style="--v:1"><span class="rs-track" aria-hidden="true"><span class="rs-fill"></span><span id="ticks" class="rs-ticks"></span></span><span class="rs-thumb" aria-hidden="true"></span></div>
+  </section>
+  <script src="../../ReasoningSlider/src/effect-policy.cjs"></script><script src="../src/policy.cjs"></script><script src="demo.js"></script>
+</body>
+</html>
