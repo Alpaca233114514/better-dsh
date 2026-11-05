@@ -190,7 +190,10 @@ function Slider({ directory, available, locked }) {
   return <>
     <button ref={trigger} className="rs-trigger" disabled={!available || locked} aria-label="推理滑条" aria-expanded={open}
       onClick={() => { setOpen(!open); setPicking(!current); }}>
-      {current?.model.name ?? '请选择模型'} <span className="rs-trigger-level">{current && (levels[selected]?.name ?? '')}</span><span className="rs-trigger-chev">⌄</span>
+      {current?.model.name ?? '请选择模型'} <span className="rs-trigger-level">{current && (levels[selected]?.name ?? '')}</span>
+      <svg className="rs-trigger-chev" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" focusable="false">
+        <path d="m2.5 4.25 3.5 3.5 3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
     </button>
     {open && createPortal(<section ref={panel} className={`rs-panel${placed ? ' rs-in' : ''}`} data-picking={picking || undefined} data-saving={state.pending !== null || undefined} data-max={isMaxEffort(levels[index]) || undefined} style={position} aria-label="推理设置">
       <div className="rs-view" data-active={!picking || undefined} aria-hidden={picking || undefined} inert={picking ? '' : undefined}><div className="rs-view-inner">

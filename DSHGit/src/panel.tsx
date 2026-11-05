@@ -53,11 +53,10 @@ export function GitPanel({ sessionId, remote, onClose }: { sessionId: string; re
   }, [call])
   useEffect(() => {
     alive.current = true
-    void loadPR()
     void call('branches').then(result => { if (alive.current) setBranches(result.branches ?? []) }).catch(() => {})
     const stop = followChanges(() => remoteRef.current, sessionId, async () => { if (!operation.current) await load() }, setLoadError)
     return () => { alive.current = false; stop(); generation.current++; diffGeneration.current++ }
-  }, [load, loadPR, call])
+  }, [load, call])
   useEffect(() => { if (commitOpen) messageInput.current?.focus() }, [commitOpen])
   useEffect(() => { if (view === 'pr') prHeading.current?.focus() }, [view])
   const openPR = () => { if (operation.current) return; setCommitOpen(false); setView('pr'); void loadPR() }
@@ -74,7 +73,7 @@ export function GitPanel({ sessionId, remote, onClose }: { sessionId: string; re
       if (action === 'commit' || action === 'commitPush') { setMessage(''); setCommitOpen(false); setSelected(''); setDiff('选择文件查看差异'); commitTrigger.current?.focus() }
       if (['switch', 'createBranch'].includes(action)) {
         setNewBranch(''); setSelected(''); setDiff('选择文件查看差异'); setPR(undefined); setPRError(''); setBase('')
-        void loadPR()
+        if (view === 'pr') void loadPR()
         const data = await call('branches'); if (alive.current) setBranches(data.branches ?? [])
       }
       if (action === 'stage' || action === 'unstage') { setSelected(''); setDiff('选择文件查看差异') }
@@ -101,7 +100,7 @@ export function GitPanel({ sessionId, remote, onClose }: { sessionId: string; re
     }
   }}>
     <header className="dg-top"><span className="dg-brand"><Icon name="branch"/>DSHGit</span>
-      <div className="dg-tools"><button title="刷新" aria-label="刷新 Git 状态" disabled={!!busy} onClick={() => { void load(true); void loadPR() }}><Icon name="refresh"/></button>
+      <div className="dg-tools"><button title="刷新" aria-label="刷新 Git 状态" disabled={!!busy} onClick={() => { void load(true); if (view === 'pr') void loadPR() }}><Icon name="refresh"/></button>
         <button aria-label="关闭 DSHGit" onClick={onClose}><Icon name="close"/></button></div>
     </header>
     {(error || loadError) && <div className="dg-alert" role="alert">{error || loadError}</div>}

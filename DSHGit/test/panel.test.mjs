@@ -98,7 +98,7 @@ test('third commit-menu action shows an existing PR without creating a duplicate
   const calls = await mount({}, request => request.action === 'prInfo' ? { ok: true, value: { pr: { number: 7, title: 'Existing PR', url: 'https://github.com/example/repo/pull/7' }, base: 'main' } } : null)
   await click(byText('提交与推送'))
   const entry = document.querySelectorAll('.dg-commit-actions button')[2]
-  assert.equal(entry.textContent.trim(), '查看 Pull Request')
+  assert.equal(calls.some(call => call.action === 'prInfo'), false)
   await click(entry)
   assert.equal(document.querySelector('.dg-pr form'), null)
   assert.match(document.querySelector('.dg-pr-existing').textContent, /Existing PR/)

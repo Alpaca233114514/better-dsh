@@ -282,9 +282,27 @@ var GitRepository = class {
       const match = /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([^/\s]+\/[^/\s]+?)(?:\.git)?$/.exec(origin);
       if (!match) throw new Error("\u521B\u5EFA PR \u9700\u8981 github.com \u7684 origin \u8FDC\u7A0B\u4ED3\u5E93\u3002");
       const repository = match[1];
-      const info = JSON.parse(await this.run("gh", ["repo", "view", repository, "--json", "nameWithOwner,defaultBranchRef"], root));
+      if (request.action === "prInfo") {
+        const [owner, name] = repository.split("/");
+        const query = "query($owner:String!,$name:String!,$head:String!){repository(owner:$owner,name:$name){defaultBranchRef{name} pullRequests(first:1,headRefName:$head,states:OPEN,orderBy:{field:CREATED_AT,direction:DESC}){nodes{number title url}}}}";
+        const response = await this.run("gh", [
+          "api",
+          "graphql",
+          "--hostname",
+          "github.com",
+          "-f",
+          "query=" + query,
+          "-f",
+          "owner=" + owner,
+          "-f",
+          "name=" + name,
+          "-f",
+          "head=" + state.branch
+        ], root);
+        const info = JSON.parse(response).data.repository;
+        return { pr: info.pullRequests.nodes[0] ?? null, base: info.defaultBranchRef?.name ?? "main" };
+      }
       const prs = JSON.parse(await this.run("gh", ["pr", "list", "--repo", repository, "--head", state.branch, "--state", "open", "--json", "number,title,url"], root));
-      if (request.action === "prInfo") return { pr: prs[0] ?? null, base: info.defaultBranchRef?.name ?? "main" };
       if (prs.length) return { pr: prs[0], notice: "\u5F53\u524D\u5206\u652F\u5DF2\u6709 Pull Request" };
       const base = required(request.base, "\u76EE\u6807\u5206\u652F");
       await this.git(root, ["check-ref-format", "--branch", base]);
@@ -626,10 +644,19 @@ var RepositoryCache = class {
   }
   async execute(request, repo = this.repo) {
     await this.ready;
+    if (request.action === "prInfo") {
+      this.jobs++;
+      try {
+        const state = await this.read();
+        return await repo.execute(this.paths[0], request, true, state);
+      } finally {
+        this.jobs--;
+      }
+    }
     return this.enqueue(async () => {
       if (this.failure) throw this.failure;
       const before = repo.lastSnapshot;
-      const cached = request.action === "diff" || request.action === "prInfo" ? this.snapshot.state : void 0;
+      const cached = request.action === "diff" ? this.snapshot.state : void 0;
       const result = await repo.execute(this.paths[0], request, true, cached);
       if (repo.lastSnapshot !== before) {
         this.snapshot = repo.lastSnapshot;
@@ -799,8 +826,8 @@ var GitService = class extends (_a = TypertRemoteService, _changes_dec = [Remote
     const session = this.ctx.sessions.get(sessionId);
     if (!session?.header.cwd) throw new Error("\u8BF7\u5148\u6253\u5F00\u5DE5\u4F5C\u533A\u4F1A\u8BDD\u3002");
     const policy = this.ctx.sandboxPolicy.resolve({ session });
-    const runner = async (program, args, cwd, input, allowed = [0]) => {
-      const timeout = AbortSignal.timeout(12e4);
+    const execute = async (program, args, cwd, input, allowed = [0], env = {}) => {
+      const timeout = AbortSignal.timeout(program === "powershell.exe" ? 3e3 : 12e4);
       const signal = AbortSignal.any([this.abort.signal, lifetime, timeout]);
       const executable = await this.ctx.subprocess.resolveExecutable(program, void 0, signal);
       const argv = [executable, ...args];
@@ -810,7 +837,7 @@ var GitService = class extends (_a = TypertRemoteService, _changes_dec = [Remote
         cwd,
         graceMs: 1e3,
         signal,
-        env: { GIT_OPTIONAL_LOCKS: "0", GIT_TERMINAL_PROMPT: "0", GIT_LITERAL_PATHSPECS: "1", GH_PROMPT_DISABLED: "1", GH_PAGER: "cat" },
+        env: { ...env, GIT_OPTIONAL_LOCKS: "0", GIT_TERMINAL_PROMPT: "0", GIT_LITERAL_PATHSPECS: "1", GH_PROMPT_DISABLED: "1", GH_PAGER: "cat" },
         stdio: {
           stdin: input === void 0 ? "ignore" : "pipe",
           stdout: { maxBytes: 2 * 1024 * 1024 },
@@ -831,7 +858,27 @@ var GitService = class extends (_a = TypertRemoteService, _changes_dec = [Remote
       if (stdout.lossy) throw new Error("\u8F93\u51FA\u8FC7\u5927\uFF0C\u65E0\u6CD5\u5B8C\u6574\u663E\u793A\uFF0C\u8BF7\u4F7F\u7528 Git \u547D\u4EE4\u884C\u67E5\u770B\u3002");
       return stdout.text;
     };
-    return runner;
+    const routes = /* @__PURE__ */ new Map();
+    return async (program, args, cwd, input, allowed) => {
+      const command = args[0] === "--no-pager" ? args[3] : args[0];
+      if (program === "git" && !["ls-remote", "fetch", "push"].includes(command)) return execute(program, args, cwd, input, allowed);
+      let proxy = process.env.DSH_GIT_PROXY;
+      if (!proxy && process.platform === "win32" && !["https_proxy", "http_proxy", "all_proxy"].some((name) => process.env[name])) {
+        let target = "https://api.github.com";
+        if (program === "git") {
+          const remote = await execute("git", ["remote", "get-url", ...command === "push" ? ["--push"] : [], "origin"], cwd);
+          if (!/^https:\/\//i.test(remote)) return execute(program, args, cwd, input, allowed);
+          target = new URL(remote.trim()).origin;
+        }
+        if (!routes.has(target)) {
+          const script = "$ErrorActionPreference = 'Stop'; $u = [uri][Console]::ReadLine(); $p = [Net.WebRequest]::GetSystemWebProxy().GetProxy($u); if ($p -and $p -ne $u) { $p.AbsoluteUri }";
+          const route = await execute("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], cwd, target + "\n");
+          routes.set(target, route.trim());
+        }
+        proxy = routes.get(target);
+      }
+      return execute(program, args, cwd, input, allowed, proxy ? { https_proxy: proxy, HTTPS_PROXY: proxy } : {});
+    };
   }
   async run(request) {
     request = requestSchema.parse(request);

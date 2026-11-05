@@ -19975,7 +19975,6 @@ function GitPanel({ sessionId, remote, onClose }) {
   }, [call]);
   (0, import_react.useEffect)(() => {
     alive.current = true;
-    void loadPR();
     void call("branches").then((result) => {
       if (alive.current) setBranches(result.branches ?? []);
     }).catch(() => {
@@ -19989,7 +19988,7 @@ function GitPanel({ sessionId, remote, onClose }) {
       generation.current++;
       diffGeneration.current++;
     };
-  }, [load, loadPR, call]);
+  }, [load, call]);
   (0, import_react.useEffect)(() => {
     if (commitOpen) messageInput.current?.focus();
   }, [commitOpen]);
@@ -20030,7 +20029,7 @@ function GitPanel({ sessionId, remote, onClose }) {
         setPR(void 0);
         setPRError("");
         setBase("");
-        void loadPR();
+        if (view === "pr") void loadPR();
         const data = await call("branches");
         if (alive.current) setBranches(data.branches ?? []);
       }
@@ -20087,7 +20086,7 @@ function GitPanel({ sessionId, remote, onClose }) {
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-tools", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { title: "\u5237\u65B0", "aria-label": "\u5237\u65B0 Git \u72B6\u6001", disabled: !!busy, onClick: () => {
           void load(true);
-          void loadPR();
+          if (view === "pr") void loadPR();
         }, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "refresh" }) }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { "aria-label": "\u5173\u95ED DSHGit", onClick: onClose, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "close" }) })
       ] })

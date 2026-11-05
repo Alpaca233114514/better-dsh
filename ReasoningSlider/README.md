@@ -1,6 +1,6 @@
 # thinking-level
 
-原生插件 `thinking-level`，当前版本 `0.1.10`，适配并验证 DSH `0.2.1-rc.3`。读取 DSH 已配置的真实模型目录、推理档位和默认设置，通过原生模型选择接口写回；不需要额外 API Key。
+原生插件 `thinking-level`，当前版本 `0.1.11`，适配并验证 DSH `0.2.1-rc.3`。读取 DSH 已配置的真实模型目录、推理档位和默认设置，通过原生模型选择接口写回；不需要额外 API Key。
 
 `0.1.3` 保持 280px 紧凑浮层和 DeepSeek 品牌蓝；进入 max / ultra / ultracode 时，靛蓝强调色从所选档位点向左展开，只覆盖填充轨道右侧约七成，并显示 13 颗微光粒子。退出该档位即移除效果；减少动态效果时停止展开、漂移和呼吸动画。效果为原创 CSS，不改变模型参数语义。
 
@@ -25,7 +25,7 @@
 通过目标运行时的官方插件命令安装打包文件：
 
 ```powershell
-dsh plugin --profile desktop add "C:/path/to/thinking-level-0.1.10.tgz" --ignore-scripts
+dsh plugin --profile desktop add "C:/path/to/thinking-level-0.1.11.tgz" --ignore-scripts
 ```
 
 插件包仅包含客户端、空 Host 入口、声明和说明。`debug/` 测试目录、截图和独立 demo 不在安装包中。安装后在 DSH 插件管理页启用；宿主提示需要重启时重启。

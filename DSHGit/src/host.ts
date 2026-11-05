@@ -132,8 +132,8 @@ class GitService extends TypertRemoteService {
     const session = this.ctx.sessions.get(sessionId as Parameters<Context['sessions']['get']>[0])
     if (!session?.header.cwd) throw new Error('请先打开工作区会话。')
     const policy = this.ctx.sandboxPolicy.resolve({ session })
-    const runner: Runner = async (program, args, cwd, input, allowed = [0]) => {
-      const timeout = AbortSignal.timeout(120000)
+    const execute = async (program: string, args: string[], cwd: string, input?: string, allowed = [0], env: Record<string, string> = {}) => {
+      const timeout = AbortSignal.timeout(program === 'powershell.exe' ? 3000 : 120000)
       const signal = AbortSignal.any([this.abort.signal, lifetime, timeout])
       const executable = await this.ctx.subprocess.resolveExecutable(program, undefined, signal)
       const argv = [executable, ...args]
@@ -142,7 +142,7 @@ class GitService extends TypertRemoteService {
         (await this.ctx.sandbox.confine(argv, { ...policy, mode: policy.mode }, signal)).argv
       const child = this.ctx.subprocess.spawn({
         argv: wrapped, cwd, graceMs: 1000, signal,
-        env: { GIT_OPTIONAL_LOCKS: '0', GIT_TERMINAL_PROMPT: '0', GIT_LITERAL_PATHSPECS: '1', GH_PROMPT_DISABLED: '1', GH_PAGER: 'cat' },
+        env: { ...env, GIT_OPTIONAL_LOCKS: '0', GIT_TERMINAL_PROMPT: '0', GIT_LITERAL_PATHSPECS: '1', GH_PROMPT_DISABLED: '1', GH_PAGER: 'cat' },
         stdio: { stdin: input === undefined ? 'ignore' : 'pipe',
           stdout: { maxBytes: 2 * 1024 * 1024 }, stderr: { maxBytes: 64000 } },
       })
@@ -157,7 +157,28 @@ class GitService extends TypertRemoteService {
       if (stdout.lossy) throw new Error('输出过大，无法完整显示，请使用 Git 命令行查看。')
       return stdout.text
     }
-    return runner
+    const routes = new Map<string, string>()
+    return async (program, args, cwd, input, allowed) => {
+      const command = args[0] === '--no-pager' ? args[3] : args[0]
+      if (program === 'git' && !['ls-remote', 'fetch', 'push'].includes(command)) return execute(program, args, cwd, input, allowed)
+      let proxy = process.env.DSH_GIT_PROXY
+      if (!proxy && process.platform === 'win32' && !['https_proxy', 'http_proxy', 'all_proxy'].some(name => process.env[name])) {
+        let target = 'https://api.github.com'
+        if (program === 'git') {
+          const remote = await execute('git', ['remote', 'get-url', ...(command === 'push' ? ['--push'] : []), 'origin'], cwd)
+          if (!/^https:\/\//i.test(remote)) return execute(program, args, cwd, input, allowed)
+          target = new URL(remote.trim()).origin
+        }
+        // Resolve Windows bypass/PAC inside confinement. 在当前沙箱内解析目标的系统代理与绕过规则。
+        if (!routes.has(target)) {
+          const script = "$ErrorActionPreference = 'Stop'; $u = [uri][Console]::ReadLine(); $p = [Net.WebRequest]::GetSystemWebProxy().GetProxy($u); if ($p -and $p -ne $u) { $p.AbsoluteUri }"
+          const route = await execute('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], cwd, target + '\n')
+          routes.set(target, route.trim())
+        }
+        proxy = routes.get(target)
+      }
+      return execute(program, args, cwd, input, allowed, proxy ? { https_proxy: proxy, HTTPS_PROXY: proxy } : {})
+    }
   }
   @Remote
   async run(request: Request): Promise<Result> {

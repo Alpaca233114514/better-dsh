@@ -38,6 +38,9 @@ async function bench(mode = 'workspace-write', deny = false, host = plugin, warm
       let text = ''
       if (args.includes('--show-toplevel')) text = args.includes('--git-common-dir') ? workspace + '\n' + workspace + '/.git\n' + workspace + '/.git\n' : workspace + '\n'
       if (args.includes('symbolic-ref')) text = 'codex/test\n'
+      if (args.includes('get-url')) text = 'https://github.com/example/repo.git\n'
+      if (args.includes('powershell.exe')) text = 'http://127.0.0.1:8123\n'
+      if (args.includes('graphql')) text = JSON.stringify({ data: { repository: { defaultBranchRef: { name: 'main' }, pullRequests: { nodes: [] } } } })
       return { done: Promise.resolve({ exitCode: 0, signal: null }), collected: {
         stdout: { readFrom: () => ({ text, lossy: false }) }, stderr: { readFrom: () => ({ text: '', lossy: false }) },
       } }
@@ -101,6 +104,30 @@ test('real Typert gateway accepts the Client request field from the installable 
     await assert.rejects(invoke({ sessionId: 'test', action: 'state' }), /disposed/)
     assert.equal(b.spawns.length, before)
   } finally { await gatewayFiber.dispose(); await b.fiber.dispose() }
+})
+test('PR read selects a proxy for one confined API call and leaves local Git alone', async t => {
+  const proxy = 'http://127.0.0.1:8123'
+  const keys = ['DSH_GIT_PROXY', 'HTTPS_PROXY', 'HTTP_PROXY', 'ALL_PROXY']
+  const previous = keys.map(key => process.env[key])
+  t.after(() => keys.forEach((key, i) => {
+    if (previous[i] === undefined) delete process.env[key]
+    else process.env[key] = previous[i]
+  }))
+  for (const system of process.platform === 'win32' ? [false, true] : [false]) {
+    if (system) keys.forEach(key => delete process.env[key])
+    else process.env.DSH_GIT_PROXY = proxy
+    const b = await bench()
+    try {
+      const result = await b.service.run({ sessionId: 'test', action: 'prInfo' })
+      assert.deepEqual(result, { base: 'main', pr: null })
+      const api = b.spawns.filter(spec => spec.argv.includes('gh'))
+      assert.equal(api.length, 1)
+      assert.equal(api[0].env.HTTPS_PROXY, proxy)
+      assert.ok(b.spawns.filter(spec => spec.argv.includes('git')).every(spec => !spec.env.HTTPS_PROXY))
+      assert.equal(b.spawns.filter(spec => spec.argv.includes('powershell.exe')).length, Number(system))
+      assert.ok(b.spawns.every(spec => spec.argv[0] === 'sandbox-runner'))
+    } finally { await b.fiber.dispose() }
+  }
 })
 test('native host refuses a read-only mutation before spawning', async () => {
   const b = await bench('read-only')

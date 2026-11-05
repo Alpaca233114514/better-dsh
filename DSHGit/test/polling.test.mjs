@@ -88,7 +88,8 @@ test('detail ticks with a fresh remote proxy do not refetch state, branches or P
     await act(async () => { root.render(React.createElement(Parent)); await tick() })
   }
   await act(async () => { await tick() })
-  for (const action of ['state', 'prInfo', 'branches']) {
+  assert.equal(rec.calls.filter(call => call === 'prInfo').length, 0)
+  for (const action of ['state', 'branches']) {
     assert.equal(rec.calls.filter(call => call === action).length, 1, `${action} must load once`)
   }
   await act(async () => root.unmount())

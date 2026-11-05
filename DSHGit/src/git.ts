@@ -151,9 +151,15 @@ export class GitRepository {
       const match = /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([^/\s]+\/[^/\s]+?)(?:\.git)?$/.exec(origin)
       if (!match) throw new Error('创建 PR 需要 github.com 的 origin 远程仓库。')
       const repository = match[1]
-      const info = JSON.parse(await this.run('gh', ['repo', 'view', repository, '--json', 'nameWithOwner,defaultBranchRef'], root))
+      if (request.action === 'prInfo') {
+        const [owner, name] = repository.split('/')
+        const query = 'query($owner:String!,$name:String!,$head:String!){repository(owner:$owner,name:$name){defaultBranchRef{name} pullRequests(first:1,headRefName:$head,states:OPEN,orderBy:{field:CREATED_AT,direction:DESC}){nodes{number title url}}}}'
+        const response = await this.run('gh', ['api', 'graphql', '--hostname', 'github.com', '-f', 'query=' + query,
+          '-f', 'owner=' + owner, '-f', 'name=' + name, '-f', 'head=' + state.branch], root)
+        const info = JSON.parse(response).data.repository
+        return { pr: info.pullRequests.nodes[0] ?? null, base: info.defaultBranchRef?.name ?? 'main' }
+      }
       const prs = JSON.parse(await this.run('gh', ['pr', 'list', '--repo', repository, '--head', state.branch, '--state', 'open', '--json', 'number,title,url'], root))
-      if (request.action === 'prInfo') return { pr: prs[0] ?? null, base: info.defaultBranchRef?.name ?? 'main' }
       if (prs.length) return { pr: prs[0], notice: '当前分支已有 Pull Request' }
       const base = required(request.base, '目标分支')
       await this.git(root, ['check-ref-format', '--branch', base])

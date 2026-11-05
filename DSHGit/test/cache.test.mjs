@@ -45,6 +45,17 @@ const equivalent = async f => {
   assert.deepEqual(sort(cached), sort(actual))
 }
 
+test('a pending PR query does not block local status or queued branch reads', async () => {
+  const f = await fixture()
+  const started = Promise.withResolvers(), response = Promise.withResolvers()
+  const pending = f.cache.execute({ action: 'prInfo' }, { execute() { started.resolve(); return response.promise } })
+  try {
+    await started.promise
+    const local = Promise.all([f.cache.read(), f.cache.execute({ action: 'branches' })])
+    assert.equal(await Promise.race([local.then(() => true), pause(1500).then(() => false)]), true)
+  } finally { response.resolve({ pr: null }); await pending; f.close() }
+})
+
 test('ordinary edits use three path-limited commands; unchanged cache reads use zero', async () => {
   const f = await fixture()
   try {

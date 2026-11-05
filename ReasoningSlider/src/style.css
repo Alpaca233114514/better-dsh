@@ -6,7 +6,7 @@
 .rs-trigger span{color:var(--dsw-alias-label-tertiary)}
 .rs-trigger:hover,.rs-trigger[aria-expanded=true]{background:var(--dsw-alias-bg-multi-select)}
 .rs-trigger:disabled{opacity:.55;cursor:default}
-.rs-trigger .rs-trigger-chev{display:inline-block;transition:transform 220ms var(--rs-ease,cubic-bezier(.22,1,.36,1))}
+.rs-trigger .rs-trigger-chev{display:block;flex:none;width:12px;height:12px;color:var(--dsw-alias-label-tertiary);transform-origin:center;transition:transform 220ms var(--rs-ease,cubic-bezier(.22,1,.36,1))}
 .rs-trigger[aria-expanded=true] .rs-trigger-chev{transform:rotate(180deg)}
 .rs-trigger:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary,#4176e6);outline-offset:2px}
 

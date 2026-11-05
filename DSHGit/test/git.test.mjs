@@ -184,7 +184,7 @@ test('PR requests use origin identity, stdin body, explicit head/base and draft'
   })
   const result = await repo.execute(root, { ...request('createPR'), base: 'main', title: 'New panel', body: 'Literal $() and `code`\nsecond line', draft: true })
   assert.equal(result.pr.number, 42)
-  assert.equal(calls[0].args[2], 'example/project')
+  assert.equal(calls[0].args[calls[0].args.indexOf('--repo') + 1], 'example/project')
   assert.equal(calls.at(-1).input, 'Literal $() and `code`\nsecond line')
   assert.ok(calls.at(-1).args.includes('--draft'))
   assert.ok(calls.at(-1).args.includes('codex/test'))

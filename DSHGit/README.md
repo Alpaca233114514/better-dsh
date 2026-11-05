@@ -16,6 +16,8 @@
 
 ## 安装
 
+变更视图只读取本地 Git，打开 PR 视图才访问 GitHub。HTTPS 远程操作优先使用宿主已有代理环境。在 Windows 上，未配置代理环境变量时，插件通过当前沙箱内的 Windows PowerShell 查询目标地址适用的系统代理。也可在启动 DSH 前设置 `DSH_GIT_PROXY`，给插件的 HTTPS 命令单独指定代理，例如 `$env:DSH_GIT_PROXY = 'http://127.0.0.1:7890'`（端口按实际配置填写）。Git 自身的代理配置和 SSH 远程仍按 Git 的规则处理。
+
 要求 Node.js **24+**、Git，以及 DSH 0.2.1-alpha.2。推送沿用宿主的 Git/SSH 凭证；PR 功能另需安装 [GitHub CLI](https://cli.github.com/) 并在宿主上完成 `gh auth login`。当前 PR 支持 `github.com` 的 `origin`，不支持其他托管平台及企业域名。
 
 仓库包含可直接安装的 `lib/` 构建产物。将路径替换为实际绝对路径：

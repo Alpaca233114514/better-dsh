@@ -112,10 +112,17 @@ export class RepositoryCache {
   }
   async execute(request: Request, repo = this.repo) {
     await this.ready
+    if (request.action === 'prInfo') {
+      this.jobs++
+      try {
+        const state = await this.read()
+        return await repo.execute(this.paths[0], request, true, state)
+      } finally { this.jobs-- }
+    }
     return this.enqueue(async () => {
       if (this.failure) throw this.failure
       const before = repo.lastSnapshot
-      const cached = request.action === 'diff' || request.action === 'prInfo' ? this.snapshot!.state : undefined
+      const cached = request.action === 'diff' ? this.snapshot!.state : undefined
       const result = await repo.execute(this.paths[0], request, true, cached)
       if (repo.lastSnapshot !== before) { this.snapshot = repo.lastSnapshot!; this.notify() }
       return result
