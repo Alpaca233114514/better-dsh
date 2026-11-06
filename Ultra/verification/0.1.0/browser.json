@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "sessionId": "session-97b674af-d73a-41af-a46b-9d7957471d3a",
+  "checks": [
+    "cold session Ultra restore",
+    "native slider selects max and ultra",
+    "exclusive effects",
+    "280px original popover",
+    "child effort RPC",
+    "restore all child efforts",
+    "reload persistence",
+    "no additional explanatory text"
+  ],
+  "errors": [],
+  "consoleMessages": []
+}

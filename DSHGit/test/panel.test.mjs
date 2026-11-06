@@ -8,7 +8,10 @@ await mkdir('.test-build', { recursive: true })
 await build({ entryPoints: ['src/panel.tsx'], outfile: '.test-build/panel.mjs', bundle: true, platform: 'node', format: 'esm', jsx: 'automatic', external: ['react', 'react/*', 'zod'] })
 const { GitPanel } = await import('../.test-build/panel.mjs')
 const dom = new JSDOM('<!doctype html><body><div id="root"></div></body>', { url: 'http://localhost' })
+dom.window.HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
+dom.window.HTMLDialogElement.prototype.close = function () { this.removeAttribute('open') }
 globalThis.window = dom.window; globalThis.document = dom.window.document
+Object.defineProperty(document, 'hidden', { value: false, configurable: true })
 globalThis.HTMLElement = dom.window.HTMLElement; globalThis.IS_REACT_ACT_ENVIRONMENT = true
 const { createRoot } = await import('react-dom/client')
 const root = createRoot(document.getElementById('root'))
@@ -23,7 +26,7 @@ async function mount(overrides = {}, handler) {
     const custom = handler?.(request); if (custom) return custom
     if (request.action === 'prInfo') return { ok: true, value: { pr: null, base: 'main' } }
     if (request.action === 'branches') return { ok: true, value: { branches: ['main', 'codex/test'] } }
-    if (request.action === 'diff') return { ok: true, value: { text: '+new\n-old\n' } }
+    if (request.action === 'diff') return { ok: true, value: { text: '@@ -8,2 +8,2 @@\n unchanged\n-old\n+new\n' } }
     return { ok: true, value: { state: structuredClone(state) } }
   } }
   await act(async () => { root.render(null); await tick() })
@@ -33,8 +36,11 @@ async function mount(overrides = {}, handler) {
 test('changes entry displays real statistics and opens per-file diff', async () => {
   await mount()
   assert.match(document.body.textContent, /\+10/)
+  await click(document.querySelector('[aria-label="文件列表"]'))
   await click(document.querySelector('.dg-file-name'))
-  assert.match(document.querySelector('pre').textContent, /\+new\n-old/)
+  assert.match([...document.querySelectorAll('pre code')].map(line => line.textContent).join('\n'), /-old\n\+new/)
+  assert.deepEqual([...document.querySelectorAll('.dg-removed .dg-line-number')].map(n => n.textContent), ['9', ''])
+  assert.deepEqual([...document.querySelectorAll('.dg-added .dg-line-number')].map(n => n.textContent), ['', '9'])
 })
 test('Ctrl+Enter commits with the current include-unstaged selection', async () => {
   const calls = await mount()
@@ -61,7 +67,7 @@ test('protected and read-only repositories disable commit and push', async () =>
 })
 test('PR entry exposes title, description, base and draft form', async () => {
   const calls = await mount()
-  await click([...document.querySelectorAll('button')].find(b => b.textContent.includes('创建 Pull Request')))
+  await click(document.querySelector('[aria-label="创建 Pull Request"]'))
   assert.ok(document.querySelector('form'))
   assert.equal(document.querySelector('input').value, 'main')
   assert.ok(document.querySelector('textarea'))
@@ -97,7 +103,7 @@ test('third commit-menu action shows an existing PR without creating a duplicate
   const calls = await mount({}, request => request.action === 'prInfo' ? { ok: true, value: { pr: { number: 7, title: 'Existing PR', url: 'https://github.com/example/repo/pull/7' }, base: 'main' } } : null)
   await click(byText('提交与推送'))
   const entry = document.querySelectorAll('.dg-commit-actions button')[2]
-  assert.equal(entry.textContent.trim(), '查看 Pull Request')
+  assert.equal(calls.some(call => call.action === 'prInfo'), false)
   await click(entry)
   assert.equal(document.querySelector('.dg-pr form'), null)
   assert.match(document.querySelector('.dg-pr-existing').textContent, /Existing PR/)
@@ -133,8 +139,62 @@ test('rapid repeat push clicks dispatch one mutation while an operation is pendi
   const push = document.querySelector('.dg-commit-actions button')
   await act(async () => { push.click(); push.click(); push.click(); await tick() })
   assert.equal(calls.filter(call => call.action === 'push').length, 1)
-  assert.ok([...document.querySelectorAll('.dg-commit-actions button')].every(button => button.disabled))
+  assert.equal(document.querySelector('.dg-commit-card'), null, 'menu closes before the request finishes')
+  assert.equal(byText('提交与推送').disabled, true)
   await act(async () => { finish({ ok: true, value: { notice: '推送成功' } }); await tick() })
 })
 
+for (const action of ['commit', 'commitPush']) {
+  test(`${action} closes immediately and preserves the draft after failure`, async () => {
+    let finish
+    const pending = new Promise(resolve => { finish = resolve })
+    const calls = await mount({}, request => request.action === action ? pending : null)
+    await click(byText('提交与推送'))
+    const input = document.querySelector('.dg-message')
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(dom.window.HTMLTextAreaElement.prototype, 'value').set.call(input, 'keep this draft')
+      input.dispatchEvent(new dom.window.Event('input', { bubbles: true }))
+      await tick()
+    })
+    await click(document.querySelectorAll('.dg-commit-actions button')[action === 'commit' ? 0 : 1])
+    assert.equal(document.querySelector('.dg-commit-card'), null)
+    assert.equal(calls.filter(call => call.action === action).length, 1)
+    await act(async () => { finish({ ok: false, error: { message: 'hook rejected' } }); await tick() })
+    assert.match(document.querySelector('[role="alert"]').textContent, /hook rejected/)
+    await click(byText('提交与推送'))
+    assert.equal(document.querySelector('.dg-message').value, 'keep this draft')
+  })
+}
+
 test.after(async () => { await act(async () => root.unmount()); dom.window.close() })
+
+test('branch creation uses DSH by default and remembers an editable or empty prefix', async () => {
+  window.localStorage.clear()
+  const edit = async (label, value) => act(async () => {
+    const input = document.querySelector(`[aria-label="${label}"]`)
+    Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set.call(input, value)
+    input.dispatchEvent(new dom.window.Event('input', { bubbles: true }))
+    await tick()
+  })
+  let calls = await mount()
+  await click(byText('提交与推送'))
+  assert.equal(document.querySelector('dialog').open, true)
+  assert.equal(document.querySelector('[aria-label="分支前缀"]').value, 'DSH')
+  await edit('新分支名称', 'new-feature')
+  await click(byText('创建分支'))
+  assert.equal(calls.find(call => call.action === 'createBranch').branch, 'DSH/new-feature')
+  await edit('分支前缀', 'team/')
+  calls = await mount()
+  await click(byText('提交与推送'))
+  assert.equal(document.querySelector('[aria-label="分支前缀"]').value, 'team/')
+  await edit('新分支名称', 'another')
+  await click(byText('创建分支'))
+  assert.equal(calls.find(call => call.action === 'createBranch').branch, 'team/another')
+  await edit('分支前缀', '')
+  calls = await mount()
+  await click(byText('提交与推送'))
+  await edit('新分支名称', 'no-prefix')
+  await click(byText('创建分支'))
+  assert.equal(calls.find(call => call.action === 'createBranch').branch, 'no-prefix')
+  window.localStorage.clear()
+})

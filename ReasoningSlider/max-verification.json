@@ -1,0 +1,15 @@
+{
+  "rightToLeft": {
+    "start": "inset(0px 0px 0px 100%)",
+    "middle": "inset(0px 0px 0px 3.86175%)",
+    "end": "inset(0px 0px 0px 0%)",
+    "width": 231.828125,
+    "track": 254
+  },
+  "partialCoverage": true,
+  "particles": 20,
+  "resetClearsEffect": true,
+  "reducedMotion": true,
+  "panelWidth": 280,
+  "errors": []
+}

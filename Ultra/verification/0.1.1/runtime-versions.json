@@ -1,0 +1,7 @@
+{
+  "dsh-session": "0.2.1-rc.3",
+  "dsh-subagent": "0.2.1-rc.3",
+  "dsh-agent-loop": "0.2.1-rc.3",
+  "dsh-typert-protocol": "0.2.1-rc.3",
+  "pluginRecord": true
+}
