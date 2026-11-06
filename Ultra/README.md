@@ -1,6 +1,6 @@
 # Ultra
 
-DSH 原生插件 `dsh-ultra` **0.1.2**，配合 `thinking-level` **0.1.12**，验证基线为 DSH **0.2.1-rc.3**。
+DSH 原生插件 `dsh-ultra` **0.1.3**，配合 `thinking-level` **0.1.13**，兼容范围为 DSH `>=0.2.1-rc.3 <0.3.0-0`（包含后续 0.2.x 正式版和预发布版）。功能验证基线仍为 **0.2.1-rc.3**；版本范围不代表未来宿主功能已逐版验证。
 
 Ultra 只让 DeepSeek 更积极地使用 **DSH 原生子代理**。主代理正常使用 `max`，原生子代理按宿主规则继承 Max；明确指定 effort 时遵循 DSH 原生工具已开放的参数和权限。
 
@@ -21,7 +21,7 @@ Ultra 只让 DeepSeek 更积极地使用 **DSH 原生子代理**。主代理正�
 退出桌面 DSH 后，通过桌面版附带的原生 CLI 安装，再重新打开：
 
 ```powershell
-dsh plugin --profile desktop add "C:/path/to/better-dsh/Ultra/release/dsh-ultra-0.1.2.tgz" "C:/path/to/better-dsh/ReasoningSlider/release/0.1.12/thinking-level-0.1.12.tgz" --ignore-scripts
+dsh plugin --profile desktop add "C:/path/to/better-dsh/Ultra/release/dsh-ultra-0.1.3.tgz" "C:/path/to/better-dsh/ReasoningSlider/release/0.1.13/thinking-level-0.1.13.tgz" --ignore-scripts
 ```
 
 插件不会更改原生子代理的容量、深度、权限、审批或取消规则，不改动 Auto Review。当前宿主未提供原生 spawn 或模型不支持 Max 时，不提供虚拟 Ultra 档。安装包不包含 Demo 和测试模型。

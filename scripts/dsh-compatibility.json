@@ -49,6 +49,14 @@
     "Qwen": {
       "minimumVersion": "0.2.1-rc.1",
       "legacyVersions": []
+    },
+    "Ultra": {
+      "minimumVersion": "0.2.1-rc.3",
+      "legacyVersions": []
+    },
+    "ReasoningSlider": {
+      "minimumVersion": "0.2.1-rc.3",
+      "legacyVersions": []
     }
   }
 }

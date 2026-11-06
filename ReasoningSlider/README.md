@@ -1,6 +1,6 @@
 # thinking-level
 
-原生插件 `thinking-level`，当前版本 `0.1.12`，适配并验证 DSH `0.2.1-rc.3`。读取 DSH 已配置的真实模型目录、推理档位和默认设置，通过原生模型选择接口写回；不需要额外 API Key。
+原生插件 `thinking-level`，当前版本 `0.1.13`，兼容 DSH `>=0.2.1-rc.3 <0.3.0-0`（包含后续 0.2.x 正式版和预发布版）。功能验证基线仍为 `0.2.1-rc.3`；版本范围不代表未来宿主功能已逐版验证。读取 DSH 已配置的真实模型目录、推理档位和默认设置，通过原生模型选择接口写回；不需要额外 API Key。
 
 `0.1.12` 可选联动 [Ultra](../Ultra/README.md)：在支持 Max 的 DeepSeek 模型上增加虚拟 Ultra 档，实际请求仍为 Max。Ultra 模式由独立插件保存；未安装或不可用时仍使用原生模型目录。特效在有 Ultra 时只绑定 Ultra，否则绑定 Max。保留现有浮层、重置与切档动画，不增加说明小字。
 
@@ -27,7 +27,7 @@
 通过目标运行时的官方插件命令安装打包文件：
 
 ```powershell
-dsh plugin --profile desktop add "C:/path/to/thinking-level-0.1.11.tgz" --ignore-scripts
+dsh plugin --profile desktop add "C:/path/to/thinking-level-0.1.13.tgz" --ignore-scripts
 ```
 
 插件包仅包含客户端、空 Host 入口、声明和说明。`debug/` 测试目录、截图和独立 demo 不在安装包中。安装后在 DSH 插件管理页启用；宿主提示需要重启时重启。
