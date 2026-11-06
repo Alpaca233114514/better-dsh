@@ -1,6 +1,6 @@
 {
   "name": "dshgit",
-  "version": "0.1.10",
+  "version": "0.2.0",
   "description": "DSHGit — native Git changes, commit, push and pull request panel for DSH",
   "type": "module",
   "license": "Apache-2.0",
@@ -38,12 +38,12 @@
     "zod": "4.6.6"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-client-ui-sidebar-right": "0.2.1-alpha.2 || >=0.2.1-rc.1 <0.3.0-0",
     "@deepseek-ai/cordis": "4.0.5-alpha.1 || 4.0.5",
     "@deepseek-ai/dsh-api-gateway": "0.2.1-alpha.2 || >=0.2.1-rc.1 <0.3.0-0",
     "@deepseek-ai/dsh-client-ui-conversation": "0.2.1-alpha.2 || >=0.2.1-rc.1 <0.3.0-0",
     "@deepseek-ai/dsh-client-ui-renderer": "0.2.1-alpha.2 || >=0.2.1-rc.1 <0.3.0-0",
     "@deepseek-ai/dsh-client-ui-session": "0.2.1-alpha.2 || >=0.2.1-rc.1 <0.3.0-0",
+    "@deepseek-ai/dsh-client-ui-sidebar-right": "0.2.1-alpha.2 || >=0.2.1-rc.1 <0.3.0-0",
     "@deepseek-ai/dsh-client-ui-slots": "0.2.1-alpha.2 || >=0.2.1-rc.1 <0.3.0-0",
     "@deepseek-ai/dsh-llm": "0.2.1-alpha.2 || >=0.2.1-rc.1 <0.3.0-0",
     "@deepseek-ai/dsh-sandbox": "0.2.1-alpha.2 || >=0.2.1-rc.1 <0.3.0-0",
@@ -74,7 +74,9 @@
     "@types/react": "18.3.27",
     "@types/react-dom": "18.3.7",
     "esbuild": "0.25.12",
+    "highlight.js": "11.11.1",
     "jsdom": "26.1.0",
+    "lowlight": "3.3.0",
     "typescript": "5.9.3"
   }
 }

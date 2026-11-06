@@ -22,3 +22,18 @@ test('Effects belong exclusively to Ultra when available, otherwise Max', () => 
   assert.equal(effects.isEmphasized('high', ['low', 'high']), false);
   assert.equal(effects.isEmphasized(undefined, []), false);
 });
+
+test('Ultra requires the native Team workflow only when Team tools are enabled', () => {
+  const team = policy.delegationInstructions('ultra', true, true);
+  assert.match(team, /MUST call spawn_teammate/);
+  assert.match(team, /do not substitute ordinary subagent tools/);
+  assert.match(team, /team_task_create/);
+  assert.match(team, /current expected_revision/);
+  assert.match(team, /inactive teammate is not proof of task completion/);
+  assert.match(team, /Only the Lead creates teammates/);
+  assert.match(team, /does not accept an invented effort parameter/);
+  assert.match(team, /permissions, review or cancellation/);
+  assert.doesNotMatch(policy.delegationInstructions('ultra'), /spawn_teammate|team_task_create/);
+  assert.equal(policy.delegationInstructions('max', true, true), '');
+  assert.equal(policy.delegationInstructions('ultra', false, true), '');
+});

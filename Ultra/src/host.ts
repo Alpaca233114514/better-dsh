@@ -4,7 +4,7 @@ import { contribution, selectSchema, sessionSchema, supportsUltra, type SelectRe
 import { projection } from './projection';
 import policy from './policy.cjs';
 
-export const inject = ['agents', 'sessions', 'sessionQuery', 'sessionProjections', 'sessionController', 'subagents', 'systemPrompt', 'typert'];
+export const inject = ['agents', 'sessions', 'sessionQuery', 'sessionProjections', 'sessionController', 'subagents', 'systemPrompt', 'tools', 'typert'];
 
 export class UltraService extends TypertRemoteService {
   private watchers = new Map<string, Set<() => void>>();
@@ -21,12 +21,15 @@ export class UltraService extends TypertRemoteService {
     ctx.on('subagent/provider-added', () => this.notifyAll());
     ctx.on('subagent/provider-removed', () => this.notifyAll());
     ctx.on('agent/created', ({ agent }: any) => this.notify(agent.id));
-    ctx.systemPrompt.section({ name: 'dsh-ultra', order: 8450, interpolate: false, text: ({ agent }: any) => {
+    ctx.systemPrompt.section({ name: 'dsh-ultra', order: 8450, interpolate: false, text: ({ agent, toolSet }: any) => {
       if (!agent) return '';
       const enabled = this.active(agent.session);
       const effort = 'max';
       this.captured.set(agent, { enabled, effort });
-      return enabled ? `${policy.delegationInstructions('ultra')}\nUse the existing native subagent tools exposed in this session. Follow their schemas for delegation, effort selection, messaging and waiting; preserve the host permission and review flow.` : '';
+      if (!enabled) return '';
+      // 按当前步骤可见工具判断，安装包存在不代表启用。 Detect admitted tools, not installed packages.
+      const agentTeams = !!ctx.tools.get('spawn_teammate', agent, toolSet);
+      return `${policy.delegationInstructions('ultra', true, agentTeams)}\nUse the existing native ${agentTeams ? 'Agent Teams' : 'subagent'} tools exposed in this session. Follow their schemas for delegation, effort selection, messaging and waiting; preserve the host permission and review flow.`;
     } });
     ctx.on('agent/request', async ({ agent }: any, next: () => Promise<any>) => {
       const resolved = await next(), captured = this.captured.get(agent);

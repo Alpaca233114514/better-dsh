@@ -1,12 +1,13 @@
 import { createRequire } from 'node:module';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
 import assert from 'node:assert/strict';
 const require = createRequire('C:/Users/Logan/Documents/GitHub/Papyrus_Desktop/package.json');
 const { chromium } = require('playwright');
 
 export async function verifyNativeUi(url, sessionId) {
-  const output = new URL('../verification/', import.meta.url); await mkdir(output, { recursive: true });
+  const output = process.env.ULTRA_VERIFICATION_DIR ? pathToFileURL(resolve(process.env.ULTRA_VERIFICATION_DIR) + '/') : new URL('../verification/', import.meta.url); await mkdir(output, { recursive: true });
   const browser = await chromium.launch({ headless: true, executablePath: 'C:/Users/Logan/AppData/Local/ms-playwright/chromium-1248/chrome-win64/chrome.exe' });
   const errors = [], consoleMessages = [];
   try {

@@ -8,6 +8,8 @@ await mkdir('.test-build', { recursive: true })
 await build({ entryPoints: ['src/panel.tsx'], outfile: '.test-build/panel.mjs', bundle: true, platform: 'node', format: 'esm', jsx: 'automatic', external: ['react', 'react/*', 'zod'] })
 const { GitPanel } = await import('../.test-build/panel.mjs')
 const dom = new JSDOM('<!doctype html><body><div id="root"></div></body>', { url: 'http://localhost' })
+dom.window.HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
+dom.window.HTMLDialogElement.prototype.close = function () { this.removeAttribute('open') }
 globalThis.window = dom.window; globalThis.document = dom.window.document
 Object.defineProperty(document, 'hidden', { value: false, configurable: true })
 globalThis.HTMLElement = dom.window.HTMLElement; globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -165,3 +167,34 @@ for (const action of ['commit', 'commitPush']) {
 }
 
 test.after(async () => { await act(async () => root.unmount()); dom.window.close() })
+
+test('branch creation uses DSH by default and remembers an editable or empty prefix', async () => {
+  window.localStorage.clear()
+  const edit = async (label, value) => act(async () => {
+    const input = document.querySelector(`[aria-label="${label}"]`)
+    Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set.call(input, value)
+    input.dispatchEvent(new dom.window.Event('input', { bubbles: true }))
+    await tick()
+  })
+  let calls = await mount()
+  await click(byText('提交与推送'))
+  assert.equal(document.querySelector('dialog').open, true)
+  assert.equal(document.querySelector('[aria-label="分支前缀"]').value, 'DSH')
+  await edit('新分支名称', 'new-feature')
+  await click(byText('创建分支'))
+  assert.equal(calls.find(call => call.action === 'createBranch').branch, 'DSH/new-feature')
+  await edit('分支前缀', 'team/')
+  calls = await mount()
+  await click(byText('提交与推送'))
+  assert.equal(document.querySelector('[aria-label="分支前缀"]').value, 'team/')
+  await edit('新分支名称', 'another')
+  await click(byText('创建分支'))
+  assert.equal(calls.find(call => call.action === 'createBranch').branch, 'team/another')
+  await edit('分支前缀', '')
+  calls = await mount()
+  await click(byText('提交与推送'))
+  await edit('新分支名称', 'no-prefix')
+  await click(byText('创建分支'))
+  assert.equal(calls.find(call => call.action === 'createBranch').branch, 'no-prefix')
+  window.localStorage.clear()
+})

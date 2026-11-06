@@ -1,7 +1,8 @@
 import { followChanges } from './refresh.ts'
-import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { unwrap, type GitRemote, type GitState, type Request, type Result } from './contracts.ts'
 import { pendingOperation, runOperation, subscribeOperations } from './operations.ts'
+import { highlightDiff } from './syntax.ts'
 
 export function Icon({ name }: { name: 'branch' | 'changes' | 'pr' | 'commit' | 'push' | 'close' | 'refresh' | 'chevron' | 'github' | 'files' }) {
   // GitHub mark: https://github.com/primer/octicons (MIT; docs/OCTICONS-LICENSE.txt).
@@ -21,7 +22,8 @@ export function Icon({ name }: { name: 'branch' | 'changes' | 'pr' | 'commit' | 
 }
 const isStaged = (index: string) => index !== ' ' && index !== '?'
 const safeUrl = (url: string) => /^https:\/\/[^/]+\//.test(url) ? url : undefined
-function DiffContent({ text }: { text: string }) {
+function DiffContent({ text, path }: { text: string; path: string }) {
+  const highlighted = useMemo(() => highlightDiff(text, path), [text, path])
   // Hunk coordinates advance separately; 增删行分别推进新旧文件行号。
   let oldLine = 0, newLine = 0, inHunk = false
   return <pre aria-label="文件差异内容">{text.split('\n').map((line, index) => {
@@ -32,8 +34,9 @@ function DiffContent({ text }: { text: string }) {
     const added = inHunk && line.startsWith('+'), removed = inHunk && line.startsWith('-')
     const context = inHunk && line.startsWith(' ')
     const before = removed || context ? oldLine++ : '', after = added || context ? newLine++ : ''
+    const tokens = highlighted.get(index)
     return <span key={index} className={`dg-code-line${hunk ? ' dg-hunk' : added ? ' dg-added' : removed ? ' dg-removed' : ''}`}>
-      <span className="dg-line-number" aria-hidden="true">{before}</span><span className="dg-line-number" aria-hidden="true">{after}</span><code>{line || ' '}</code>
+      <span className="dg-line-number" aria-hidden="true">{before}</span><span className="dg-line-number" aria-hidden="true">{after}</span><code>{tokens ? <><span className="dg-diff-marker">{line[0]}</span>{tokens.map((token, i) => <span key={i} className={token.className || undefined}>{token.text}</span>)}</> : line || ' '}</code>
     </span>
   })}</pre>
 }
@@ -45,6 +48,9 @@ export function GitPanel({ sessionId, remote, onClose, active = true }: { sessio
   const [view, setView] = useState<'changes' | 'pr'>('changes')
   const [commitOpen, setCommitOpen] = useState(false), [message, setMessage] = useState(''), [include, setInclude] = useState(true)
   const [branches, setBranches] = useState<string[]>([]), [newBranch, setNewBranch] = useState('')
+  const [branchPrefix, setBranchPrefix] = useState(() => {
+    try { return window.localStorage.getItem('dshgit.branchPrefix') ?? 'DSH' } catch { return 'DSH' }
+  })
   const [diff, setDiff] = useState('选择文件查看差异'), [selected, setSelected] = useState('')
   const [filesOpen, setFilesOpen] = useState(false)
   const [pr, setPR] = useState<Result['pr']>(), [prError, setPRError] = useState('')
@@ -53,6 +59,7 @@ export function GitPanel({ sessionId, remote, onClose, active = true }: { sessio
   const previousBusy = useRef(busy)
   const prHeading = useRef<HTMLHeadingElement>(null)
   const commitTrigger = useRef<HTMLButtonElement>(null), messageInput = useRef<HTMLTextAreaElement>(null)
+  const commitDialog = useRef<HTMLDialogElement>(null)
   // Parent renders can hand over a new service proxy; the load interval must
   // survive that identity change instead of refetching state, branches and PR.
   const remoteRef = useRef(remote)
@@ -88,7 +95,15 @@ export function GitPanel({ sessionId, remote, onClose, active = true }: { sessio
     previousBusy.current = busy
   }, [active, busy, load])
   useEffect(() => { if (!active) setCommitOpen(false) }, [active])
-  useEffect(() => { if (commitOpen) messageInput.current?.focus() }, [commitOpen])
+  useEffect(() => {
+    if (!commitOpen) return
+    const dialog = commitDialog.current!
+    dialog.showModal(); messageInput.current?.focus()
+    return () => dialog.close()
+  }, [commitOpen])
+  useEffect(() => {
+    try { window.localStorage.setItem('dshgit.branchPrefix', branchPrefix) } catch { /* Storage may be disabled; 存储禁用时仍可编辑。 */ }
+  }, [branchPrefix])
   useEffect(() => { if (view === 'pr') prHeading.current?.focus() }, [view])
   const openPR = () => { if (operation.current) return; setCommitOpen(false); setView('pr'); void loadPR() }
   const act = async (action: Request['action'], extra: Partial<Request> = {}) => {
@@ -163,7 +178,7 @@ export function GitPanel({ sessionId, remote, onClose, active = true }: { sessio
           })}
           {!state.files.length && <div className="dg-empty">工作区干净<br/><span className="dg-muted">所有变更均已提交</span></div>}
         </div>}
-        <div className="dg-diff"><div className="dg-diff-title"><Icon name="changes"/><span title={selected ? selected.slice(selected.indexOf(':') + 1) : ''}>{selected ? selected.slice(selected.indexOf(':') + 1) : '文件差异'}</span></div><DiffContent text={diff}/></div>
+        <div className="dg-diff"><div className="dg-diff-title"><Icon name="changes"/><span title={selected ? selected.slice(selected.indexOf(':') + 1) : ''}>{selected ? selected.slice(selected.indexOf(':') + 1) : '文件差异'}</span></div><DiffContent text={diff} path={selected.slice(selected.indexOf(':') + 1)}/></div>
       </div> : <div className="dg-pr">
         <div className="dg-pr-heading"><Icon name="github"/><h2 ref={prHeading} tabIndex={-1}>{pr ? 'Pull Request' : '创建 Pull Request'}</h2></div>
         {prError && <div className="dg-alert" role="alert">{prError}</div>}
@@ -178,17 +193,20 @@ export function GitPanel({ sessionId, remote, onClose, active = true }: { sessio
       <footer className="dg-footer"><span className="dg-muted" role="status">{busy ? (['commit', 'commitPush'].includes(busy) && !message.trim() ? '正在生成说明并提交…' : '正在执行 Git 操作…') : state.writable === false ? '只读工作区' : state.files.length ? `${state.files.length} 个变更文件` : '没有待提交的变更'}</span>
         <button ref={commitTrigger} className="dg-primary" aria-expanded={commitOpen} aria-controls={commitId} disabled={!!busy} onClick={() => setCommitOpen(value => !value)}><Icon name="commit"/>提交与推送<Icon name="chevron"/></button>
       </footer>
-      {commitOpen && <div className="dg-commit-shade" onClick={closeCommit}><section id={commitId} className="dg-commit-card" aria-label="提交与推送" onClick={e => e.stopPropagation()}>
+      {commitOpen && <dialog ref={commitDialog} id={commitId} className="dg-commit-shade" aria-label="提交与推送" onCancel={event => { event.preventDefault(); closeCommit() }} onClick={closeCommit}><section className="dg-commit-card" onClick={e => e.stopPropagation()}>
         <div className="dg-branch-select"><Icon name="branch"/><select aria-label="当前分支" value={state.branch} disabled={!writable} onChange={e => { void act('switch', { branch: e.target.value }) }}>{!state.branch && <option value="">Detached HEAD</option>}{Array.from(new Set([state.branch, ...branches])).filter(Boolean).map(branch => <option key={branch}>{branch}</option>)}</select></div>
-        <div className="dg-new-branch"><input aria-label="新分支名称" value={newBranch} onChange={e => setNewBranch(e.target.value)} placeholder="codex/新分支"/><button disabled={!writable || !newBranch.trim()} onClick={() => { void act('createBranch', { branch: newBranch }) }}>创建分支</button></div>
-        {hasChanges && <><textarea ref={messageInput} className="dg-message" aria-label="提交信息" disabled={!!busy} value={message} onChange={e => setMessage(e.target.value)} placeholder="提交信息（留空由当前会话模型生成）…" rows={4}/>
+        <div className="dg-new-branch"><div className="dg-branch-name"><input className="dg-prefix" aria-label="分支前缀" title="分支前缀（可修改或留空）" value={branchPrefix} onChange={e => setBranchPrefix(e.target.value)} placeholder="前缀"/><span aria-hidden="true">/</span><input aria-label="新分支名称" value={newBranch} onChange={e => setNewBranch(e.target.value)} placeholder="新分支"/></div><button disabled={!writable || !newBranch.trim()} onClick={() => {
+          const prefix = branchPrefix.trim().replace(/\/+$/, '')
+          void act('createBranch', { branch: prefix ? `${prefix}/${newBranch.trim()}` : newBranch.trim() })
+        }}>创建分支</button></div>
+        {hasChanges && <><textarea ref={messageInput} className="dg-message" aria-label="提交信息" disabled={!!busy} value={message} onChange={e => setMessage(e.target.value)} placeholder="提交信息（留空自动生成）…" rows={3}/>
         <div className="dg-include"><label className="dg-check"><input type="checkbox" checked={include} disabled={!!busy} onChange={e => setInclude(e.target.checked)}/>包含未暂存的更改</label><span className="dg-stats"><b>+{state.additions.toLocaleString()}</b><em>-{state.deletions.toLocaleString()}</em></span></div></>}
         <div className="dg-commit-actions">{hasChanges && <><button disabled={!canCommit} onClick={() => { void act('commit', { message, includeUnstaged: include }) }}><Icon name="commit"/><span>提交</span><kbd>Ctrl/⌘ ↵</kbd></button>
           <button disabled={!canCommit} onClick={() => { void act('commitPush', { message, includeUnstaged: include }) }}><Icon name="push"/><span>提交并推送</span><kbd>Ctrl/⌘ ⇧ ↵</kbd></button></>}
           {!hasChanges && <button disabled={!canPush} onClick={() => { void act('push') }}><Icon name="push"/><span>推送</span></button>}
           <button disabled={!!busy} onClick={openPR}><Icon name="github"/><span>{pr ? '查看 Pull Request' : '创建 Pull Request'}</span></button>
           {hasChanges && <button disabled={!canPush} onClick={() => { void act('push') }}><Icon name="push"/><span>推送</span></button>}</div>
-      </section></div>}
+      </section></dialog>}
     </>}
   </section>
 }

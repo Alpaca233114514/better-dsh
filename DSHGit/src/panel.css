@@ -63,7 +63,19 @@
 .dg-diff-title span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .dg-diff-title svg { flex-shrink:0; width:16px; height:16px; }
 .dg-code-line { display:flex; min-width:100%; width:max-content; min-height:24px; }
-.dg-code-line code { padding-right:16px; font:inherit; white-space:pre; }
+.dg-code-line code { padding-right:16px; font:inherit; white-space:pre; color:var(--dg-text); }
+.dg-added .dg-diff-marker { color:var(--dg-green); }
+.dg-removed .dg-diff-marker { color:var(--dg-red); }
+.dg-diff :is(.hljs-keyword,.hljs-selector-tag,.hljs-literal) { color:light-dark(#a626a4,#c792ea); }
+.dg-diff :is(.hljs-string,.hljs-regexp,.hljs-addition) { color:light-dark(#397300,#a3d98b); }
+.dg-diff :is(.hljs-comment,.hljs-quote) { color:light-dark(#68737d,#929da8); font-style:italic; }
+.dg-diff :is(.hljs-number,.hljs-symbol,.hljs-bullet) { color:light-dark(#9c5100,#f6b979); }
+.dg-diff :is(.hljs-title,.hljs-section,.hljs-attribute) { color:light-dark(#005cc5,#82aaff); }
+.dg-diff :is(.hljs-built_in,.hljs-type,.hljs-class,.hljs-attr) { color:light-dark(#865300,#ffcb8b); }
+.dg-diff :is(.hljs-variable,.hljs-template-variable,.hljs-selector-class,.hljs-selector-id,.hljs-tag,.hljs-name) { color:light-dark(#b2293e,#f07178); }
+.dg-diff :is(.hljs-meta,.hljs-deletion) { color:light-dark(#006f78,#89ddff); }
+.dg-diff .hljs-emphasis { font-style:italic; }
+.dg-diff .hljs-strong { font-weight:600; }
 .dg-line-number { flex:0 0 42px; padding-right:12px; color:var(--dg-muted); text-align:right; user-select:none; font-size:11px; }
 .dg-code-line.dg-added { background:color-mix(in srgb,var(--dg-green) 12%,transparent); }
 .dg-code-line.dg-removed { background:color-mix(in srgb,var(--dg-red) 12%,transparent); }
@@ -94,20 +106,27 @@
 .dg-pr-existing { padding:18px 24px; border:1px solid var(--dg-line); border-radius:16px; background:var(--dg-card); }
 .dg-pr-existing h3 { font-size:18px; font-weight:500; }
 .dg-pr-existing a { color:var(--dg-text); text-underline-offset:4px; }
-.dg-commit-shade { position:absolute; inset:60px 0 65px; display:flex; align-items:flex-end; justify-content:flex-end; padding:16px 20px; background:color-mix(in srgb,var(--dg-bg) 35%,transparent); }
-.dg-commit-card { background:var(--dg-card); border:1px solid var(--dg-line); border-radius:24px; padding:18px 10px 10px; box-shadow:0 12px 44px #0002; width:470px; max-width:100%; max-height:100%; overflow:auto; animation:dg-appear 160ms ease-out; }
-.dg-branch-select { display:flex; align-items:center; gap:9px; margin:0 14px 12px; }
-.dshgit .dg-branch-select select { flex:1; border:0; background:transparent; padding:3px; font-size:17px; }
-.dg-new-branch { display:flex; gap:8px; margin:0 14px 10px; }
-.dg-new-branch input { flex:1; width:0; font-size:12px; }
-.dg-new-branch button { padding:5px 10px; color:var(--dg-muted); font-size:12px; flex-shrink:0; }
-.dshgit .dg-message { width:100%; display:block; border:0; background:transparent; padding:14px 18px; font-size:16px; resize:vertical; min-height:100px; }
-.dg-include { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:14px 18px 20px; }
+.dg-commit-shade { position:fixed; inset:0; margin:auto; padding:0; border:0; width:380px; max-width:calc(100vw - 32px); max-height:calc(100dvh - 32px); background:transparent; color:var(--dg-text); overflow:visible; font-family:inherit; font-size:13px; line-height:1.5; }
+.dg-commit-shade::backdrop { background:#0003; backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); }
+.dg-commit-card { background:color-mix(in srgb,var(--dg-card) 78%,transparent); backdrop-filter:blur(24px) saturate(140%); -webkit-backdrop-filter:blur(24px) saturate(140%); border:1px solid color-mix(in srgb,var(--dg-line) 70%,transparent); border-radius:18px; padding:12px 8px 8px; box-shadow:0 16px 48px #0003,inset 0 1px 0 #ffffff12; width:100%; max-height:calc(100dvh - 32px); overflow:auto; animation:dg-appear 160ms ease-out; }
+.dg-commit-card svg { width:17px; height:17px; flex-shrink:0; }
+.dg-branch-select { display:flex; align-items:center; gap:8px; margin:0 10px 10px; }
+.dshgit .dg-branch-select select { flex:1; border:0; background:transparent; padding:3px; font-size:14px; }
+.dg-new-branch { display:flex; gap:6px; margin:0 6px 8px; }
+.dg-branch-name { display:flex; align-items:center; flex:1; min-width:0; border-radius:8px; background:color-mix(in srgb,var(--dg-bg) 45%,transparent); }
+.dg-branch-name>span { color:var(--dg-muted); }
+.dshgit .dg-branch-name input { flex:1; width:0; border:0; border-radius:6px; padding:7px 8px; background:transparent; font-size:12px; }
+.dshgit .dg-branch-name .dg-prefix { flex:0 1 66px; }
+.dg-new-branch button { padding:5px 8px; color:var(--dg-muted); font-size:12px; flex-shrink:0; }
+.dshgit .dg-message { width:100%; display:block; border:0; border-radius:8px; background:transparent; padding:10px 12px; font-size:13px; resize:none; min-height:76px; }
+.dg-include { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:10px 12px 12px; }
+.dg-commit-card .dg-check,.dg-commit-card .dg-stats { font-size:12px; }
+.dg-commit-card .dg-check input { width:14px; height:14px; }
 .dg-commit-actions { padding-top:6px; border-top:1px solid var(--dg-line); }
-.dg-commit-actions button { width:100%; display:flex; align-items:center; gap:13px; padding:12px 15px; text-align:left; font-size:17px; }
+.dg-commit-actions button { width:100%; display:flex; align-items:center; gap:10px; padding:8px 12px; min-height:36px; text-align:left; font-size:14px; }
 .dg-commit-actions button:first-child { background:var(--dg-hover); }
 .dg-commit-actions button>span { flex:1; }
-.dg-commit-actions kbd { color:var(--dg-muted); background:color-mix(in srgb,var(--dg-text) 8%,transparent); padding:0 8px; border-radius:10px; font:12px/1.8 inherit; }
+.dg-commit-actions kbd { color:var(--dg-muted); background:color-mix(in srgb,var(--dg-text) 8%,transparent); padding:0 6px; border-radius:6px; font-family:inherit; font-size:11px; line-height:1.8; }
 @keyframes dg-appear { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
 @media(prefers-reduced-motion:reduce) { .dg-commit-card { animation:none; } }
 
@@ -123,7 +142,6 @@
 @container dshgit (max-width: 760px) {
   .dg-workspace[data-files-open=true] { grid-template-columns:minmax(150px,38%) minmax(0,1fr); }
   .dg-footer { padding:12px 16px; flex-wrap:wrap; font-size:12px; }
-  .dg-commit-shade { inset:52px 0 65px; padding:8px; }
   .dg-pr { padding:16px; }
   .dg-pr form { grid-template-columns:1fr; }
   .dg-form-footer { flex-wrap:wrap; }
@@ -131,9 +149,6 @@
 @container dshgit (max-width: 480px) {
   .dg-workspace[data-files-open=true] { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(80px,38%) minmax(100px,1fr); }
   .dg-files { border-right:0; border-bottom:1px solid var(--dg-line); padding:4px; }
-  .dg-include { flex-wrap:wrap; margin:10px; }
-  .dg-commit-actions button { font-size:15px; }
-  .dg-commit-card { border-radius:16px; }
 }
 
 .dg-toolbar { display:flex; align-items:center; gap:8px; padding:8px 10px; min-height:50px; flex-shrink:0; }

@@ -5,6 +5,7 @@ import { mkdtemp, mkdir, writeFile, unlink, rename } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { build } from 'esbuild'
 await mkdir('.test-build', { recursive: true })
+await mkdir('../.cache', { recursive: true })
 await build({ entryPoints: ['src/cache.ts'], outfile: '.test-build/cache.mjs', bundle: true, platform: 'node', format: 'esm' })
 await build({ entryPoints: ['src/watch.ts'], outfile: '.test-build/watch.mjs', bundle: true, platform: 'node', format: 'esm' })
 const { RepositoryCache } = await import('../.test-build/cache.mjs')

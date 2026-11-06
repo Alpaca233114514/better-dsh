@@ -8,6 +8,8 @@ import React, { act } from 'react'
 await mkdir('.test-build', { recursive: true })
 await build({ stdin: { contents: "export { GitPanel } from './src/panel.tsx'; export { GitNotifications } from './src/notifications.tsx'; export { getNotices, dismissNotice } from './src/operations.ts'", resolveDir: process.cwd() }, outfile: '.test-build/background.mjs', bundle: true, platform: 'node', format: 'esm', jsx: 'automatic', external: ['react', 'react/*', 'zod'] })
 const dom = new JSDOM('<!doctype html><body><div id="panel"></div><div id="notifications"></div></body>', { url: 'http://localhost' })
+dom.window.HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
+dom.window.HTMLDialogElement.prototype.close = function () { this.removeAttribute('open') }
 globalThis.window = dom.window; globalThis.document = dom.window.document
 Object.defineProperty(document, 'hidden', { value: false, configurable: true })
 globalThis.HTMLElement = dom.window.HTMLElement; globalThis.IS_REACT_ACT_ENVIRONMENT = true

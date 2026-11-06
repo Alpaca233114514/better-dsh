@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "sessionId": "session-387d7527-97fb-4dae-a386-9cc5e90a8240",
+  "checks": [
+    "cold session Ultra restore",
+    "native slider selects max and ultra",
+    "exclusive effects",
+    "280px original popover",
+    "no custom agent activity panel",
+    "reload persistence",
+    "no additional explanatory text"
+  ],
+  "errors": [],
+  "consoleMessages": []
+}

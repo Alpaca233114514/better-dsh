@@ -1,0 +1,26 @@
+{
+  "runtime": "0.2.2-rc.1",
+  "status": "passed",
+  "plugins": [
+    {
+      "name": "thinking-level",
+      "version": "0.1.13",
+      "accepted": [
+        "0.2.1-rc.3",
+        "0.2.2-rc.1"
+      ],
+      "unverifiedVersionRejected": true,
+      "oldDeclarationReproducesFailure": true
+    },
+    {
+      "name": "dsh-ultra",
+      "version": "0.1.3",
+      "accepted": [
+        "0.2.1-rc.3",
+        "0.2.2-rc.1"
+      ],
+      "unverifiedVersionRejected": true,
+      "oldDeclarationReproducesFailure": true
+    }
+  ]
+}

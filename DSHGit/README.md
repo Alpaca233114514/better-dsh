@@ -1,5 +1,7 @@
 # DSHGit
 
+`0.2.0`：提交弹层以整个窗口居中，宽 380px，采用紧凑布局与半透明毛玻璃；新分支默认前缀为 `DSH/`，可编辑或清空，保存在当前客户端。差异按文件类型显示语法高亮，保留新旧行号和增删背景，支持 Python、JS/TS、Shell、PowerShell、JSON/YAML、Kotlin 等常见语言。未知类型或超过 300 KB 的差异保留纯文本显示。
+
 > 2026-10-25：按 **DSH 0.2.x 系列**兼容，后续 rc、正式版与补丁版不再逐个添加版本号；原有最低版本和旧版例外保留。详见 [系列兼容说明](../docs/dsh-series-compatibility.md)。
 
 当前版本已适配 **DSH 0.2.1-rc.2**，开发依赖锁定到该版本。2026-10-18 已完成本地构建与接口测试；真实桌面交互由用户手动验收。下文较早版本的验证记录保留为历史证据。
@@ -76,5 +78,7 @@ npm run preview
 原创实现遵循仓库的 Apache-2.0，见 [LICENSE](LICENSE)。实现前检索了 [dsh-git-nexus](https://github.com/JFWaskin/dsh-git-nexus) 与 DSH 官方插件接口；未复用这些项目的源码。
 
 GitHub 标识复用自 [Primer Octicons](https://github.com/primer/octicons)，遵循 MIT 许可证；许可全文见 [OCTICONS-LICENSE.txt](docs/OCTICONS-LICENSE.txt)。
+
+语法高亮使用 [lowlight](https://github.com/wooorm/lowlight)（MIT）与 [highlight.js](https://github.com/highlightjs/highlight.js)（BSD-3-Clause），随客户端打包；第三方许可见 [SYNTAX-LICENSES.txt](docs/SYNTAX-LICENSES.txt)。
 
 工作区干净时，提交菜单仅保留“推送”和“创建 Pull Request”（已有 PR 时为“查看 Pull Request”），隐藏提交信息和包含未暂存更改选项。有未提交更改时显示提交操作；操作执行期间禁止重复触发。
