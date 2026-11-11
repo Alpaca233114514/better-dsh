@@ -6,7 +6,7 @@ import { createRequire } from 'node:module'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import test from 'node:test'
 import { build } from 'esbuild'
-import { DshScanDriver, SecurityManager, projectFindings } from '../dist/test-runtime.js'
+import { DshScanDriver, SecurityManager, projectFindings, startFindingRepair } from '../dist/test-runtime.js'
 
 const runtime = new URL('../../.cache/dsh-022-compat/runtime/', import.meta.url)
 let native
@@ -134,4 +134,74 @@ for (const ultra of [false, true]) test(`desktop 0.2.2 normal scan conversation:
     assert.ok((await ctx.sessionPersistence.stat(task.id)).header)
     assert.match(JSON.stringify(await ctx.tools.execute({ calls: [{ type: 'tool-call', id: 'after', name: 'read', arguments: JSON.stringify({ file_path: 'src/sample.py' }) }], agent: ctx.agents.get(task.id), signal: new AbortController().signal })), /本次扫描已结束/)
   } finally { await manager?.dispose(); for (const handle of handles) await handle.dispose(); await ctx.fiber.dispose() }
+})
+
+for (const ultra of [false, true]) test(`desktop 0.2.2 repair conversation runs the filled prompt with normal tools and ${ultra ? 'Ultra' : 'selected effort'}`, async t => {
+  try { await access(new URL('node_modules/@deepseek-ai/dsh-api-session-controller/lib/index.js', runtime)) }
+  catch { t.skip('Desktop compatibility runtime is not present'); return }
+  const n = await nativeRuntime(), m = n.modules
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'security-repair-')))
+  const workspace = join(root, 'workspace')
+  await mkdir(workspace)
+  const sourceFile = join(workspace, 'sample.py')
+  await writeFile(sourceFile, 'SYNTHETIC_UNFIXED\n')
+  const ctx = new m.cordis.Context(), guardCalls = []
+  const selection = { provider: 'deepseek-fixture', model: 'deepseek-fixture', reasoningEffort: 'high', ultra }
+  const finding = { id: 'fixture-finding', taskId: 'source-scan', status: 'new', title: 'Synthetic repair target', severity: 'high',
+    summary: 'Fixture only, not a real vulnerability.', locations: [{ path: 'sample.py', startLine: 1 }], evidence: 'SYNTHETIC_UNFIXED',
+    remediation: 'Replace the fixture marker.', validation: 'Static fixture', attackPath: '', firstSeen: '2026-11-11T00:00:00Z', lastSeen: '2026-11-11T00:00:00Z', occurrences: 1 }
+  const task = { id: 'source-scan', workspace, scanId: 'fixture-upstream-id', scope: 'sample.py', provider: 'scan-provider', model: 'scan-model', startedAt: '2026-11-11T00:00:00Z' }
+  let calls = 0
+  class Scripted extends m['dsh-llm'].LlmAdapter {
+    async resolveModel(provider, model) { return { provider, id: model, name: 'DeepSeek fixture', reasoning: { efforts: [{ id: 'high', name: 'High' }, { id: 'max', name: 'Max' }] } } }
+    async listModels(provider) { return [{ provider, id: 'deepseek-fixture', name: 'DeepSeek fixture' }] }
+    async *stream(options) {
+      assert.equal(options.reasoningEffort, ultra ? 'max' : 'high')
+      const messages = JSON.stringify(options.messages)
+      for (const text of ['Synthetic repair target', 'sample.py', 'fixture-upstream-id', '不擅自推送', 'Auto Review']) assert.ok(messages.includes(text), text)
+      assert.ok(options.tools.some(tool => tool.name === 'fixture_fix'), 'Repair must retain the ordinary session tools')
+      const first = calls++ === 0
+      yield { type: 'block-start', index: 0, blockType: first ? 'tool-call' : 'text' }
+      yield { type: 'block-end', index: 0, block: first ? { type: 'tool-call', id: 'fixture-fix', name: 'fixture_fix', arguments: '{}' } : { type: 'text', text: 'Synthetic fixture changed and verified. Not a real security fix.' } }
+      yield { type: 'finish', reason: { kind: first ? 'tool-calls' : 'stop' } }
+    }
+  }
+  try {
+    for (const name of ['dsh-llm', 'dsh-session', 'dsh-session-projection', 'dsh-system-prompt', 'dsh-tools', 'dsh-agent']) await ctx.plugin(m[name].default)
+    await ctx.plugin(m['dsh-agent-loop'].default, { agents: [] })
+    await ctx.plugin(m['dsh-tool-executor-native'])
+    await ctx.plugin(m['dsh-session-persistence-jsonl'], { root: join(root, 'sessions'), compression: 'none' })
+    await ctx.plugin(m['dsh-session-query'].default)
+    await ctx.plugin(m['dsh-session-title'].default, { fallbackMaxWords: 12, fallbackMaxBytes: 120, maxTitleBytes: 240 })
+    ctx.provide('agentDefaultModel', { currentSelection: () => ({ provider: selection.provider, model: selection.model }), async saveSelection() {} })
+    ctx.provide('workspaceRegistry', { archivedSessionIds: [], get() {}, list: () => [] })
+    ctx.llm.registerAdapter([selection.provider], new Scripted())
+    ctx.provide('attachments', { async admitPromptContent(content) { return content } })
+    ctx.provide('fileUploads', { bindPrompt() { return { commit() {}, [Symbol.dispose]() {} } } })
+    const agents = new n.ApiSessionAgentController(ctx), commands = new n.SessionCommandController(ctx, agents, workspace)
+    ctx.provide('sessionController', { create: request => commands.create(request), resolveAgent: id => agents.resolveAgent(id),
+      selectModel: request => commands.selectModel(request), rename: request => commands.rename(request),
+      prompt: request => commands.prompt(request, { kind: 'user', rpcId: request.requestId }),
+      async modelCatalog() { return { groups: [{ id: selection.provider, models: [await ctx.llm.resolveModelInfo(selection.provider, selection.model)] }] } } })
+    ctx.tools.register(m['dsh-tools'].defineTool({ name: 'fixture_fix', description: 'Modify only the synthetic fixture marker.', parameters: {},
+      output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+      async execute() { assert.equal(await readFile(sourceFile, 'utf8'), 'SYNTHETIC_UNFIXED\n'); await writeFile(sourceFile, 'SYNTHETIC_FIXED\n'); return 'Fixture written' } }))
+    ctx.tools.guard(exec => { guardCalls.push(exec.name) })
+    ctx.provide('typert', { remotes: { register() {} }, local: { get() {}, hasSeen: () => false }, lookups: { definitions: () => [] } })
+    ctx.provide('subagents', { getProvider: () => ({ prepareContinuable() {}, capabilities: { agentOptions: true, depthLimit: true } }) })
+    await ctx.plugin(n.ultra)
+    const result = await startFindingRepair(ctx, workspace, finding, task, selection)
+    assert.notEqual(result.conversationId, task.id)
+    const agent = ctx.agents.get(result.conversationId)
+    await agent.whenIdle()
+    assert.equal(calls, 2)
+    assert.equal(agent.session.header.cwd, workspace)
+    assert.equal(agent.session.header.origin, undefined)
+    assert.equal(ctx.get('dshUltra').active(agent.session), ultra)
+    assert.deepEqual(guardCalls, ['fixture_fix'])
+    assert.equal(await readFile(sourceFile, 'utf8'), 'SYNTHETIC_FIXED\n')
+    assert.match(JSON.stringify(agent.session.snapshotEvents()), /Synthetic fixture changed and verified/)
+    assert.ok((await ctx.sessionPersistence.stat(result.conversationId)).header)
+    assert.equal(ctx.agents.get(task.id), undefined)
+  } finally { await ctx.fiber.dispose() }
 })

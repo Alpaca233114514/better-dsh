@@ -13,9 +13,11 @@ const workspace = 'C:/fixture/better-dsh'
 const task = { id: 'fixture-task-20261111', sessionId: 'fixture-chat', workspace, status: 'completed', phase: 'reporting', model: 'fixture-model', provider: 'scripted-fixture', findings: 1, scope: 'src', scanId: 'fixture-scan', startedAt: '2026-11-11T07:52:00Z', updatedAt: '2026-11-11T07:55:00Z', usage: { inputTokens: 1500, outputTokens: 400, cacheReadTokens: 100, cacheWriteTokens: 0, calls: 3, unreportedCalls: 0 }, timeline: [{ phase: 'preflight', at: '2026-11-11T07:52:00Z' }, { phase: 'discovery', at: '2026-11-11T07:52:30Z' }, { phase: 'reporting', at: '2026-11-11T07:54:40Z' }] } as const
 const details = { report: '# Synthetic fixture report\n\nThis is a browser contract test, not a model audit.', findings: JSON.stringify(fixture), threatModel: 'Synthetic fixture threat model.' }
 const findings = projectFindings([{ task: task as any, details }])
-let state: any = { workspace, tasks: [task], findings, warnings: [], capabilities: { findingStatusEditing: true }, selection: { provider: 'scripted-fixture', model: 'fixture-model', reasoningEffort: 'high' } }
+let state: any = { workspace, tasks: [task], findings, warnings: [], capabilities: { findingStatusEditing: true, findingRepair: true }, selection: { provider: 'scripted-fixture', model: 'fixture-model', reasoningEffort: 'high' } }
 let starts: any[] = [], cancels = 0, failStart = false, failRead = false, holdRead = false, failStatus = false
 const statusWrites: any[] = []
+const repairs: any[] = []
+let failRepair = false, repairConversation: string | undefined
 let refreshes = 0, dashboardReads = 0, detailReads = 0
 const openedConversations: string[] = []
 let releaseRead: (() => void) | undefined
@@ -36,6 +38,13 @@ const remote = {
     if (failStatus) return { ok: false, error: { message: 'Fixture status save failed' } }
     state.findings = state.findings.map((finding: any) => finding.id === request.findingId ? { ...finding, status: request.status } : finding)
     return { ok: true, value: structuredClone(state) }
+  },
+  async repairFinding(request: any) {
+    repairs.push(request)
+    if (failRepair) return { ok: false, error: { message: 'Fixture repair rejected' } }
+    repairConversation = 'fixture-repair-conversation'
+    state.findings = state.findings.map((finding: any) => finding.id === request.findingId ? { ...finding, status: 'in_progress' } : finding)
+    return { ok: true, value: { conversationId: repairConversation, findingId: request.findingId, workspace } }
   },
 }
 let unmount: (() => void) | undefined, pluginFiber: any, nativeContext: any, renderer: any
@@ -59,7 +68,7 @@ const imports: Record<string, any> = { react: React, 'react/jsx-runtime': jsx, '
     ctx.provide('sessions', { list: sessionSource, async refresh() {
       refreshes++
       if (refreshes < 2) return
-      const conversationId = state.tasks[0]?.conversationId
+      const conversationId = state.tasks[0]?.conversationId ?? repairConversation
       if (conversationId && !catalog.byId[conversationId]) {
         catalog = { ...catalog, ids: [...catalog.ids, conversationId], byId: { ...catalog.byId, [conversationId]: { id: conversationId, cwd: workspace } } }
         sessionListeners.forEach(callback => callback())
@@ -82,7 +91,7 @@ const imports: Record<string, any> = { react: React, 'react/jsx-runtime': jsx, '
 const loadScript = (src: string) => new Promise<void>((resolve, reject) => { const element = document.createElement('script'); element.src = src; element.onload = () => resolve(); element.onerror = () => reject(new Error(`Script failed: ${src}`)); document.head.append(element) })
 void loadScript('/native-renderer.js').then(() => loadScript('/plugin.js'))
 ;(window as any).cyberFixture = {
-  stats: () => ({ starts, cancels, refreshes, dashboardReads, detailReads, statusWrites, openedConversations, registrations: ['main', 'sidebar.panellist', 'conversation.input.dock'].flatMap(name => nativeContext.slots.entries(name).map((entry: any) => ({ ...entry.options, name }))) }),
+  stats: () => ({ starts, cancels, refreshes, dashboardReads, detailReads, statusWrites, repairs, openedConversations, registrations: ['main', 'sidebar.panellist', 'conversation.input.dock'].flatMap(name => nativeContext.slots.entries(name).map((entry: any) => ({ ...entry.options, name }))) }),
   failStart: (value: boolean) => { failStart = value },
   failRead: (value: boolean) => { failRead = value },
   holdRead: (value: boolean) => { holdRead = value; if (!value) releaseRead?.() },
@@ -90,7 +99,10 @@ void loadScript('/native-renderer.js').then(() => loadScript('/plugin.js'))
   catalog: (value: any) => { catalog = value; sessionListeners.forEach(callback => callback()) },
   empty: () => { state = { ...state, tasks: [], findings: [] } },
   failStatus: (value: boolean) => { failStatus = value },
-  legacyHost: (value: boolean) => { state.capabilities = value ? undefined : { findingStatusEditing: true } },
+  failRepair: (value: boolean) => { failRepair = value },
+  legacyHost: (value: boolean) => { state.capabilities = value ? undefined : { findingStatusEditing: true, findingRepair: true } },
+  legacyRepair: (value: boolean) => { state.capabilities = { findingStatusEditing: true, ...(value ? {} : { findingRepair: true }) } },
+  resetNavigation: () => { refreshes = 0; repairConversation = undefined; openedConversations.length = 0 },
   distribution: () => { state.findings = Array.from({ length: 11 }, (_, index) => ({ ...findings[0], id: `distribution-${index}`, severity: index ? 'low' : 'medium', status: index ? 'new' : 'in_progress' })) },
   allStatuses: () => { state.findings = ['new', 'triaged', 'in_progress', 'fixed', 'wont_fix', 'duplicate', 'false_positive'].map((status, index) => ({ ...findings[0], id: `status-${index}`, status })) },
   resetFindings: () => { state.findings = findings },

@@ -3,13 +3,13 @@ import { mkdtemp, mkdir, readFile, writeFile, symlink, realpath } from 'node:fs/
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { DashboardObserver, SecurityManager, SecurityHost, FindingState, findingStatuses, findingStatusRequestSchema, projectFindings, scanScope, workspaceTools, contribution, startSchema, detailRequestSchema } from '../dist/test-runtime.js'
+import { DashboardObserver, SecurityManager, SecurityHost, FindingState, findingStatuses, findingStatusRequestSchema, findingRequestSchema, canRepair, projectFindings, scanScope, workspaceTools, contribution, startSchema, detailRequestSchema } from '../dist/test-runtime.js'
 import { Context } from '@deepseek-ai/cordis'
 import { remoteMethods } from '@deepseek-ai/dsh-typert-protocol'
 import { TypertGatewayService } from '@deepseek-ai/dsh-api-gateway'
 
 const base = { id: 'task-1', workspace: 'workspace', sessionId: 'chat', status: 'completed', phase: 'reporting', provider: 'fixture', model: 'fixture', findings: 1, startedAt: '2026-11-11T00:00:00Z', updatedAt: '2026-11-11T00:01:00Z' }
-const data = { workspace: 'workspace', tasks: [base], findings: [], warnings: [], capabilities: { findingStatusEditing: true }, selection: null }
+const data = { workspace: 'workspace', tasks: [base], findings: [], warnings: [], capabilities: { findingStatusEditing: true, findingRepair: true }, selection: null }
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done }); return { promise, resolve } }
 const ok = value => ({ ok: true, value })
 
@@ -108,7 +108,7 @@ test('dashboard observation is read-only; duplicate actions, stale responses and
 })
 
 test('RPC descriptors use method-specific strict schemas and scoped historical report ids', () => {
-  assert.equal(contribution.descriptors.length, 7)
+  assert.equal(contribution.descriptors.length, 8)
   assert.equal(startSchema.parse({ sessionId: 'chat', scope: 'src', model: 'm' }).scope, 'src')
   assert.throws(() => startSchema.parse({ sessionId: 'chat', shell: 'execute' }))
   assert.throws(() => startSchema.parse({ sessionId: 'chat', instructions: 'x'.repeat(12001) }))
@@ -117,6 +117,8 @@ test('RPC descriptors use method-specific strict schemas and scoped historical r
   assert.equal(findingStatusRequestSchema.parse({ sessionId: 'chat', findingId: 'id', status: 'fixed' }).status, 'fixed')
   assert.throws(() => findingStatusRequestSchema.parse({ sessionId: 'chat', findingId: 'id', status: 'closed' }))
   assert.throws(() => findingStatusRequestSchema.parse({ sessionId: 'chat', findingId: '../outside', status: 'new', workspace: 'neighbor' }))
+  assert.throws(() => findingRequestSchema.parse({ sessionId: 'chat', findingId: 'finding', prompt: 'Client-supplied instructions' }))
+  assert.deepEqual(findingStatuses.filter(canRepair), ['new', 'triaged', 'in_progress'])
 })
 
 test('editable finding statuses survive restart, serialize writes and remain scoped without altering reports', async () => {
@@ -176,6 +178,37 @@ test('an old host never receives the new status endpoint; explicit refresh clear
   observer.dispose()
 })
 
+test('repair actions deduplicate clicks, retry navigation without resubmitting, and block old hosts or closed findings', async () => {
+  const finding = projectFindings([{ task: base, details: { report: '', threatModel: '', findings: await readFile(new URL('../vendor/codex-security/examples/completed-scan/findings.json', import.meta.url), 'utf8') } }])[0]
+  let dashboard = { ...data, findings: [finding] }, requests = 0, opens = 0
+  const entered = deferred(), release = deferred()
+  const observer = new DashboardObserver({ dashboard: async () => ok(dashboard), async repairFinding(request) {
+    requests++; entered.resolve(); await release.promise
+    assert.deepEqual(request, { sessionId: 'chat', findingId: finding.id })
+    return ok({ workspace: 'workspace', findingId: finding.id, conversationId: 'repair-chat' })
+  } }, 'chat')
+  observer.start(); await observer.refresh()
+  const open = async id => { assert.equal(id, 'repair-chat'); if (opens++ === 0) throw new Error('Fixture navigation failed') }
+  const first = observer.repairFinding(finding.id, open)
+  await entered.promise
+  assert.equal(await observer.repairFinding(finding.id, open), false)
+  release.resolve()
+  assert.equal(await first, false)
+  assert.match(observer.getSnapshot().error, /navigation failed/)
+  assert.equal(await observer.repairFinding(finding.id, open), true)
+  assert.equal(requests, 1)
+  assert.equal(opens, 2)
+  dashboard = { ...dashboard, capabilities: { findingStatusEditing: true } }
+  await observer.refresh()
+  assert.equal(await observer.repairFinding(finding.id, open), false)
+  assert.match(observer.getSnapshot().error, /修复接口尚未加载/)
+  dashboard = { ...dashboard, capabilities: data.capabilities, findings: [{ ...finding, status: 'fixed' }] }
+  await observer.refresh(true)
+  assert.equal(await observer.repairFinding(finding.id, open), false)
+  assert.equal(requests, 1)
+  observer.dispose()
+})
+
 test('dashboard timeout becomes a visible retryable error and ignores a late read', async () => {
   const stalled = deferred()
   let response = stalled.promise, reads = 0
@@ -207,7 +240,8 @@ test('native Cordis/Typert gateway reads cold repositories without activation, c
   const attached = new Map(), metadataReads = new Map(), activations = [], scanStarts = []
   const defaultSelection = { provider: 'fixture', model: 'fixture-model' }
   const sessionSelection = { ...defaultSelection, reasoningEffort: 'high' }
-  let modelCalls = 0, metadataFailure = true
+  let modelCalls = 0, metadataFailure = true, rejectRepair = false
+  const repairCalls = []
   ctx.provide('typert', { remotes: { register: value => descriptors.push(value) }, local: { get: () => undefined, hasSeen: () => false }, lookups: { definitions: () => [] } })
   ctx.provide('sessions', { get: id => attached.get(id) })
   ctx.provide('sessionPersistence', {
@@ -222,6 +256,10 @@ test('native Cordis/Typert gateway reads cold repositories without activation, c
   })
   // 当前宿主没有 inspect；只暴露启动真正需要的恢复方法。 Current host has no inspect method.
   ctx.provide('sessionController', {
+    async create(request) { repairCalls.push({ method: 'create', request }); return { sessionId: `repair-${repairCalls.length}` } },
+    async selectModel(request) { repairCalls.push({ method: 'selectModel', request }) },
+    async rename(request) { repairCalls.push({ method: 'rename', request }) },
+    async prompt(request) { repairCalls.push({ method: 'prompt', request }); await new Promise(done => setImmediate(done)); if (rejectRepair) throw new Error('Fixture repair prompt rejected'); return { accepted: true } },
     async resolveAgent(id) {
       activations.push(id)
       if (id === 'blocked-chat') return { error: new Error('Fixture session writer held') }
@@ -254,8 +292,8 @@ test('native Cordis/Typert gateway reads cold repositories without activation, c
   const gateway = ctx.get('typertGateway')
   const invoke = (method, request = { sessionId: 'chat' }) => gateway.invoke({ peer, namespace: 'deepseekSecurity', method, args: { request } })
   try {
-    assert.equal(descriptors[0].descriptors.length, 7)
-    assert.deepEqual(remoteMethods(ctx.get('deepseekSecurity')).map(item => item.method).sort(), ['cancel', 'dashboard', 'details', 'models', 'setFindingStatus', 'start', 'state'])
+    assert.equal(descriptors[0].descriptors.length, 8)
+    assert.deepEqual(remoteMethods(ctx.get('deepseekSecurity')).map(item => item.method).sort(), ['cancel', 'dashboard', 'details', 'models', 'repairFinding', 'setFindingStatus', 'start', 'state'])
     const [overview, state, models, details] = await Promise.all([
       invoke('dashboard'), invoke('state'), invoke('models'), invoke('details'),
     ])
@@ -307,5 +345,30 @@ test('native Cordis/Typert gateway reads cold repositories without activation, c
     assert.deepEqual((await invoke('dashboard')).selection, { ...defaultSelection, ultra: false })
     assert.equal((await invoke('state')).task.id, base.id)
     assert.equal(modelCalls, 0)
+    for (const status of ['fixed', 'wont_fix', 'duplicate', 'false_positive']) {
+      await invoke('setFindingStatus', { sessionId: 'chat', findingId, status })
+      await assert.rejects(invoke('repairFinding', { sessionId: 'chat', findingId }), /已结束处置/)
+    }
+    assert.equal(repairCalls.length, 0)
+    await assert.rejects(invoke('repairFinding', { sessionId: 'neighbor-chat', findingId }), /不属于当前仓库/)
+    await invoke('setFindingStatus', { sessionId: 'chat', findingId, status: 'triaged' })
+    rejectRepair = true
+    await assert.rejects(invoke('repairFinding', { sessionId: 'chat', findingId }), /prompt rejected/)
+    assert.equal((await invoke('dashboard')).findings[0].status, 'triaged')
+    rejectRepair = false
+    const before = repairCalls.length
+    const [repair, duplicate] = await Promise.all([invoke('repairFinding', { sessionId: 'chat', findingId }), invoke('repairFinding', { sessionId: 'chat', findingId })])
+    assert.equal(repair.conversationId, duplicate.conversationId)
+    assert.equal(repair.workspace, workspace)
+    assert.deepEqual(repairCalls.slice(before).map(call => call.method), ['create', 'selectModel', 'rename', 'prompt'])
+    assert.deepEqual(repairCalls[before].request, { cwd: workspace })
+    const prompt = repairCalls.at(-1).request
+    assert.equal(prompt.sessionId, repair.conversationId)
+    assert.equal(prompt.mode, 'queue')
+    assert.match(prompt.content[0].text, /Unsafe archive extraction can escape the output directory/)
+    assert.match(prompt.content[0].text, /不擅自推送/)
+    assert.match(prompt.content[0].text, /own-scan/)
+    assert.equal((await invoke('dashboard')).findings[0].status, 'in_progress')
+    assert.deepEqual(activations, [])
   } finally { await peer.dispose(); await gatewayFiber.dispose(); await fiber.dispose(); await ctx.fiber.dispose() }
 })

@@ -1,4 +1,4 @@
-import { dashboardSchema, stateSchema, type Dashboard, type FindingStatus, type SecurityRemote, type StartRequest, type Task } from './contracts.ts'
+import { dashboardSchema, stateSchema, repairResultSchema, canRepair, type RepairResult, type Dashboard, type FindingStatus, type SecurityRemote, type StartRequest, type Task } from './contracts.ts'
 
 export type DashboardSnapshot = { data: Dashboard | null; error: string | null; loading: boolean; busy: boolean }
 
@@ -10,6 +10,7 @@ export class DashboardObserver {
   private live = false
   private version = 0
   private actionError: string | null = null
+  private repairConversations = new Map<string, RepairResult>()
   constructor(private remote: SecurityRemote, private sessionId: string, private timeoutMs = 15000) {}
   getSnapshot = () => this.snapshot
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
@@ -83,6 +84,41 @@ export class DashboardObserver {
         this.actionError = /HTTP 404/.test(message(error)) ? '状态编辑接口尚未加载，请完整退出并重新打开 DSH。' : message(error)
         this.publish({ error: this.actionError })
       }
+    } finally {
+      if (this.live && version === this.version) { this.publish({ busy: false }); void this.refresh() }
+    }
+  }
+  async repairFinding(findingId: string, openConversation: (id: string) => Promise<void>) {
+    if (!this.live || this.snapshot.busy) return false
+    clearTimeout(this.timer)
+    const version = ++this.version
+    this.actionError = null
+    this.publish({ busy: true, error: null })
+    try {
+      const data = this.snapshot.data
+      if (!data?.capabilities.findingRepair) throw new Error('修复接口尚未加载，请完整退出并重新打开 DSH。')
+      const finding = data.findings.find(finding => finding.id === findingId)
+      if (!finding || !canRepair(finding.status)) throw new Error('该发现已结束处置，请先重新打开其状态。')
+      let repair = this.repairConversations.get(findingId)
+      if (!repair) {
+        const result = await this.remote.repairFinding({ sessionId: this.sessionId, findingId })
+        if (!result.ok) throw new Error(result.error.message)
+        repair = repairResultSchema.parse(result.value)
+        if (repair.findingId !== findingId || repair.workspace !== data.workspace) throw new Error('修复会话与当前发现不匹配。')
+        // 导航失败重试只打开已建会话，避免重复发送修复。 Retry navigation without launching another repair.
+        this.repairConversations.set(findingId, repair)
+      }
+      if (!this.live || version !== this.version) return false
+      await openConversation(repair.conversationId)
+      this.repairConversations.delete(findingId)
+      if (repair.warning) { this.actionError = repair.warning; this.publish({ error: repair.warning }) }
+      return true
+    } catch (error) {
+      if (this.live && version === this.version) {
+        this.actionError = /HTTP 404/.test(message(error)) ? '修复接口尚未加载，请完整退出并重新打开 DSH。' : message(error)
+        this.publish({ error: this.actionError })
+      }
+      return false
     } finally {
       if (this.live && version === this.version) { this.publish({ busy: false }); void this.refresh() }
     }

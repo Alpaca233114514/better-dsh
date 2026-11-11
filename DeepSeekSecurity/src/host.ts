@@ -8,7 +8,8 @@ import type {} from '@deepseek-ai/dsh-session-persistence'
 import type {} from '@deepseek-ai/dsh-api-session-controller'
 import type {} from '@deepseek-ai/dsh-agent-default-model'
 import type { SessionId } from '@deepseek-ai/dsh-session'
-import { startSchema, detailRequestSchema, findingStatusRequestSchema, type FindingStatusRequest, type Request, type StartRequest, type DetailRequest, type Details } from './contracts.ts'
+import { startSchema, detailRequestSchema, findingStatusRequestSchema, findingRequestSchema, type FindingRequest, type RepairResult, type FindingStatusRequest, type Request, type StartRequest, type DetailRequest, type Details } from './contracts.ts'
+import { startFindingRepair } from './repair.ts'
 import { FindingState } from './finding-state.ts'
 import { scanScope } from './workspace-tools.ts'
 import { projectFindings } from './dashboard.ts'
@@ -27,6 +28,7 @@ class SecurityService extends TypertRemoteService {
   private reports = new Map<string, Details>()
   private workspaces = new Map<string, string>()
   private workspaceReads = new Map<string, Promise<string | undefined>>()
+  private repairs = new Map<string, Promise<RepairResult>>()
   constructor(ctx: Context, private manager: SecurityManager, private workbench: Workbench) {
     super(ctx, 'deepseekSecurity')
     this.findingState = new FindingState(workbench.stateDirectory)
@@ -117,7 +119,7 @@ class SecurityService extends TypertRemoteService {
     const selected = session ? this.ctx.sessionProjections.stateOf(session, 'modelSelection') : null
     const selection = selected?.pending ?? selected?.lastUsed ?? this.ctx.agentDefaultModel.currentSelection() ?? null
     const statuses = await this.findingState.statuses(workspace)
-    return { workspace, tasks, findings: projectFindings(reports).map(finding => ({ ...finding, status: statuses.get(finding.id) ?? 'new' })), warnings, capabilities: { findingStatusEditing: true }, selection: selection && { ...selection, ultra: !!session && !!ultraService(this.ctx)?.active(session) } }
+    return { workspace, tasks, findings: projectFindings(reports).map(finding => ({ ...finding, status: statuses.get(finding.id) ?? 'new' })), warnings, capabilities: { findingStatusEditing: true, findingRepair: true }, selection: selection && { ...selection, ultra: !!session && !!ultraService(this.ctx)?.active(session) } }
   }
 
   @Remote
@@ -127,6 +129,27 @@ class SecurityService extends TypertRemoteService {
     if (!dashboard.findings.some(finding => finding.id === request.findingId)) throw new Error('该安全发现不属于当前仓库，或报告尚不可用。')
     await this.findingState.set(dashboard.workspace, request.findingId, request.status)
     return this.dashboard(request)
+  }
+
+  @Remote
+  async repairFinding(request: FindingRequest) {
+    request = findingRequestSchema.parse(request)
+    const dashboard = await this.dashboard(request)
+    const finding = dashboard.findings.find(finding => finding.id === request.findingId)
+    const task = dashboard.tasks.find(task => task.id === finding?.taskId)
+    if (!finding || !task) throw new Error('该安全发现不属于当前仓库，或报告尚不可用。')
+    const key = JSON.stringify([dashboard.workspace, finding.id])
+    let pending = this.repairs.get(key)
+    if (!pending) {
+      pending = (async () => {
+        const result = await startFindingRepair(this.ctx, dashboard.workspace, finding, task, dashboard.selection)
+        try { await this.findingState.set(dashboard.workspace, finding.id, 'in_progress') }
+        catch { return { ...result, warning: '修复会话已启动，但“处理中”状态保存失败，请稍后检查。' } }
+        return result
+      })().finally(() => this.repairs.delete(key))
+      this.repairs.set(key, pending)
+    }
+    return pending
   }
 
   @Remote

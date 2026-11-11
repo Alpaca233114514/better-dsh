@@ -42,6 +42,11 @@ export type FindingStatus = z.infer<typeof findingStatusSchema>
 export const findingStatusLabels: Record<FindingStatus, string> = { new: '新发现', triaged: '已分诊', in_progress: '处理中', fixed: '已修复', wont_fix: '不修复', duplicate: '重复', false_positive: '误报' }
 export const findingStatusRequestSchema = requestSchema.extend({ findingId: z.string().min(1).max(2000), status: findingStatusSchema }).strict()
 export type FindingStatusRequest = z.infer<typeof findingStatusRequestSchema>
+export const findingRequestSchema = requestSchema.extend({ findingId: z.string().min(1).max(2000) }).strict()
+export type FindingRequest = z.infer<typeof findingRequestSchema>
+export const repairResultSchema = z.object({ conversationId: z.string().min(1), workspace: z.string(), findingId: z.string(), warning: z.string().optional() })
+export type RepairResult = z.infer<typeof repairResultSchema>
+export const canRepair = (status: FindingStatus) => status === 'new' || status === 'triaged' || status === 'in_progress'
 export const findingSchema = z.object({
   id: z.string(), taskId: z.string(), title: z.string(), summary: z.string(),
   severity: z.enum(['critical', 'high', 'medium', 'low', 'info', 'unknown']),
@@ -53,7 +58,7 @@ export const findingSchema = z.object({
 export type Finding = z.infer<typeof findingSchema>
 export const dashboardSchema = z.object({ workspace: z.string(), tasks: z.array(taskSchema),
   findings: z.array(findingSchema), warnings: z.array(z.string()),
-  capabilities: z.object({ findingStatusEditing: z.boolean() }).default({ findingStatusEditing: false }),
+  capabilities: z.object({ findingStatusEditing: z.boolean(), findingRepair: z.boolean().default(false) }).default({ findingStatusEditing: false, findingRepair: false }),
   selection: z.object({ provider: z.string(), model: z.string(), reasoningEffort: z.string().optional(), ultra: z.boolean().optional() }).nullable(),
 })
 export type Dashboard = z.infer<typeof dashboardSchema>
@@ -69,4 +74,5 @@ export interface SecurityRemote {
   dashboard(request: Request): Promise<RemoteResult<Dashboard>>
   models(request: Request): Promise<RemoteResult<Models>>
   setFindingStatus(request: FindingStatusRequest): Promise<RemoteResult<Dashboard>>
+  repairFinding(request: FindingRequest): Promise<RemoteResult<RepairResult>>
 }

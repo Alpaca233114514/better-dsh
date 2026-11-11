@@ -39,7 +39,7 @@ export async function apply(ctx: Context) {
       if (!navigation?.openSession || !catalog?.refresh) throw new Error('DSH 会话导航不可用，请检查工作区插件。')
       await catalog.refresh()
       if (!catalog.list.getSnapshot().byId[id]) await catalog.refresh()
-      if (!catalog.list.getSnapshot().byId[id]) throw new Error('扫描会话尚未出现在 DSH 会话列表中，请重试。')
+      if (!catalog.list.getSnapshot().byId[id]) throw new Error('会话尚未出现在 DSH 会话列表中，请重试。')
       navigation.openSession(id)
     }
     const remote: SecurityRemote = {
@@ -50,6 +50,7 @@ export async function apply(ctx: Context) {
       dashboard: request => scope.remote.deepseekSecurity.dashboard(request),
       models: request => scope.remote.deepseekSecurity.models(request),
       setFindingStatus: request => scope.remote.deepseekSecurity.setFindingStatus(request),
+      repairFinding: request => scope.remote.deepseekSecurity.repairFinding(request),
     }
     function Dock({ sessionId }: PropsRuntime<'conversation.input.dock'>) {
       return <SecurityProgress key={sessionId} sessionId={sessionId} remote={remote} />
