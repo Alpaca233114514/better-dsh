@@ -6,7 +6,7 @@ import type {} from '@deepseek-ai/dsh-sandbox-policy'
 import type {} from '@deepseek-ai/dsh-subprocess'
 import { requestSchema, sessionSchema, type Result, type Request } from './contracts.ts'
 import { contribution } from './remote.ts'
-import { GitRepository, type Runner } from './git.ts'
+import { GitRepository, gitArguments, gitSubcommand, type Runner } from './git.ts'
 import { descriptionGenerator } from './description.ts'
 
 import { RepositoryWatches } from './watch.ts'
@@ -34,16 +34,10 @@ class GitService extends TypertRemoteService {
         for (const key of this.caches.keys()) this.evictCache(key)
       }
     })
-    let warming = Promise.resolve()
-    const warm = (session: { id: string; header: { cwd?: string } }) => {
-      if (session.header.cwd) warming = warming.then(() => this.getCache(session.id)).then(cache => cache.ready).catch(() => {})
-    }
-    ctx.on('session/created', warm)
     ctx.on('session/disposed', session => this.release(session.id))
     ctx.on('session/event', (session, event) => {
-      if (event.type === 'sandbox/mode') { this.release(session.id); warm(session) }
+      if (event.type === 'sandbox/mode') this.release(session.id)
     })
-    for (const session of ctx.sessions.list()) warm(session)
   }
   @Remote({ mode: 'stream' })
   async *changes(sessionId: string, signal: AbortSignal): AsyncIterable<{ changed: true }> {
@@ -114,7 +108,7 @@ class GitService extends TypertRemoteService {
         return Promise.reject(new Error('工作区会话或权限已变化，请重新打开面板。'))
       }
       const cache = (async () => {
-        const paths = (await runner('git', ['rev-parse', '--path-format=absolute', '--show-toplevel', '--absolute-git-dir', '--git-common-dir'], session.header.cwd!)).trim().split(/\r?\n/)
+        const paths = (await runner('git', gitArguments(['rev-parse', '--path-format=absolute', '--show-toplevel', '--absolute-git-dir', '--git-common-dir']), session.header.cwd!)).trim().split(/\r?\n/)
         const value = new RepositoryCache(new GitRepository(runner), paths, this.watches,
           AbortSignal.any([abort.signal, this.abort.signal]), () => { if (this.caches.get(key)?.abort === abort) this.evictCache(key) })
         record!.value = value
@@ -159,13 +153,13 @@ class GitService extends TypertRemoteService {
     }
     const routes = new Map<string, string>()
     return async (program, args, cwd, input, allowed) => {
-      const command = args[0] === '--no-pager' ? args[3] : args[0]
+      const command = program === 'git' ? gitSubcommand(args) : args[0]
       if (program === 'git' && !['ls-remote', 'fetch', 'push'].includes(command)) return execute(program, args, cwd, input, allowed)
       let proxy = process.env.DSH_GIT_PROXY
       if (!proxy && process.platform === 'win32' && !['https_proxy', 'http_proxy', 'all_proxy'].some(name => process.env[name])) {
         let target = 'https://api.github.com'
         if (program === 'git') {
-          const remote = await execute('git', ['remote', 'get-url', ...(command === 'push' ? ['--push'] : []), 'origin'], cwd)
+          const remote = await execute('git', gitArguments(['remote', 'get-url', ...(command === 'push' ? ['--push'] : []), 'origin']), cwd)
           if (!/^https:\/\//i.test(remote)) return execute(program, args, cwd, input, allowed)
           target = new URL(remote.trim()).origin
         }
