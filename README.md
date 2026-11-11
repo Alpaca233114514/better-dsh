@@ -20,6 +20,7 @@ README（功能 / 文件 / 使用方法 / 实现要点），方便按需选用�
 | [Qwen](Qwen/) | Qwen 提供方：适配 DSH 0.2.1-rc.3，支持思考预算/强度、Maas 模型别名与工具回放 | [README](Qwen/README.md) |
 | [DSHKey](DSHKey/) | 原生快捷键与设置，支持 DSH 0.2.1-rc.3 | [README](DSHKey/README.md) |
 | [DSHGit](DSHGit/) | 原生 Git 面板，支持 DSH 0.2.1-rc.3 | [README](DSHGit/README.md) |
+| [dsh-pet-manager](dsh-pet-manager/) | Mini 轻量伙伴、设置内宠物管理、SVG 宠物创建，适配 DSH 内置语音输入 | [README](dsh-pet-manager/README.md) |
 | [Oi](Oi/) | 第三方收录：面向 Agent Skills 的 agent-native 语言（MIT License） | [README](Oi/README.md) |
 | [dsh-anchored-standard](dsh-anchored-standard/) | 第三方收录：双阶段 DSH 代理预设，首轮锚定 Minimal、晋升后按需解锁 Standard 工具（MIT License） | [README](dsh-anchored-standard/README.zh-CN.md) |
 | [dsh-next-suggestion](dsh-next-suggestion/) | 第三方收录：Makonike 的下一条消息预测插件，灰字提示与快捷键采纳（MIT License） | [README](dsh-next-suggestion/README.md) |

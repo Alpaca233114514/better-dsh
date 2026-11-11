@@ -18,7 +18,7 @@ for (const [directory, { minimumVersion, legacyVersions }] of Object.entries(pol
     }
   })
   test(`${manifest.name}: official gate rejects below-minimum and next-series versions`, () => {
-    const belowMinimum = directory === 'DSHObserver' ? '0.2.1-rc.1' : '0.2.1-beta.1'
+    const belowMinimum = ['DSHObserver', 'DeepSeekSecurity'].includes(directory) ? '0.2.1-rc.1' : '0.2.1-beta.1'
     for (const version of ['0.1.9', '0.2.0', belowMinimum, '0.3.0-0', '0.3.0-alpha.1', '0.3.0-rc.1', '0.3.0', '1.0.0']) {
       const issue = evaluatePluginCompatibility(manifest, {}, version)
       assert.ok(issue, `unexpectedly accepts ${version}`)

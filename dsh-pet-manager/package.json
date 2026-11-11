@@ -1,0 +1,19 @@
+{
+  "name": "dsh-pet-manager",
+  "version": "0.1.0",
+  "description": "DSH Mini companion and SVG pet creation and management in Settings",
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": { ".": "./lib/host.js", "./client": "./lib/client.js" },
+  "files": ["lib", "native", "vendor/LICENSE.deepseek", "cordis.patch.yml", "README.md", "LICENSE", "NOTICE.md", "skills"],
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web", "inject": ["@deepseek-ai/dsh-api-gateway", "@deepseek-ai/dsh-client-ui-settings-general", "@deepseek-ai/dsh-client-ui-workspace", "@deepseek-ai/dsh-client-ui-conversation", "@deepseek-ai/dsh-client-ui-layout"] }
+  },
+  "scripts": { "build": "node scripts/build.mjs", "test": "node --test test/*.test.mjs", "preview": "node scripts/preview.mjs" },
+  "dependencies": { "@deepseek-ai/schemastery": "3.18.5", "zod": "4.6.6" },
+  "peerDependencies": { "@deepseek-ai/dsh-typert-protocol": "0.1.0-rc.6 || >=0.2.1-rc.3 <0.3.0-0", "react": "^18.3.1", "react-dom": "^18.3.1" },
+  "optionalDependencies": { "electron": "44.7.0" },
+  "devDependencies": { "esbuild": "0.25.12", "jsdom": "26.1.0" },
+  "engines": { "node": ">=24" }
+}

@@ -58,7 +58,7 @@ export class ProgressObserver {
     this.actionError = null
     this.publish({ stopping: true, error: null })
     try {
-      const result = await this.remote.cancel({ sessionId: this.sessionId })
+      const result = await this.remote.cancel({ sessionId: this.sessionId, taskId: this.snapshot.task.id })
       if (!this.running || version !== this.version) return
       if (!result.ok) throw new Error(result.error.message)
       const { task } = stateSchema.parse(result.value)

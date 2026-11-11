@@ -44,9 +44,9 @@ export class Workbench {
     })
   }
 
-  async start(workspace: string, threadId: string, model: string): Promise<ObjectValue> {
+  async start(workspace: string, threadId: string, model: string, scope = '.'): Promise<ObjectValue> {
     const result = await this.run(['start-headless-standard-scan', '--thread-id', threadId,
-      '--target-path', workspace, '--scope', '.', '--model', model])
+      '--target-path', workspace, '--scope', scope, '--model', model])
     return record(result.scan)
   }
 

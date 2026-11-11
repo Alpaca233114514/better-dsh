@@ -4,8 +4,8 @@
 
 | 插件 | 主范围 | 保留的旧版例外 | 插件版本 |
 | --- | --- | --- | --- |
-| DeepSeek Security | `>=0.2.1-rc.1 <0.3.0-0` | `0.2.0-rc.2`、`0.2.1-alpha.2` | 0.1.5 |
-| DSHGit | 同上 | `0.2.1-alpha.2` | 0.1.7 |
+| DeepSeek Security | `>=0.2.1-rc.2 <0.3.0-0` | 无（0.2.0 Cyber 使用原生 sidebar/layout 接口） | 0.2.0 |
+| DSHGit | `>=0.2.1-rc.1 <0.3.0-0` | `0.2.1-alpha.2` | 0.1.7 |
 | DSHKey | 同上 | `0.2.0-rc.2`、`0.2.1-alpha.2` | 0.1.5 |
 | RichThinking | 同上 | `0.2.0-rc.2`、`0.2.1-alpha.2` | 0.1.9 |
 | MoonSeek | 同上 | `0.2.1-alpha.2` | 0.1.4 |

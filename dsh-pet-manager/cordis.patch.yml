@@ -1,0 +1,10 @@
+- insert:
+    - id: dsh-pet-manager
+      name: dsh-pet-manager
+      config:
+        enabled: true
+        animated: true
+        size: 112
+        selected: alpaca
+        library: '[]'
+        desktop: false

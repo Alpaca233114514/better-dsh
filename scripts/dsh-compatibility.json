@@ -3,11 +3,8 @@
   "seriesUpperExclusive": "0.3.0-0",
   "plugins": {
     "DeepSeekSecurity": {
-      "minimumVersion": "0.2.1-rc.1",
-      "legacyVersions": [
-        "0.2.0-rc.2",
-        "0.2.1-alpha.2"
-      ]
+      "minimumVersion": "0.2.1-rc.2",
+      "legacyVersions": []
     },
     "DSHGit": {
       "minimumVersion": "0.2.1-rc.1",

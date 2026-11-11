@@ -1,0 +1,14 @@
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { Settings, Mini } from '../src/ui.jsx';
+import { defaults } from '../src/pets.mjs';
+import { createStore } from '../src/manager.mjs';
+import css from '../src/style.css';
+const style = document.createElement('style');
+style.textContent = css + `body{margin:0;background:#fafafa;font:14px/1.5 system-ui,sans-serif;color:#252730}body.dark{background:#18191c;color:#ededf0;--dsw-alias-bg-layer-1:#202125;--dsw-alias-bg-layer-2:#27282d;--dsw-alias-bg-layer-3:#303139;--dsw-alias-border-l2:#393a42;--dsw-alias-label-primary:#eeeef2;--dsw-alias-label-secondary:#a2a3ad;color-scheme:dark}.preview{display:grid;grid-template-columns:230px 1fr;min-height:100vh}.preview nav{border-right:1px solid var(--dsw-alias-border-l2,#e0e1e7);padding:28px 18px;background:var(--dsw-alias-bg-layer-1,white)}.preview nav h1{font-size:22px;margin:0 12px 28px}.preview nav p{padding:11px 12px;color:#858690;margin:3px 0}.preview nav .active{background:var(--dsw-alias-bg-layer-2,#f1f2f6);border-radius:9px;color:inherit}.preview-toolbar{padding:12px 20px;text-align:right;border-bottom:1px solid var(--dsw-alias-border-l2,#e0e1e7)}.preview-toolbar button{padding:7px 12px;border-radius:7px;border:1px solid #8885;background:none;color:inherit}main{min-width:0}.demo-label{margin-right:14px;color:#888;font-size:12px}@media(max-width:760px){.preview{grid-template-columns:1fr}.preview nav{display:none}}`;
+document.head.append(style);
+const store = createStore({ value: defaults, status: 'ready', writable: true, sessionAvailable: true, menuOpen: false, notices: [], voicePhase: 'idle' });
+const manager = { store, update: async patch => store.set({ value: { ...store.getSnapshot().value, ...patch } }), chat: () => store.set({ error: '开发预览：聊天入口需要真实 DSH 会话' }), voice: () => store.set({ error: '开发预览：语音需连接 DSH 内置语音输入插件' }), design: () => store.set({ error: '开发预览：设计请求会在真实 DSH 会话中写入草稿' }), toggleMenu: value => store.set({ menuOpen: value ?? !store.getSnapshot().menuOpen }), clearError: () => store.set({ error: '' }), clearTranscript() {}, cancelVoice() {}, finishVoice() {} };
+window.previewManager = manager;
+manager.setManagementVisible = managementVisible => store.set({ managementVisible });
+createRoot(document.getElementById('root')).render(<div className="preview"><nav><h1>设置</h1><p>常规</p><p>外观</p><p>模型与提供方</p><p>插件</p><p>快捷键</p><p className="active">迷你界面和伙伴</p></nav><main><div className="preview-toolbar"><span className="demo-label">组件预览 · 演示数据</span><button onClick={() => document.body.classList.toggle('dark')}>切换外观</button></div><Settings manager={manager}/></main><Mini manager={manager}/></div>);

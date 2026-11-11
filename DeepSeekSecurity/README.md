@@ -1,10 +1,14 @@
 # DeepSeek Security
 
-> 2026-10-25：按 **DSH 0.2.x 系列**兼容，后续 rc、正式版与补丁版不再逐个添加版本号；原有最低版本和旧版例外保留。详见 [系列兼容说明](../docs/dsh-series-compatibility.md)。
+> 0.2.1 的 Cyber 原生界面要求 **DSH >=0.2.1-rc.2 且 <0.3.0-0**；开发依赖固定到 `0.2.1-rc.2`。后续同系列版本不再逐个枚举。详见 [系列兼容说明](../docs/dsh-series-compatibility.md)。
 
-当前版本支持 **DSH 0.2.1-rc.2**，开发依赖固定到该版本。验证范围见仓库 `docs/dsh-0.2.1-rc.2.md`；以下旧版记录保留为历史证据。
+当前 Cyber 验证范围见 [CYBER.md](CYBER.md)；文中早期版本的安装和扫描记录只保留为历史证据。
 
-DSH 原生 Cordis 插件。将 Codex Security 可公开获得的审计流程、语义检查点和报告工作台接入 DSH 当前选定的模型。输入框通过原生 `@` 菜单插入 **DeepSeek Security** 引用，用户补充需求并发送后，由模型调用插件，扫描期间在输入框上方显示进度。
+DSH 原生 Cordis 插件。将 Codex Security 可公开获得的审计流程、语义检查点和报告工作台接入 DSH 模型。**0.2.0 新增侧边栏 Cyber 入口和独立安全工作台**，提供安全发现分布图、漏洞详情、仓库、扫描历史和新建扫描抽屉。0.2.1 修复未打开仓库的加载与错误反馈，并统一中文和主界面底色。聊天中的 `@deepseek-security` 入口与扫描进度继续保留。
+
+Cyber 界面参照用户提供的 OpenAI Daybreak Cloud 截图设计，使用 DSH 原生 `sidebar.panellist` / `main` 扩展接口与主题变量。界面功能、边界和验证方式见 [CYBER.md](CYBER.md)。
+
+安全发现详情支持编辑七种处置状态：新发现、已分诊、处理中、已修复、不修复、重复、误报。状态按仓库与漏洞指纹独立保存，列表、图表和筛选同步更新，重启后保留。宿主接口更新后须完整退出并重新打开 DSH；仅刷新界面不会加载新增后端方法。
 
 ## 使用与边界
 
@@ -16,9 +20,9 @@ DSH 原生 Cordis 插件。将 Codex Security 可公开获得的审计流程、�
 
 选择时只插入引用标签，保留用户自己写的文字，不改成预设的整句扫描命令。发送时引用仅序列化为 `@deepseek-security`，不会把内部工具说明写入用户消息，模型通过 `security_scan` 把需求、关注点和排除项传给扫描 Agent。直接键入完整的 `@deepseek-security` 加需求也会作为正常消息交给模型。
 
-扫描真正启动后，输入框上方自动显示原生风格的进度框，显示实际阶段，支持折叠和停止。完成、失败或取消后进度框自动收起，报告或错误返回聊天；没有空闲启动面板、“开始扫描”按钮或专用报告弹窗。同一工作区只保留一个活动任务，切换聊天不会重启扫描。重启或插件卸载造成的中断会被记录，不会自动消费模型 Token。
+扫描真正启动后，输入框上方自动显示原生风格的进度框，显示实际阶段，支持折叠和停止。完成、失败或取消后进度框自动收起；聊天发起的扫描将报告或错误返回聊天。Cyber 发起的扫描会创建并打开一条普通 DSH 会话，保留执行过程，完成后的报告与发现同步到 Cyber 的扫描记录和安全发现页，也可从扫描详情重新打开会话。新建扫描抽屉可选择模型、推理强度、整个工作区或一个相对目录／文件，并填写附加需求。安装且启用 Ultra 插件的原生委派能力后，支持 Max 的 DeepSeek 模型还可选择 Ultra，由 Ultra 插件启用 Max 和委派策略；子代理沿用本次扫描的只读目录边界。同一工作区只保留一个活动任务，切换聊天不会重启扫描。重启或插件卸载造成的中断会被记录，不会自动消费模型 Token。
 
-**仅选择候选项不消耗模型额度；发送审计请求会使用当前选定的 DSH 模型账号额度。** 进度框与聊天的 **停止** 都会取消扫描并等待活动执行收尾。直接请求“查看上次安全扫描报告”会使用 `security_report` 读取已有结果，不启动新扫描。
+**仅选择候选项或打开 Cyber 不消耗模型额度；发送审计请求或点击 Start Scan 会使用所选 DSH 模型账号额度。** 进度框与聊天的 **停止** 都会取消扫描并等待活动执行收尾。直接请求“查看上次安全扫描报告”会使用 `security_report` 读取已有结果，不启动新扫描。
 
 当前实现 Standard 静态源码审计：威胁模型、发现、证据核对、攻击路径和报告。使用 DSH `read/glob/grep` 工具与既有 AgentLoop，未增加模型调度器。没有暴露 Deep Scan、PR/diff 扫描、动态漏洞复现或云端扫描。静态结论不能证明漏洞已被动态验证，也不代表与 Codex 模型具有相同的发现能力。
 
@@ -28,7 +32,7 @@ DSH 原生 Cordis 插件。将 Codex Security 可公开获得的审计流程、�
 
 ## 构建与安装
 
-依赖 Node.js、Python 3，以及 DSH。接口编译和集成测试基线是 `0.2.1-alpha.2`；`0.2.0-rc.2` 已做原生 Web 面板加载验证，不能据此宣称旧版完整模型扫描兼容。
+依赖 Node.js、Python 3，以及 DSH。当前接口编译和集成测试基线是 `0.2.1-rc.2`。早期版本曾在 `0.2.0-rc.2` 做原生 Web 面板加载验证，该记录不代表当前 Cyber 工作台支持旧宿主。
 
 ```powershell
 cd DeepSeekSecurity
@@ -61,7 +65,8 @@ dsh plugin --profile web add "link:C:/path/to/better-dsh/DeepSeekSecurity" --ign
 | `src/driver.ts` | DSH 原生 Agent 接口与上游审计流程适配 |
 | `src/workbench.ts` | 原版 Python 工作台和语义草稿契约调用 |
 | `src/mention.ts` | 原生插件引用与发送时序列化，保留后续用户需求 |
-| `src/client.tsx`, `src/progress.ts`, `src/panel.css` | 仅在任务执行期间显示的 composer 进度框、RPC 状态读取和取消 |
+| `src/client.tsx`, `src/progress.ts`, `src/panel.css` | 原生 Cyber 导航注册、composer 进度框、RPC 状态读取和取消 |
+| `src/cyber-panel.tsx`, `src/cyber.css`, `src/dashboard-state.ts`, `src/dashboard.ts` | 独立安全工作台、扫描抽屉、历史观察与漏洞身份归并 |
 | `vendor/codex-security/` | 保留上游目录结构和许可证的原始源码 |
 | `test/security.test.mjs` | 生命周期与真实工作台/AgentLoop 合约测试 |
 | `UI-GUIDE.md` | 可供其他 DSH 插件使用的简短 UI 规范 |
