@@ -13,6 +13,7 @@ import { pluginRoot, record, string, Workbench } from './workbench.ts'
 import { workspaceTools } from './workspace-tools.ts'
 import { ScanIsolation } from './scan-isolation.ts'
 import { ultraService } from './ultra.ts'
+import { sessionLocation } from './session-location.ts'
 
 declare module '@deepseek-ai/dsh-llm' {
   interface MessageSourceMap { 'deepseek-security': { kind: 'deepseek-security' } }
@@ -99,7 +100,7 @@ export class DshScanDriver implements ScanDriver {
         signal: hooks.signal, setup,
       })
       // 正常会话由宿主创建并持久化，扫描过程可直接查看。 Publish a normal durable conversation.
-      const created = await this.ctx.sessionController.create({ sessionId: task.id as SessionId, cwd: task.workspace })
+      const created = await this.ctx.sessionController.create({ sessionId: task.id as SessionId, ...await sessionLocation(this.ctx, task.workspace, task.sessionId) })
       if (created.sessionId !== task.id) throw new Error('宿主未创建独立扫描会话，请重试。')
       const resolved = await this.ctx.sessionController.resolveAgent(created.sessionId)
       if ('error' in resolved) throw resolved.error

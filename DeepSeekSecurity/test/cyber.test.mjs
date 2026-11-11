@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, readFile, writeFile, symlink, realpath } from 'node:fs/
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { DashboardObserver, SecurityManager, SecurityHost, FindingState, findingStatuses, findingStatusRequestSchema, findingRequestSchema, canRepair, projectFindings, scanScope, workspaceTools, contribution, startSchema, detailRequestSchema } from '../dist/test-runtime.js'
+import { DashboardObserver, SecurityManager, SecurityHost, FindingState, findingStatuses, findingStatusRequestSchema, findingRequestSchema, canRepair, projectFindings, sessionLocation, scanScope, workspaceTools, contribution, startSchema, detailRequestSchema } from '../dist/test-runtime.js'
 import { Context } from '@deepseek-ai/cordis'
 import { remoteMethods } from '@deepseek-ai/dsh-typert-protocol'
 import { TypertGatewayService } from '@deepseek-ai/dsh-api-gateway'
@@ -12,6 +12,27 @@ const base = { id: 'task-1', workspace: 'workspace', sessionId: 'chat', status: 
 const data = { workspace: 'workspace', tasks: [base], findings: [], warnings: [], capabilities: { findingStatusEditing: true, findingRepair: true }, selection: null }
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done }); return { promise, resolve } }
 const ok = value => ({ ok: true, value })
+
+test('new conversations use source workspace ownership and canonical paths, never a same-title or parent folder', async () => {
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'cyber-session-location-')))
+  const workspace = join(root, 'repository')
+  await mkdir(workspace)
+  const other = { id: 'other', title: 'Same title', path: root, sessionIds: [] }
+  const own = { id: 'own', title: 'Same title', path: workspace, sessionIds: ['source'] }
+  let groups = [other, own]
+  const ctx = new Context()
+  try {
+    ctx.provide('workspaceRegistry', { list: () => groups })
+    assert.deepEqual(await sessionLocation(ctx, join(workspace, '.'), 'source'), { workspaceId: 'own' })
+    assert.deepEqual(await sessionLocation(ctx, workspace, 'ungrouped-source'), { workspaceId: 'own' })
+    const duplicate = { ...own, id: 'duplicate', sessionIds: ['different-source'] }
+    groups = [duplicate, own]
+    assert.deepEqual(await sessionLocation(ctx, workspace, 'source'), { workspaceId: 'own' })
+    await assert.rejects(sessionLocation(ctx, workspace, 'ungrouped-source'), /多个工作区分组/)
+    groups = [other]
+    assert.deepEqual(await sessionLocation(ctx, workspace, 'source'), { cwd: workspace })
+  } finally { await ctx.fiber.dispose() }
+})
 
 test('history preserves completed scans, real phase timestamps and workspace isolation across restart', async () => {
   const root = await mkdtemp(join(tmpdir(), 'cyber-history-'))

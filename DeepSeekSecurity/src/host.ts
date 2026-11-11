@@ -142,7 +142,7 @@ class SecurityService extends TypertRemoteService {
     let pending = this.repairs.get(key)
     if (!pending) {
       pending = (async () => {
-        const result = await startFindingRepair(this.ctx, dashboard.workspace, finding, task, dashboard.selection)
+        const result = await startFindingRepair(this.ctx, dashboard.workspace, finding, task, dashboard.selection, request.sessionId)
         try { await this.findingState.set(dashboard.workspace, finding.id, 'in_progress') }
         catch { return { ...result, warning: '修复会话已启动，但“处理中”状态保存失败，请稍后检查。' } }
         return result

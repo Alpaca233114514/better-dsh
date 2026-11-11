@@ -3,6 +3,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { SessionRequestId } from '@deepseek-ai/dsh-api-session-controller'
 import { canRepair, type Dashboard, type Finding, type RepairResult, type Task } from './contracts.ts'
 import { ultraService } from './ultra.ts'
+import { sessionLocation } from './session-location.ts'
 
 export function repairPrompt(workspace: string, finding: Finding, task: Task): string {
   return [
@@ -24,10 +25,10 @@ export function repairPrompt(workspace: string, finding: Finding, task: Task): s
 }
 
 /** 修复走普通会话，不复用扫描的只读 Agent。 Repair uses an ordinary conversation and host review policy. */
-export async function startFindingRepair(ctx: Context, workspace: string, finding: Finding, task: Task, selection: Dashboard['selection']): Promise<RepairResult> {
+export async function startFindingRepair(ctx: Context, workspace: string, finding: Finding, task: Task, selection: Dashboard['selection'], sourceSessionId = task.sessionId): Promise<RepairResult> {
   if (!canRepair(finding.status)) throw new Error('该发现已结束处置，请先重新打开其状态。')
   if (!selection) throw new Error('请先为当前工作区选择 DSH 模型。')
-  const created = await ctx.sessionController.create({ cwd: workspace })
+  const created = await ctx.sessionController.create(await sessionLocation(ctx, workspace, sourceSessionId))
   const { ultra: enabled, ...model } = selection
   if (enabled) {
     const ultra = ultraService(ctx)

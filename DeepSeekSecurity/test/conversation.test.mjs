@@ -87,7 +87,9 @@ for (const ultra of [false, true]) test(`desktop 0.2.2 normal scan conversation:
     await ctx.plugin(m['dsh-session-title'].default, { fallbackMaxWords: 12, fallbackMaxBytes: 120, maxTitleBytes: 240 })
     const selection = { provider: 'deepseek-fixture', model: 'deepseek-fixture' }
     ctx.provide('agentDefaultModel', { currentSelection: () => selection, async saveSelection() {} })
-    ctx.provide('workspaceRegistry', { archivedSessionIds: [], get() {}, list: () => [] })
+    const group = { id: 'scan-workspace', path: workspace, sessionIds: ['source-chat-not-loaded'],
+      async attachSession(id) { assert.equal(ctx.sessions.get(id).header.cwd, workspace); this.sessionIds.push(id) } }
+    ctx.provide('workspaceRegistry', { archivedSessionIds: [], get: id => id === group.id ? group : undefined, list: () => [group] })
     ctx.llm.registerAdapter([selection.provider], new Scripted())
     const agents = new n.ApiSessionAgentController(ctx)
     const commands = new n.SessionCommandController(ctx, agents, workspace)
@@ -118,6 +120,7 @@ for (const ultra of [false, true]) test(`desktop 0.2.2 normal scan conversation:
     const session = ctx.sessions.get(started.task.id)
     assert.equal(session.header.origin, undefined)
     assert.equal(session.header.parentSession, undefined)
+    assert.ok(group.sessionIds.includes(session.id), 'Native create must attach the scan to the source workspace group')
     await manager.wait(workspace, started.task.id, new AbortController().signal)
     const task = (await manager.state(workspace)).task
     assert.equal(task.status, 'completed', task.error)
@@ -150,7 +153,7 @@ for (const ultra of [false, true]) test(`desktop 0.2.2 repair conversation runs 
   const finding = { id: 'fixture-finding', taskId: 'source-scan', status: 'new', title: 'Synthetic repair target', severity: 'high',
     summary: 'Fixture only, not a real vulnerability.', locations: [{ path: 'sample.py', startLine: 1 }], evidence: 'SYNTHETIC_UNFIXED',
     remediation: 'Replace the fixture marker.', validation: 'Static fixture', attackPath: '', firstSeen: '2026-11-11T00:00:00Z', lastSeen: '2026-11-11T00:00:00Z', occurrences: 1 }
-  const task = { id: 'source-scan', workspace, scanId: 'fixture-upstream-id', scope: 'sample.py', provider: 'scan-provider', model: 'scan-model', startedAt: '2026-11-11T00:00:00Z' }
+  const task = { id: 'source-scan', sessionId: 'source-workspace-chat', workspace, scanId: 'fixture-upstream-id', scope: 'sample.py', provider: 'scan-provider', model: 'scan-model', startedAt: '2026-11-11T00:00:00Z' }
   let calls = 0
   class Scripted extends m['dsh-llm'].LlmAdapter {
     async resolveModel(provider, model) { return { provider, id: model, name: 'DeepSeek fixture', reasoning: { efforts: [{ id: 'high', name: 'High' }, { id: 'max', name: 'Max' }] } } }
@@ -174,7 +177,9 @@ for (const ultra of [false, true]) test(`desktop 0.2.2 repair conversation runs 
     await ctx.plugin(m['dsh-session-query'].default)
     await ctx.plugin(m['dsh-session-title'].default, { fallbackMaxWords: 12, fallbackMaxBytes: 120, maxTitleBytes: 240 })
     ctx.provide('agentDefaultModel', { currentSelection: () => ({ provider: selection.provider, model: selection.model }), async saveSelection() {} })
-    ctx.provide('workspaceRegistry', { archivedSessionIds: [], get() {}, list: () => [] })
+    const group = { id: 'repair-workspace', path: workspace, sessionIds: [task.sessionId],
+      async attachSession(id) { assert.equal(ctx.sessions.get(id).header.cwd, workspace); this.sessionIds.push(id) } }
+    ctx.provide('workspaceRegistry', { archivedSessionIds: [], get: id => id === group.id ? group : undefined, list: () => [group] })
     ctx.llm.registerAdapter([selection.provider], new Scripted())
     ctx.provide('attachments', { async admitPromptContent(content) { return content } })
     ctx.provide('fileUploads', { bindPrompt() { return { commit() {}, [Symbol.dispose]() {} } } })
@@ -197,6 +202,7 @@ for (const ultra of [false, true]) test(`desktop 0.2.2 repair conversation runs 
     assert.equal(calls, 2)
     assert.equal(agent.session.header.cwd, workspace)
     assert.equal(agent.session.header.origin, undefined)
+    assert.ok(group.sessionIds.includes(agent.id), 'Native create must attach the repair to the source workspace group')
     assert.equal(ctx.get('dshUltra').active(agent.session), ultra)
     assert.deepEqual(guardCalls, ['fixture_fix'])
     assert.equal(await readFile(sourceFile, 'utf8'), 'SYNTHETIC_FIXED\n')
