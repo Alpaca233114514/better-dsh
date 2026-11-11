@@ -40,17 +40,33 @@ const required = (value: string | undefined, label: string) => {
   return value.trim()
 }
 
+export function gitArguments(args: string[]) {
+  // Empty disables fsmonitor even on older Git; 旧版 Git 会把 false 当作钩子路径，故用空值。
+  return ['--no-pager', '-c', 'color.ui=false', '-c', 'core.fsmonitor=', ...args]
+}
+export function gitSubcommand(args: string[]) {
+  let index = 0
+  while (args[index]?.startsWith('-')) {
+    const option = args[index++]
+    if (['-c', '-C', '--config-env', '--git-dir', '--work-tree', '--namespace'].includes(option)) index++
+  }
+  return args[index]
+}
+
 export class GitRepository {
   readonly run: Runner
   lastSnapshot?: GitSnapshot
   private generate?: DescriptionGenerator
-  constructor(run: Runner, generate?: DescriptionGenerator) { this.run = run; this.generate = generate }
+  constructor(run: Runner, generate?: DescriptionGenerator) {
+    this.run = (program, args, ...rest) => run(program, program === 'git' ? gitArguments(args) : args, ...rest)
+    this.generate = generate
+  }
   private async describe(input: DescriptionInput) {
     if (!this.generate) throw new Error('模型生成不可用，请手动填写说明。')
     return this.generate(input)
   }
   private git(cwd: string, args: string[], input?: string, allowed?: number[]) {
-    return this.run('git', ['--no-pager', '-c', 'color.ui=false', ...args], cwd, input, allowed)
+    return this.run('git', args, cwd, input, allowed)
   }
   async scan(root: string, paths?: string[]) {
     const scope = paths ? ['--', ...paths] : []

@@ -157,12 +157,23 @@ var required = (value, label) => {
   if (!value?.trim() || value.includes("\0")) throw new Error(`\u8BF7\u586B\u5199${label}\u3002`);
   return value.trim();
 };
+function gitArguments(args) {
+  return ["--no-pager", "-c", "color.ui=false", "-c", "core.fsmonitor=", ...args];
+}
+function gitSubcommand(args) {
+  let index = 0;
+  while (args[index]?.startsWith("-")) {
+    const option = args[index++];
+    if (["-c", "-C", "--config-env", "--git-dir", "--work-tree", "--namespace"].includes(option)) index++;
+  }
+  return args[index];
+}
 var GitRepository = class {
   run;
   lastSnapshot;
   generate;
   constructor(run, generate) {
-    this.run = run;
+    this.run = (program, args, ...rest) => run(program, program === "git" ? gitArguments(args) : args, ...rest);
     this.generate = generate;
   }
   async describe(input) {
@@ -170,7 +181,7 @@ var GitRepository = class {
     return this.generate(input);
   }
   git(cwd, args, input, allowed) {
-    return this.run("git", ["--no-pager", "-c", "color.ui=false", ...args], cwd, input, allowed);
+    return this.run("git", args, cwd, input, allowed);
   }
   async scan(root, paths) {
     const scope = paths ? ["--", ...paths] : [];
@@ -717,20 +728,10 @@ var GitService = class extends (_a = TypertRemoteService, _changes_dec = [Remote
         for (const key of this.caches.keys()) this.evictCache(key);
       };
     });
-    let warming = Promise.resolve();
-    const warm = (session) => {
-      if (session.header.cwd) warming = warming.then(() => this.getCache(session.id)).then((cache) => cache.ready).catch(() => {
-      });
-    };
-    ctx.on("session/created", warm);
     ctx.on("session/disposed", (session) => this.release(session.id));
     ctx.on("session/event", (session, event) => {
-      if (event.type === "sandbox/mode") {
-        this.release(session.id);
-        warm(session);
-      }
+      if (event.type === "sandbox/mode") this.release(session.id);
     });
-    for (const session of ctx.sessions.list()) warm(session);
   }
   async *changes(sessionId, signal) {
     sessionSchema.parse(sessionId);
@@ -800,7 +801,7 @@ var GitService = class extends (_a = TypertRemoteService, _changes_dec = [Remote
         return Promise.reject(new Error("\u5DE5\u4F5C\u533A\u4F1A\u8BDD\u6216\u6743\u9650\u5DF2\u53D8\u5316\uFF0C\u8BF7\u91CD\u65B0\u6253\u5F00\u9762\u677F\u3002"));
       };
       const cache = (async () => {
-        const paths = (await runner("git", ["rev-parse", "--path-format=absolute", "--show-toplevel", "--absolute-git-dir", "--git-common-dir"], session.header.cwd)).trim().split(/\r?\n/);
+        const paths = (await runner("git", gitArguments(["rev-parse", "--path-format=absolute", "--show-toplevel", "--absolute-git-dir", "--git-common-dir"]), session.header.cwd)).trim().split(/\r?\n/);
         const value = new RepositoryCache(
           new GitRepository(runner),
           paths,
@@ -861,13 +862,13 @@ var GitService = class extends (_a = TypertRemoteService, _changes_dec = [Remote
     };
     const routes = /* @__PURE__ */ new Map();
     return async (program, args, cwd, input, allowed) => {
-      const command = args[0] === "--no-pager" ? args[3] : args[0];
+      const command = program === "git" ? gitSubcommand(args) : args[0];
       if (program === "git" && !["ls-remote", "fetch", "push"].includes(command)) return execute(program, args, cwd, input, allowed);
       let proxy = process.env.DSH_GIT_PROXY;
       if (!proxy && process.platform === "win32" && !["https_proxy", "http_proxy", "all_proxy"].some((name) => process.env[name])) {
         let target = "https://api.github.com";
         if (program === "git") {
-          const remote = await execute("git", ["remote", "get-url", ...command === "push" ? ["--push"] : [], "origin"], cwd);
+          const remote = await execute("git", gitArguments(["remote", "get-url", ...command === "push" ? ["--push"] : [], "origin"]), cwd);
           if (!/^https:\/\//i.test(remote)) return execute(program, args, cwd, input, allowed);
           target = new URL(remote.trim()).origin;
         }

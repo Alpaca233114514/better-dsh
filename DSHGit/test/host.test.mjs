@@ -164,7 +164,7 @@ test('cached state reads spawn no additional processes and concurrent readers sh
   } finally { await b.fiber.dispose() }
 })
 
-test('startup sessions with the same workspace and confinement share one snapshot', async () => {
+test('requested sessions with the same workspace and confinement share one snapshot', async () => {
   const b = await bench('workspace-write', false, plugin, true)
   try {
     await Promise.all(['test', 'second'].map(sessionId => b.service.run({ sessionId, action: 'state' })))
@@ -233,5 +233,52 @@ test('cache hits renew idle expiry without sweeping, sorting or spawning Git', a
     assert.equal(b.service.caches.size, 1)
     sweep(record.lastUsed + 11 * 60_000)
     assert.equal(b.service.caches.size, 0)
+  } finally { await b.fiber.dispose() }
+})
+
+for (const [label, host] of [['source', plugin], ['bundle', await import('../lib/host.js')]]) {
+  test(`${label} host never scans on startup, session creation or sandbox-mode changes`, async () => {
+    const b = await bench('workspace-write', false, host, true)
+    try {
+      await new Promise(resolve => setImmediate(resolve))
+      const session = b.ctx.sessions.get('test')
+      b.ctx.emit('session/created', session)
+      b.ctx.emit('session/event', session, { type: 'sandbox/mode' })
+      await new Promise(resolve => setImmediate(resolve))
+      assert.equal(b.spawns.length, 0)
+      assert.equal(b.service.caches.size, 0)
+      const streamAbort = new AbortController()
+      const stream = b.service.changes('test', streamAbort.signal)[Symbol.asyncIterator]()
+      assert.deepEqual((await stream.next()).value, { changed: true })
+      await stream.return()
+      streamAbort.abort()
+      assert.equal(b.spawns.filter(spec => spec.argv.includes('status')).length, 1)
+      assert.ok(b.spawns.every(spec => spec.argv.includes('core.fsmonitor=')))
+      b.ctx.emit('session/event', session, { type: 'sandbox/mode' })
+      const before = b.spawns.length
+      await new Promise(resolve => setImmediate(resolve))
+      assert.equal(b.spawns.length, before)
+      assert.equal(b.service.caches.size, 0)
+      assert.equal((await b.service.run({ sessionId: 'test', action: 'state' })).state.branch, 'codex/test')
+    } finally { await b.fiber.dispose() }
+  })
+}
+
+test('all remote Git commands retain configured proxy after safe global options', async t => {
+  const previous = process.env.DSH_GIT_PROXY
+  process.env.DSH_GIT_PROXY = 'http://127.0.0.1:8123'
+  t.after(() => { if (previous === undefined) delete process.env.DSH_GIT_PROXY; else process.env.DSH_GIT_PROXY = previous })
+  const b = await bench()
+  try {
+    const { gitArguments } = await import('../src/git.ts')
+    const runner = b.service.runner('test')
+    for (const command of ['ls-remote', 'fetch', 'push']) {
+      await runner('git', gitArguments([command, 'origin']), b.ctx.sessions.get('test').header.cwd)
+      assert.equal(b.spawns.at(-1).env.HTTPS_PROXY, process.env.DSH_GIT_PROXY)
+      assert.ok(b.spawns.at(-1).argv.includes('core.fsmonitor='))
+    }
+    await runner('git', gitArguments(['status', '--', 'push']), b.ctx.sessions.get('test').header.cwd)
+    assert.equal(b.spawns.at(-1).env.HTTPS_PROXY, undefined)
+    assert.ok(b.spawns.every(spec => spec.argv[0] === 'sandbox-runner'))
   } finally { await b.fiber.dispose() }
 })

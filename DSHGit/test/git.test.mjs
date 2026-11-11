@@ -2,9 +2,9 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
-import { mkdtemp, mkdir, writeFile, readFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, writeFile, readFile, chmod, unlink } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
-import { GitRepository, parseStatus, numstat } from '../src/git.ts'
+import { GitRepository, parseStatus, numstat, gitArguments, gitSubcommand } from '../src/git.ts'
 const exec = promisify(execFile)
 const cache = resolve('../.cache')
 await mkdir(cache, { recursive: true })
@@ -189,4 +189,44 @@ test('PR requests use origin identity, stdin body, explicit head/base and draft'
   assert.equal(calls.at(-1).input, 'Literal $() and `code`\nsecond line')
   assert.ok(calls.at(-1).args.includes('--draft'))
   assert.ok(calls.at(-1).args.includes('codex/test'))
+})
+
+for (const configuration of ['local', 'include', 'worktree']) {
+  test(`real Git ${configuration} fsmonitor cannot execute during repository reads or writes`, async () => {
+    const { root, repo, request } = await fixture()
+    const hook = join(root, '.git', 'fsmonitor-hook')
+    const marker = join(root, '.git', 'fsmonitor-ran')
+    await writeFile(hook, '#!/bin/sh\nprintf ran > .git/fsmonitor-ran\nprintf "token\\0"\n')
+    await chmod(hook, 0o755)
+    if (configuration === 'include') {
+      const config = join(root, '.git', 'included config')
+      await writeFile(config, '[core]\n\tfsmonitor = ./.git/fsmonitor-hook\n')
+      await run('git', ['config', 'include.path', config], root)
+    } else {
+      if (configuration === 'worktree') await run('git', ['config', 'extensions.worktreeConfig', 'true'], root)
+      await run('git', ['config', ...(configuration === 'worktree' ? ['--worktree'] : []), 'core.fsmonitor', './.git/fsmonitor-hook'], root)
+    }
+    // Positive control proves the executable trigger; 正向对照确认恶意配置确实能执行。
+    await run('git', ['--no-pager', '-c', 'color.ui=false', 'status', '--porcelain=v1', '-z', '--untracked-files=all'], root)
+    assert.equal(await readFile(marker, 'utf8'), 'ran')
+    await unlink(marker)
+    await writeFile(join(root, 'file.txt'), 'safe change\n')
+    const state = await repo.state(root)
+    await assert.rejects(readFile(marker), { code: 'ENOENT' })
+    assert.equal(state.files.find(file => file.path === 'file.txt').worktree, 'M')
+    await repo.incremental(repo.lastSnapshot, ['file.txt'])
+    await repo.run('git', ['ls-files', '-z', '--cached'], root)
+    await repo.execute(root, { ...request('stage'), path: 'file.txt' })
+    await repo.execute(root, { ...request('commit'), message: 'safe commit', includeUnstaged: false })
+    assert.equal((await repo.state(root)).files.length, 0)
+    assert.equal((await run('git', ['log', '-1', '--format=%s'], root)).trim(), 'safe commit')
+    await assert.rejects(readFile(marker), { code: 'ENOENT' })
+  })
+}
+
+test('Git subcommand parsing skips global options without mistaking filenames for commands', () => {
+  for (const command of ['ls-remote', 'fetch', 'push', 'status']) {
+    assert.equal(gitSubcommand(gitArguments([command, '--', 'push'])), command)
+    assert.equal(gitSubcommand(['-C', '/workspace', '-c', 'x=y', '--no-literal-pathspecs', command]), command)
+  }
 })
