@@ -1014,15 +1014,15 @@ var require_core = __commonJS({
             const word = language.case_insensitive ? match[0].toLowerCase() : match[0];
             const data = keywordData(top, word);
             if (data) {
-              const [kind, keywordRelevance] = data;
+              const [kind2, keywordRelevance] = data;
               emitter.addText(buf);
               buf = "";
               keywordHits[word] = (keywordHits[word] || 0) + 1;
               if (keywordHits[word] <= MAX_KEYWORD_HITS) relevance += keywordRelevance;
-              if (kind.startsWith("_")) {
+              if (kind2.startsWith("_")) {
                 buf += match[0];
               } else {
-                const cssClass = language.classNameAliases[kind] || kind;
+                const cssClass = language.classNameAliases[kind2] || kind2;
                 emitKeyword(match[0], cssClass);
               }
             } else {
@@ -6679,8 +6679,8 @@ function isRecursive(inst, stack, resolve) {
       result = answer;
   };
   const def = inst._zod.def;
-  const kind = def.type;
-  switch (kind) {
+  const kind2 = def.type;
+  switch (kind2) {
     case "object": {
       const raw = rawShape(def);
       merge2(raw ? shape(raw, true) : ASSUMED);
@@ -6760,7 +6760,7 @@ function isRecursive(inst, stack, resolve) {
     case "custom":
       break;
     default: {
-      kind;
+      kind2;
       for (const key in def) {
         const desc = Object.getOwnPropertyDescriptor(def, key);
         if (!desc || desc.get)
@@ -21101,8 +21101,8 @@ function visit(schema, fnOrHandlers) {
   }
   function mapInner(s) {
     const def = s._zod.def;
-    const kind = def.type;
-    switch (kind) {
+    const kind2 = def.type;
+    switch (kind2) {
       case "object": {
         const oldShape = def.shape;
         const keys = Object.keys(oldShape);
@@ -21222,7 +21222,7 @@ function visit(schema, fnOrHandlers) {
       case "custom":
         return s;
       default: {
-        kind;
+        kind2;
         return s;
       }
     }
@@ -21297,10 +21297,45 @@ function date4(params) {
   return _coercedDate(ZodDate, params);
 }
 
+// src/pulls.ts
+var actor = external_exports.object({ login: external_exports.string() }).nullable();
+var pullSummary = external_exports.object({
+  number: external_exports.number().int().positive(),
+  title: external_exports.string(),
+  state: external_exports.enum(["OPEN", "CLOSED", "MERGED"]),
+  isDraft: external_exports.boolean(),
+  author: actor,
+  updatedAt: external_exports.string(),
+  url: external_exports.string().url()
+});
+var pullDetail = pullSummary.extend({
+  body: external_exports.string(),
+  baseRefName: external_exports.string(),
+  headRefName: external_exports.string(),
+  additions: external_exports.number(),
+  deletions: external_exports.number(),
+  changedFiles: external_exports.number(),
+  comments: external_exports.array(external_exports.object({ author: actor, body: external_exports.string(), createdAt: external_exports.string() })),
+  commits: external_exports.array(external_exports.object({ oid: external_exports.string(), messageHeadline: external_exports.string(), committedDate: external_exports.string() })),
+  latestReviews: external_exports.array(external_exports.object({ author: actor, state: external_exports.string() })),
+  reviewRequests: external_exports.array(external_exports.object({ login: external_exports.string().optional(), name: external_exports.string().optional() })),
+  statusCheckRollup: external_exports.array(external_exports.object({
+    name: external_exports.string().nullable().optional(),
+    context: external_exports.string().nullable().optional(),
+    status: external_exports.string().nullable().optional(),
+    conclusion: external_exports.string().nullable().optional(),
+    state: external_exports.string().nullable().optional()
+  })).nullable().optional()
+});
+var pullFile = external_exports.object({ filename: external_exports.string(), additions: external_exports.number(), deletions: external_exports.number(), patch: external_exports.string().optional() });
+var filesPerPage = 20;
+
 // src/contracts.ts
 var requestSchema = external_exports.object({
   sessionId: external_exports.string().min(1),
-  action: external_exports.enum(["state", "diff", "stage", "unstage", "commit", "commitPush", "push", "branches", "switch", "createBranch", "prInfo", "createPR"]),
+  action: external_exports.enum(["state", "diff", "stage", "unstage", "commit", "commitPush", "push", "branches", "switch", "createBranch", "prInfo", "createPR", "pullList", "pullDetail", "pullFiles"]),
+  number: external_exports.number().int().positive().optional(),
+  page: external_exports.number().int().positive().optional(),
   refresh: external_exports.boolean().optional(),
   path: external_exports.string().optional(),
   staged: external_exports.boolean().optional(),
@@ -21328,6 +21363,10 @@ var stateSchema = external_exports.object({
 });
 var prSchema = external_exports.object({ number: external_exports.number(), title: external_exports.string(), url: external_exports.string().url() });
 var resultSchema = external_exports.object({
+  repository: external_exports.string().optional(),
+  pulls: external_exports.array(pullSummary).optional(),
+  pull: pullDetail.optional(),
+  pullFiles: external_exports.array(pullFile).optional(),
   state: stateSchema.optional(),
   text: external_exports.string().optional(),
   branches: external_exports.array(external_exports.string()).optional(),
@@ -35407,7 +35446,7 @@ function highlightDiff(text, path) {
 
 // src/panel.tsx
 var import_jsx_runtime = require("react/jsx-runtime");
-function Icon({ name }) {
+function Icon({ name, size = 20 }) {
   if (name === "github") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", { width: "20", height: "20", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656" }) });
   const paths = {
     branch: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
@@ -35436,7 +35475,7 @@ function Icon({ name }) {
     chevron: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m6 9 6 6 6-6" }),
     files: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm3-2V3h6l2 2h5" })
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: paths[name] });
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: paths[name] });
 }
 var isStaged = (index) => index !== " " && index !== "?";
 var safeUrl = (url2) => /^https:\/\/[^/]+\//.test(url2) ? url2 : void 0;
@@ -36002,14 +36041,326 @@ function GitNotifications() {
 // src/panel.css
 var panel_default = ".dshgit,.dg-launcher,.dg-sidebar,.dg-toasts {\r\n  --dg-bg: var(--dsw-alias-bg-base, light-dark(#fff,#202020));\r\n  --dg-card: var(--dsw-alias-bg-module-platform, light-dark(#f7f7f8,#2c2c2c));\r\n  --dg-text: var(--dsw-alias-label-primary, light-dark(#242424,#f1f1f1));\r\n  --dg-muted: var(--dsw-alias-label-tertiary, light-dark(#737373,#a1a1a1));\r\n  --dg-line: var(--dsw-alias-border-l2, light-dark(#e2e2e5,#434343));\r\n  --dg-hover: var(--dsw-alias-interactive-bg-hover, light-dark(#ededf0,#3b3b3b));\r\n  --dg-green: var(--dsw-alias-state-success-primary, light-dark(#148049,#33c97c));\r\n  --dg-red: var(--dsw-alias-state-error-primary, light-dark(#cb3939,#ff6262));\r\n  font: inherit; color: var(--dg-text); box-sizing: border-box;\r\n}\r\n.dg-launcher { display:inline-flex; align-items:center; gap:6px; border:0; border-radius:8px; padding:6px 9px; background:transparent; cursor:pointer; font-size:13px; }\r\n.dg-launcher:hover { background:var(--dg-hover); }\r\n.dg-host { position:relative; }\r\n.dg-host[data-dg-wide=true] .dg-conversation-body { margin-right:328px; min-width:0; }\r\n.dg-sidebar { position:absolute; top:calc(var(--dg-header-height,76px) + 18px); right:18px; width:292px; max-width:calc(100% - 36px); max-height:calc(100% - var(--dg-header-height,76px) - 36px); overflow:auto; padding:10px; border:1px solid var(--dg-line); border-radius:16px; background:var(--dg-card); font-size:13px; line-height:1.5; z-index:5; text-align:left; }\r\n.dg-sidebar-floating { position:fixed; top:90px; max-height:calc(100dvh - 110px); }\r\n.dg-sidebar * { box-sizing:border-box; }\r\n.dg-sidebar button { font:inherit; color:inherit; border:0; background:transparent; cursor:pointer; border-radius:8px; }\r\n.dg-sidebar button:hover { background:var(--dg-hover); }\r\n.dg-sidebar button:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary,#5787dc); outline-offset:2px; }\r\n.dg-sidebar button:disabled { cursor:default; opacity:.5; }\r\n.dg-sidebar-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 4px 6px 10px; color:var(--dg-muted); }\r\n.dg-sidebar-heading>span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-sidebar-heading button { display:grid; place-items:center; width:26px; height:26px; flex-shrink:0; }\r\n.dg-sidebar-heading svg { width:15px; height:15px; }\r\n.dg-sidebar .dg-sidebar-changes { display:flex; align-items:center; gap:10px; width:100%; padding:7px 10px; background:var(--dg-hover); text-align:left; }\r\n.dg-sidebar-changes>span:first-of-type { flex:1; }\r\n.dg-sidebar .dg-stats { font-size:12px; }\r\n.dg-sidebar svg { width:17px; height:17px; flex-shrink:0; }\r\n.dg-sidebar-section { display:flex; justify-content:space-between; gap:8px; margin:12px 10px 7px; padding-top:10px; border-top:1px solid var(--dg-line); color:var(--dg-muted); font-size:12px; }\r\n.dg-sidebar-branch { display:flex; gap:10px; align-items:center; padding:5px 10px; color:var(--dg-muted); }\r\n.dg-sidebar-branch span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-sidebar-open { display:flex; align-items:center; gap:8px; width:100%; padding:7px 10px; text-align:left; }\r\n.dg-sidebar-open svg { transform:rotate(-90deg); margin-left:auto; }\r\n.dg-sidebar-error { color:var(--dg-red); padding:8px 10px; overflow-wrap:anywhere; }\r\n.dshgit { display:flex; flex-direction:column; height:min(760px,calc(100dvh - 44px)); position:relative; text-align:left; font-size:14px; line-height:1.5; }\r\n.dshgit * { box-sizing:border-box; }\r\n.dshgit button,.dshgit input,.dshgit textarea,.dshgit select { font:inherit; color:inherit; }\r\n.dshgit button { cursor:pointer; border:0; background:transparent; border-radius:10px; }\r\n.dshgit button:hover:not(:disabled) { background:var(--dg-hover); }\r\n.dshgit button:disabled { opacity:.36; cursor:default; }\r\n.dshgit :is(button,input,textarea,select,a):focus-visible,.dg-launcher:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary,#5787dc); outline-offset:2px; }\r\n.dg-tools { display:flex; gap:2px; flex-shrink:0; border-radius:18px; padding:3px; background:var(--dg-card); }\r\n.dg-tools button { display:grid; place-items:center; width:28px; height:28px; color:var(--dg-muted); }\r\n.dg-muted { color:var(--dg-muted); font-weight:400; }\r\n.dg-stats { display:inline-flex; align-items:center; gap:7px; font-size:14px; white-space:nowrap; font-variant-numeric:tabular-nums; }\r\n.dg-stats b { color:var(--dg-green); font-weight:400; }\r\n.dg-stats em { color:var(--dg-red); font-style:normal; }\r\n.dg-workspace { display:grid; grid-template-columns:minmax(0,1fr); flex:1; min-height:0; border-top:1px solid var(--dg-line); }\r\n.dg-files { overflow:auto; border-right:1px solid var(--dg-line); padding:10px; }\r\n.dg-files h3 { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--dg-muted); font-weight:500; margin:8px 10px; }\r\n.dg-files h3 span { font-variant-numeric:tabular-nums; }\r\n.dg-file { display:flex; border-radius:8px; margin:2px 0; }\r\n.dg-file[data-active=true] { background:var(--dg-hover); }\r\n.dshgit .dg-file-name { min-width:0; padding:8px; display:flex; align-items:center; flex:1; text-align:left; gap:8px; font-size:13px; }\r\n.dg-file-name>span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-status { font-size:11px; width:16px; flex-shrink:0; color:var(--dg-green); }\r\n.dshgit .dg-stage { width:30px; flex-shrink:0; color:var(--dg-muted); font-size:20px; }\r\n.dg-diff { display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--dg-bg); }\r\n.dg-diff-title { display:flex; align-items:center; gap:8px; padding:12px 16px; font-size:13px; border-bottom:1px solid var(--dg-line); color:var(--dg-muted); overflow-wrap:anywhere; }\r\n.dg-diff pre { flex:1; overflow:auto; margin:0; padding:0; font:12px/1.8 ui-monospace,Consolas,monospace; tab-size:4; }\r\n.dg-diff-title span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-diff-title svg { flex-shrink:0; width:16px; height:16px; }\r\n.dg-code-line { display:flex; min-width:100%; width:max-content; min-height:24px; }\r\n.dg-code-line code { padding-right:16px; font:inherit; white-space:pre; color:var(--dg-text); }\r\n.dg-added .dg-diff-marker { color:var(--dg-green); }\r\n.dg-removed .dg-diff-marker { color:var(--dg-red); }\r\n.dg-diff :is(.hljs-keyword,.hljs-selector-tag,.hljs-literal) { color:light-dark(#a626a4,#c792ea); }\r\n.dg-diff :is(.hljs-string,.hljs-regexp,.hljs-addition) { color:light-dark(#397300,#a3d98b); }\r\n.dg-diff :is(.hljs-comment,.hljs-quote) { color:light-dark(#68737d,#929da8); font-style:italic; }\r\n.dg-diff :is(.hljs-number,.hljs-symbol,.hljs-bullet) { color:light-dark(#9c5100,#f6b979); }\r\n.dg-diff :is(.hljs-title,.hljs-section,.hljs-attribute) { color:light-dark(#005cc5,#82aaff); }\r\n.dg-diff :is(.hljs-built_in,.hljs-type,.hljs-class,.hljs-attr) { color:light-dark(#865300,#ffcb8b); }\r\n.dg-diff :is(.hljs-variable,.hljs-template-variable,.hljs-selector-class,.hljs-selector-id,.hljs-tag,.hljs-name) { color:light-dark(#b2293e,#f07178); }\r\n.dg-diff :is(.hljs-meta,.hljs-deletion) { color:light-dark(#006f78,#89ddff); }\r\n.dg-diff .hljs-emphasis { font-style:italic; }\r\n.dg-diff .hljs-strong { font-weight:600; }\r\n.dg-line-number { flex:0 0 42px; padding-right:12px; color:var(--dg-muted); text-align:right; user-select:none; font-size:11px; }\r\n.dg-code-line.dg-added { background:color-mix(in srgb,var(--dg-green) 12%,transparent); }\r\n.dg-code-line.dg-removed { background:color-mix(in srgb,var(--dg-red) 12%,transparent); }\r\n.dg-code-line.dg-hunk { background:var(--dg-card); padding-block:5px; color:var(--dg-muted); }\r\n.dg-added { color:var(--dg-green); }\r\n.dg-removed { color:var(--dg-red); }\r\n.dg-hunk { color:var(--dsw-alias-state-business-primary,#7096d4); }\r\n.dg-empty { padding:38px 20px; text-align:center; color:var(--dg-muted); line-height:2; }\r\n.dg-footer { display:flex; justify-content:space-between; align-items:center; gap:12px; border-top:1px solid var(--dg-line); padding:14px 24px; flex-shrink:0; }\r\n.dshgit .dg-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:9px 15px; background:var(--dsw-alias-button-primary-fill,var(--dg-text)); color:var(--dsw-alias-label-primary-foreground,var(--dg-bg)); font-weight:500; white-space:nowrap; }\r\n.dshgit .dg-primary:hover:not(:disabled) { background:var(--dsw-alias-button-primary-hover,var(--dg-muted)); }\r\n.dg-alert,.dg-notice { margin:12px 24px 0; padding:10px 14px; border-radius:10px; overflow-wrap:anywhere; font-size:13px; max-height:110px; overflow:auto; flex-shrink:0; }\r\n.dg-alert { color:var(--dg-red); background:color-mix(in srgb,var(--dg-red) 9%,transparent); }\r\n.dg-notice { color:var(--dg-green); background:color-mix(in srgb,var(--dg-green) 8%,transparent); }\r\n.dg-pr { padding:20px 28px 28px; flex:1; min-height:0; overflow:auto; border-top:1px solid var(--dg-line); }\r\n.dg-pr-heading { display:flex; align-items:center; gap:10px; margin-bottom:18px; }\r\n.dg-pr h2 { font-size:18px; font-weight:500; margin:0; }\r\n.dg-pr form { max-width:680px; margin:auto; display:grid; grid-template-columns:150px minmax(0,1fr); gap:16px; }\r\n.dg-pr form>label:nth-child(3),.dg-form-footer { grid-column:1/-1; }\r\n.dg-pr label { display:flex; flex-direction:column; gap:7px; font-size:13px; }\r\n.dshgit :is(input:not([type=checkbox]),textarea,select) { border:1px solid var(--dg-line); border-radius:10px; background:var(--dg-bg); padding:9px 12px; min-width:0; }\r\n.dshgit input::placeholder,.dshgit textarea::placeholder { color:var(--dg-muted); opacity:1; }\r\n.dshgit textarea { resize:vertical; }\r\n.dg-pr .dg-alert { margin:0 0 18px; }\r\n.dg-form-footer { display:flex; align-items:center; justify-content:space-between; gap:16px; }\r\n.dshgit .dg-check { display:inline-flex; flex-direction:row; align-items:center; gap:9px; font-size:14px; cursor:pointer; }\r\n.dg-check input { width:17px; height:17px; accent-color:var(--dg-text); margin:0; }\r\n.dg-pr-existing { padding:18px 24px; border:1px solid var(--dg-line); border-radius:16px; background:var(--dg-card); }\r\n.dg-pr-existing h3 { font-size:18px; font-weight:500; }\r\n.dg-pr-existing a { color:var(--dg-text); text-underline-offset:4px; }\r\n.dg-commit-shade { position:fixed; inset:0; margin:auto; padding:0; border:0; width:380px; max-width:calc(100vw - 32px); max-height:calc(100dvh - 32px); background:transparent; color:var(--dg-text); overflow:visible; font-family:inherit; font-size:13px; line-height:1.5; }\r\n.dg-commit-shade::backdrop { background:#0003; backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); }\r\n.dg-commit-card { background:color-mix(in srgb,var(--dg-card) 78%,transparent); backdrop-filter:blur(24px) saturate(140%); -webkit-backdrop-filter:blur(24px) saturate(140%); border:1px solid color-mix(in srgb,var(--dg-line) 70%,transparent); border-radius:18px; padding:12px 8px 8px; box-shadow:0 16px 48px #0003,inset 0 1px 0 #ffffff12; width:100%; max-height:calc(100dvh - 32px); overflow:auto; animation:dg-appear 160ms ease-out; }\r\n.dg-commit-card svg { width:17px; height:17px; flex-shrink:0; }\r\n.dg-branch-select { display:flex; align-items:center; gap:8px; margin:0 10px 10px; }\r\n.dshgit .dg-branch-select select { flex:1; border:0; background:transparent; padding:3px; font-size:14px; }\r\n.dg-new-branch { display:flex; gap:6px; margin:0 6px 8px; }\r\n.dg-branch-name { display:flex; align-items:center; flex:1; min-width:0; border-radius:8px; background:color-mix(in srgb,var(--dg-bg) 45%,transparent); }\r\n.dg-branch-name>span { color:var(--dg-muted); }\r\n.dshgit .dg-branch-name input { flex:1; width:0; border:0; border-radius:6px; padding:7px 8px; background:transparent; font-size:12px; }\r\n.dshgit .dg-branch-name .dg-prefix { flex:0 1 66px; }\r\n.dg-new-branch button { padding:5px 8px; color:var(--dg-muted); font-size:12px; flex-shrink:0; }\r\n.dshgit .dg-message { width:100%; display:block; border:0; border-radius:8px; background:transparent; padding:10px 12px; font-size:13px; resize:none; min-height:76px; }\r\n.dg-include { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:10px 12px 12px; }\r\n.dg-commit-card .dg-check,.dg-commit-card .dg-stats { font-size:12px; }\r\n.dg-commit-card .dg-check input { width:14px; height:14px; }\r\n.dg-commit-actions { padding-top:6px; border-top:1px solid var(--dg-line); }\r\n.dg-commit-actions button { width:100%; display:flex; align-items:center; gap:10px; padding:8px 12px; min-height:36px; text-align:left; font-size:14px; }\r\n.dg-commit-actions button:first-child { background:var(--dg-hover); }\r\n.dg-commit-actions button>span { flex:1; }\r\n.dg-commit-actions kbd { color:var(--dg-muted); background:color-mix(in srgb,var(--dg-text) 8%,transparent); padding:0 6px; border-radius:6px; font-family:inherit; font-size:11px; line-height:1.8; }\r\n@keyframes dg-appear { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }\r\n@media(prefers-reduced-motion:reduce) { .dg-commit-card { animation:none; } }\r\n\r\n.dg-docked { height:100%; min-height:0; min-width:0; container: dshgit / inline-size; }\r\n.dg-docked .dshgit { height:100%; min-height:0; background:var(--dg-bg); }\r\n.dg-toasts { position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:10000; width:min(560px,calc(100vw - 32px)); display:flex; flex-direction:column; gap:10px; pointer-events:none; max-height:calc(100dvh - 40px); overflow:auto; }\r\n.dg-toast { display:flex; align-items:flex-start; gap:10px; border:1px solid var(--dg-line); border-radius:14px; padding:14px 16px; background:var(--dg-card); box-shadow:0 8px 32px #0003; font-size:14px; line-height:1.5; pointer-events:auto; }\r\n.dg-toast>span:nth-child(2) { flex:1; min-width:0; overflow-wrap:anywhere; white-space:pre-wrap; max-height:35dvh; overflow:auto; }\r\n.dg-toast-symbol { color:var(--dg-green); font-weight:600; }\r\n.dg-toast[data-error=true] .dg-toast-symbol { color:var(--dg-red); }\r\n.dg-toast button { border:0; background:transparent; color:var(--dg-muted); cursor:pointer; font-size:20px; line-height:1; padding:2px; }\r\n.dg-toast button:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary,#5787dc); outline-offset:3px; }\r\n@container dshgit (max-width: 760px) {\r\n  .dg-workspace[data-files-open=true] { grid-template-columns:minmax(150px,38%) minmax(0,1fr); }\r\n  .dg-footer { padding:12px 16px; flex-wrap:wrap; font-size:12px; }\r\n  .dg-pr { padding:16px; }\r\n  .dg-pr form { grid-template-columns:1fr; }\r\n  .dg-form-footer { flex-wrap:wrap; }\r\n}\r\n@container dshgit (max-width: 480px) {\r\n  .dg-workspace[data-files-open=true] { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(80px,38%) minmax(100px,1fr); }\r\n  .dg-files { border-right:0; border-bottom:1px solid var(--dg-line); padding:4px; }\r\n}\r\n\r\n.dg-toolbar { display:flex; align-items:center; gap:8px; padding:8px 10px; min-height:50px; flex-shrink:0; }\r\n.dshgit .dg-summary-pill,.dshgit .dg-branch-pill { display:flex; align-items:center; gap:8px; min-height:34px; padding:6px 12px; background:var(--dg-card); border-radius:18px; font-size:13px; white-space:nowrap; }\r\n.dg-summary-pill { flex-shrink:0; }\r\n.dg-summary-pill .dg-stats { font-size:12px; gap:4px; }\r\n.dg-branch-pill { flex:1; min-width:0; }\r\n.dg-branch-pill span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-branch-pill svg { width:14px; height:14px; flex-shrink:0; }\r\n.dg-branch-pill svg:last-child { margin-left:auto; }\r\n.dg-tools svg { width:17px; height:17px; }\r\n.dg-tools button[aria-pressed=true],.dg-tools button[aria-expanded=true] { color:var(--dg-text); background:var(--dg-hover); }\r\n.dg-workspace[data-files-open=true] { grid-template-columns:240px minmax(0,1fr); }\r\n@container dshgit (max-width: 760px) {\r\n  .dg-workspace[data-files-open=true] { grid-template-columns:minmax(150px,38%) minmax(0,1fr); }\r\n}\r\n@container dshgit (max-width: 480px) {\r\n  .dg-toolbar { gap:5px; padding:7px 6px; }\r\n  .dshgit .dg-summary-pill,.dshgit .dg-branch-pill { padding:6px 8px; gap:5px; }\r\n  .dg-branch-pill svg:first-child { display:none; }\r\n  .dg-workspace[data-files-open=true] { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(80px,38%) minmax(100px,1fr); }\r\n}\r\n";
 
-// src/client.tsx
+// src/pull-panel.tsx
+var import_react5 = require("react");
+
+// src/pull-inbox.ts
+var import_react4 = require("react");
+function usePullInbox(remote, workspaces, revision) {
+  const signature = JSON.stringify(workspaces);
+  const [sources, setSources] = (0, import_react4.useState)({});
+  const [progress, setProgress] = (0, import_react4.useState)({ done: 0, total: workspaces.length });
+  const previous = (0, import_react4.useRef)(revision);
+  (0, import_react4.useEffect)(() => {
+    const items = JSON.parse(signature);
+    const force = previous.current !== revision;
+    previous.current = revision;
+    let alive = true, cursor = 0, done = 0;
+    setProgress({ done, total: items.length });
+    async function worker() {
+      while (alive && cursor < items.length) {
+        const { sessionId } = items[cursor++];
+        let update;
+        try {
+          update = { value: unwrap(await remote.run({ sessionId, action: "pullList", refresh: force })) };
+        } catch (error62) {
+          update = { error: error62.message };
+        }
+        if (!alive) return;
+        setSources((last) => ({ ...last, [sessionId]: { ...last[sessionId], error: void 0, ...update } }));
+        setProgress({ done: ++done, total: items.length });
+      }
+    }
+    void worker();
+    void worker();
+    return () => {
+      alive = false;
+    };
+  }, [signature, remote, revision]);
+  const unique = /* @__PURE__ */ new Map();
+  const errors = [];
+  for (const { sessionId, path } of workspaces) {
+    const source2 = sources[sessionId];
+    if (source2?.error) errors.push(path + " \u2014 " + source2.error);
+    for (const pr of source2?.value?.pulls ?? []) {
+      unique.set(pr.url.toLowerCase(), { ...pr, sessionId, repository: source2.value.repository });
+    }
+  }
+  const pulls = [...unique.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.url.localeCompare(b.url));
+  return { pulls, errors, ...progress };
+}
+
+// src/pull-panel.tsx
 var import_jsx_runtime4 = require("react/jsx-runtime");
-var inject = ["slots", "remote", "sidebarRight", "sidebarRightTabs"];
+function usePullRead(remote, sessionId, action, revision, active, number4, page) {
+  const key = JSON.stringify([sessionId, action, revision, number4, page]);
+  const [response, setResponse] = (0, import_react5.useState)();
+  const previous = (0, import_react5.useRef)(revision);
+  (0, import_react5.useEffect)(() => {
+    if (!active) return;
+    let current = true;
+    const request = { sessionId, action, number: number4, page, refresh: previous.current !== revision };
+    previous.current = revision;
+    remote.run(request).then(unwrap).then((value) => {
+      if (current) setResponse({ key, value });
+    }).catch((error62) => {
+      if (current) setResponse({ key, error: String(error62.message ?? error62) });
+    });
+    return () => {
+      current = false;
+    };
+  }, [remote, sessionId, action, revision, active, number4, page, key]);
+  return response?.key === key ? response : void 0;
+}
+var states = { OPEN: "\u5DF2\u6253\u5F00", MERGED: "\u5DF2\u5408\u5E76", CLOSED: "\u5DF2\u5173\u95ED", DRAFT: "\u8349\u7A3F" };
+var kind = (pr) => pr.state === "OPEN" && pr.isDraft ? "DRAFT" : pr.state;
+var date5 = (value) => new Date(value).toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
+var statuses = {
+  SUCCESS: "\u901A\u8FC7",
+  FAILURE: "\u5931\u8D25",
+  ERROR: "\u9519\u8BEF",
+  CANCELLED: "\u5DF2\u53D6\u6D88",
+  SKIPPED: "\u5DF2\u8DF3\u8FC7",
+  IN_PROGRESS: "\u8FD0\u884C\u4E2D",
+  QUEUED: "\u6392\u961F\u4E2D",
+  PENDING: "\u7B49\u5F85\u4E2D",
+  APPROVED: "\u5DF2\u6279\u51C6",
+  CHANGES_REQUESTED: "\u8BF7\u6C42\u4FEE\u6539",
+  COMMENTED: "\u5DF2\u8BC4\u8BBA"
+};
+function Stats({ additions, deletions }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { className: "dg-stats", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("b", { children: [
+      "+",
+      additions.toLocaleString()
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("em", { children: [
+      "\u2212",
+      deletions.toLocaleString()
+    ] })
+  ] });
+}
+function Description({ body }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "dg-pr-prose", children: (body.trim() || "\u5C1A\u672A\u586B\u5199\u8BF4\u660E\u3002").split(/\r?\n\s*\n/).map((block, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { children: block.split(/\r?\n/).map((line, j) => {
+    if (/^#{1,6}\s/.test(line)) return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("h3", { children: line.replace(/^#+\s+/, "") }, j);
+    if (/^[-*]\s/.test(line)) return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "dg-pr-bullet", children: line.slice(2) }, j);
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { children: line }, j);
+  }) }, i)) });
+}
+function Summary({ pr }) {
+  const reviews = pr.latestReviews.map((r2) => ({ who: r2.author?.login ?? "\u672A\u77E5\u7528\u6237", state: statuses[r2.state] ?? r2.state }));
+  const requested = pr.reviewRequests.map((r2) => ({ who: r2.login ?? r2.name ?? "\u5BA1\u67E5\u8005", state: "\u5F85\u5BA1\u67E5" }));
+  const activity = [
+    ...pr.comments.map((c2) => ({ title: c2.author?.login ?? "\u672A\u77E5\u7528\u6237", text: c2.body, at: c2.createdAt, sha: "" })),
+    ...pr.commits.map((c2) => ({ title: c2.messageHeadline, text: "", at: c2.committedDate, sha: c2.oid.slice(0, 7) }))
+  ].sort((a, b) => b.at.localeCompare(a.at));
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-columns", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("article", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Description, { body: pr.body }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("section", { className: "dg-pr-activity", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("h3", { children: [
+          "\u6D3B\u52A8 ",
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("small", { children: activity.length })
+        ] }),
+        activity.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { className: "dg-muted", children: "\u6682\u65E0\u6D3B\u52A8" }),
+        activity.map((item, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-event", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "dg-pr-event-icon", children: item.sha ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "commit" }) : "\u25CC" }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("strong", { children: item.title }),
+            item.text && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { children: item.text })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("small", { children: [
+            item.sha && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("code", { children: item.sha }),
+            " ",
+            date5(item.at)
+          ] })
+        ] }, i))
+      ] })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("aside", { className: "dg-pr-facts", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("section", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("h3", { children: "\u5BA1\u67E5\u8005" }),
+        [...requested, ...reviews].map((r2, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-fact", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "dg-pr-avatar", children: r2.who[0].toUpperCase() }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: r2.who }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("small", { children: r2.state })
+        ] }, i)),
+        !requested.length && !reviews.length && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { children: "\u6682\u65E0\u5BA1\u67E5\u8005" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("section", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("h3", { children: "\u68C0\u67E5" }),
+        pr.statusCheckRollup?.map((check2, i) => {
+          const status = check2.conclusion || check2.state || check2.status || "PENDING";
+          return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-fact", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "dg-pr-check", "data-status": status, children: status === "SUCCESS" ? "\u2713" : ["FAILURE", "ERROR"].includes(status) ? "\xD7" : "\xB7" }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: check2.name || check2.context }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("small", { children: statuses[status] ?? status })
+          ] }, i);
+        }),
+        !pr.statusCheckRollup?.length && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { children: pr.statusCheckRollup === void 0 ? "\u65E0\u6CD5\u8BFB\u53D6\u68C0\u67E5\u72B6\u6001" : "\u6682\u65E0\u68C0\u67E5" })
+      ] })
+    ] })
+  ] });
+}
+function FileChanges({ pr, remote, sessionId, revision, active }) {
+  const [page, setPage] = (0, import_react5.useState)(1);
+  const response = usePullRead(remote, sessionId, "pullFiles", revision, active, pr.number, page);
+  const files = response?.value?.pullFiles;
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("section", { className: "dg-pr-files", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("h3", { children: [
+      "\u66F4\u6539\u7684\u6587\u4EF6 ",
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("small", { children: pr.changedFiles })
+    ] }),
+    response?.error && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { role: "alert", children: response.error }),
+    !response && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { role: "status", children: "\u6B63\u5728\u8BFB\u53D6\u6587\u4EF6\u5DEE\u5F02\u2026" }),
+    files?.map((file2, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("details", { open: i === 0, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("summary", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "changes" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: file2.filename }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Stats, { ...file2 })
+      ] }),
+      file2.patch ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "dg-diff", children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(DiffContent, { path: file2.filename, text: file2.patch }) }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { children: "GitHub \u672A\u63D0\u4F9B\u6B64\u6587\u4EF6\u7684\u6587\u672C\u5DEE\u5F02\u3002" })
+    ] }, file2.filename)),
+    files?.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { children: "\u6CA1\u6709\u6587\u4EF6\u66F4\u6539" }),
+    pr.changedFiles > filesPerPage && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-pages", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { disabled: page === 1, onClick: () => setPage(page - 1), children: "\u4E0A\u4E00\u9875" }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { children: [
+        "\u7B2C ",
+        page,
+        " \u9875"
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { disabled: page * filesPerPage >= Math.min(3e3, pr.changedFiles), onClick: () => setPage(page + 1), children: "\u4E0B\u4E00\u9875" })
+    ] })
+  ] });
+}
+function PullPanel({ remote, workspaces, demo = false }) {
+  const [revision, setRevision] = (0, import_react5.useState)(0), [query, setQuery] = (0, import_react5.useState)("");
+  const [url2, setUrl] = (0, import_react5.useState)(), [section, setSection] = (0, import_react5.useState)("summary");
+  const [showList, setShowList] = (0, import_react5.useState)(true);
+  const { pulls, errors, done, total } = usePullInbox(remote, workspaces, revision);
+  const loading = done < total;
+  const matches = pulls.filter((p) => [p.repository, p.title, p.author?.login, "#" + p.number, p.url].some((s) => s?.toLowerCase().includes(query.toLowerCase().trim())));
+  const selected = matches.find((p) => p.url === url2) ?? matches[0];
+  const sessionId = selected?.sessionId ?? "", repository = selected?.repository;
+  const detail = usePullRead(remote, sessionId, "pullDetail", revision, !!selected, selected?.number);
+  const pr = detail?.value?.pull;
+  function select(id) {
+    setUrl(id);
+    setSection("summary");
+    setShowList(false);
+  }
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dshgit dg-pr", "data-list": showList, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("nav", { className: "dg-pr-inbox", "aria-label": "\u62C9\u53D6\u8BF7\u6C42\u5217\u8868", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("header", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("h2", { children: "\u62C9\u53D6\u8BF7\u6C42" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { "aria-label": "\u5237\u65B0\u62C9\u53D6\u8BF7\u6C42", disabled: loading, onClick: () => setRevision((r2) => r2 + 1), children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "refresh" }) })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { className: "dg-pr-search", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { "aria-hidden": "true", children: "\u2315" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "search", "aria-label": "\u641C\u7D22\u62C9\u53D6\u8BF7\u6C42", placeholder: "\u641C\u7D22\u6807\u9898\u3001\u7F16\u53F7\u6216 PR \u94FE\u63A5", value: query, onChange: (e) => setQuery(e.target.value) })
+      ] }),
+      loading && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-progress", role: "status", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("progress", { value: done, max: total }),
+        "\u6B63\u5728\u8BFB\u53D6 Git \u4ED3\u5E93\u4E0E PR \xB7 ",
+        done,
+        "/",
+        total
+      ] }),
+      errors.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("details", { className: "dg-pr-errors", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("summary", { children: [
+          errors.length,
+          " \u4E2A\u5DE5\u4F5C\u533A\u8BFB\u53D6\u5931\u8D25"
+        ] }),
+        errors.map((e) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { children: e }, e))
+      ] }),
+      ["OPEN", "DRAFT", "MERGED", "CLOSED"].map((state) => {
+        const group = matches.filter((p) => kind(p) === state);
+        return group.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("section", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("h3", { children: [
+            states[state],
+            " ",
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("small", { children: group.length })
+          ] }),
+          group.map((p) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("button", { className: "dg-pr-item", "aria-current": p.url === selected?.url, onClick: () => select(p.url), children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("strong", { children: p.title }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("small", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { "data-kind": kind(p), children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "pr" }) }),
+              p.repository.split("/").at(-1),
+              " #",
+              p.number,
+              " \xB7 ",
+              date5(p.updatedAt)
+            ] })
+          ] }, p.url))
+        ] }, state);
+      }),
+      !loading && !matches.length && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { className: "dg-muted", children: query ? "\u6CA1\u6709\u5339\u914D\u7684\u62C9\u53D6\u8BF7\u6C42" : errors.length ? "\u6682\u65E0\u53EF\u663E\u793A\u7684\u62C9\u53D6\u8BF7\u6C42" : "\u5DE5\u4F5C\u533A\u6682\u65E0\u62C9\u53D6\u8BF7\u6C42" })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("main", { className: "dg-pr-reader", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-bar", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { className: "dg-pr-back", onClick: () => setShowList(!showList), children: showList ? "\u8FD4\u56DE\u8BE6\u60C5" : "\u2630 \u8BF7\u6C42\u5217\u8868" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "dg-pr-segments", children: ["summary", "changes"].map((tab) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("button", { "aria-pressed": section === tab, onClick: () => setSection(tab), children: [
+          tab === "summary" ? "\u6458\u8981" : "\u66F4\u6539",
+          tab === "changes" && pr && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Stats, { ...pr })
+        ] }, tab)) }),
+        pr && !demo && /^https:\/\/github\.com\//.test(pr.url) && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("a", { href: pr.url, target: "_blank", rel: "noreferrer", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "github" }),
+          " GitHub \u2197"
+        ] })
+      ] }),
+      detail?.error ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-empty", role: "alert", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { children: detail.error }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { onClick: () => setRevision((r2) => r2 + 1), children: "\u91CD\u8BD5" })
+      ] }) : loading && !selected || selected && !pr ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { className: "dg-pr-empty", role: "status", children: selected ? "\u6B63\u5728\u8BFB\u53D6 PR \u8BE6\u60C5\u2026" : "\u6B63\u5728\u8BFB\u53D6 Git \u4ED3\u5E93\u4E0E\u62C9\u53D6\u8BF7\u6C42\u2026" }) : !selected || !pr ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-empty", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "pr" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { children: query ? "\u6CA1\u6709\u5339\u914D\u7684\u62C9\u53D6\u8BF7\u6C42" : errors.length ? "\u6682\u65E0\u53EF\u663E\u793A\u7684\u62C9\u53D6\u8BF7\u6C42\uFF0C\u8BF7\u67E5\u770B\u5DE5\u4F5C\u533A\u8BFB\u53D6\u7ED3\u679C\u3002" : "\u5DE5\u4F5C\u533A\u6682\u65E0\u62C9\u53D6\u8BF7\u6C42" }),
+        query && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { onClick: () => setQuery(""), children: "\u6E05\u9664\u641C\u7D22" })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-scroll", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("header", { className: "dg-pr-heading", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-kicker", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { "data-kind": kind(pr), children: [
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "pr" }),
+              states[kind(pr)]
+            ] }),
+            repository,
+            " ",
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("b", { children: [
+              "#",
+              pr.number
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("h2", { children: pr.title }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-byline", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "dg-pr-avatar", children: pr.author?.login[0].toUpperCase() ?? "?" }),
+            pr.author?.login ?? "\u672A\u77E5\u7528\u6237",
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("i", { children: "\xB7" }),
+            date5(pr.updatedAt),
+            " \u66F4\u65B0"
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-refs", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "branch" }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("code", { children: pr.headRefName }),
+            " \u2192 ",
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("code", { children: pr.baseRefName })
+          ] })
+        ] }),
+        section === "summary" ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Summary, { pr }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(FileChanges, { pr, remote, sessionId, revision, active: true })
+      ] }, pr.url)
+    ] })
+  ] });
+}
+
+// src/pull-panel.css
+var pull_panel_default = ".dg-pr.dshgit { display:grid; grid-template-columns:clamp(220px,23%,296px) minmax(0,1fr); overflow:hidden; }\n.dg-pr :is(h2,h3,p) { margin:0; }\n.dg-pr h3 { font-size:15px; font-weight:600; }\n.dg-pr small { color:var(--dg-muted); font-size:12px; font-weight:400; }\n.dg-pr-inbox { overflow:auto; padding:20px 10px; background:color-mix(in srgb,var(--dg-card) 56%,var(--dg-bg)); border-right:1px solid var(--dg-line); }\n.dg-pr-inbox header,.dg-pr-inbox h3,.dg-pr-pages,.dg-pr-fact,.dg-pr-bar,.dg-pr-kicker,.dg-pr-byline,.dg-pr-refs,.dg-pr-segments,.dg-pr-item small,.dg-pr-files summary { display:flex; align-items:center; gap:8px; }\n.dg-pr-inbox header { padding:0 8px; justify-content:space-between; }\n.dg-pr-inbox header h2 { font-size:19px; letter-spacing:-.4px; }\n.dg-pr-inbox header button { display:grid; place-items:center; padding:6px; color:var(--dg-muted); }\n.dg-pr-inbox header svg { width:16px; height:16px; }\n.dg-pr-progress,.dg-pr-errors { margin:0 8px 15px; font-size:12px; color:var(--dg-muted); overflow-wrap:anywhere; }\n.dg-pr-progress progress { display:block; width:100%; height:4px; margin-bottom:6px; }\n.dg-pr-errors summary { cursor:pointer; }\n.dg-pr-errors p { margin-top:7px; }\n.dg-pr-search { display:flex; align-items:center; gap:8px; margin:18px 4px 22px; padding:7px 12px; border-radius:18px; background:var(--dg-card); border:1px solid var(--dg-line); color:var(--dg-muted); }\n.dg-pr-search span { font:22px/1 monospace; }\n.dg-pr-search input { width:100%; min-width:0; background:none; border:0; font-size:13px; }\n.dg-pr-inbox section { margin-bottom:21px; }\n.dg-pr-inbox h3 { color:var(--dg-muted); font-size:12px; padding:0 10px 7px; }\n.dg-pr-inbox h3 small,.dg-pr-activity h3 small,.dg-pr-files h3 small { font-variant-numeric:tabular-nums; margin-inline-start:4px; }\n.dg-pr .dg-pr-item { display:block; width:100%; text-align:left; padding:11px 12px; margin-bottom:2px; }\n.dg-pr-item[aria-current=true],.dg-pr .dg-pr-segments [aria-pressed=true] { background:var(--dg-hover); }\n.dg-pr-item strong { font-size:14px; line-height:1.55; font-weight:550; overflow-wrap:anywhere; }\n.dg-pr-item small { margin-top:5px; gap:5px; }\n.dg-pr-item svg { width:14px; height:14px; vertical-align:middle; }\n.dg-pr [data-kind=OPEN] { color:var(--dg-green); }\n.dg-pr [data-kind=MERGED] { color:light-dark(#7848af,#c09aeb); }\n.dg-pr [data-kind=CLOSED] { color:var(--dg-red); }\n.dg-pr [data-kind=DRAFT] { color:var(--dg-muted); }\n.dg-pr-reader { min-width:0; display:flex; flex-direction:column; overflow:hidden; }\n.dg-pr-bar { min-height:65px; padding:12px clamp(16px,3%,42px); border-bottom:1px solid var(--dg-line); flex-wrap:wrap; }\n.dg-pr-segments { gap:2px; background:var(--dg-card); padding:3px; border-radius:20px; }\n.dg-pr .dg-pr-segments button { border-radius:16px; padding:5px 12px; display:flex; align-items:center; gap:8px; font-size:13px; }\n.dg-pr-segments .dg-stats { font-size:12px; }\n.dg-pr-bar a { margin-left:auto; display:flex; align-items:center; gap:6px; color:var(--dg-muted); text-decoration:none; }\n.dg-pr-bar a svg { width:15px; }\n.dg-pr-back { display:none; }\n.dg-pr-scroll { overflow:auto; padding:clamp(16px,3.3%,46px); }\n.dg-pr-heading { margin-bottom:30px; }\n.dg-pr-kicker,.dg-pr-byline,.dg-pr-refs { flex-wrap:wrap; font-size:13px; color:var(--dg-muted); overflow-wrap:anywhere; }\n.dg-pr-kicker b { font:inherit; }\n.dg-pr-kicker span { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; background:color-mix(in srgb,currentColor 12%,transparent); font-weight:600; }\n.dg-pr-kicker svg,.dg-pr-refs svg,.dg-pr-event-icon svg,.dg-pr-files summary svg { width:16px; height:16px; flex-shrink:0; }\n.dg-pr-heading h2 { font-size:clamp(22px,2.3cqw,34px); font-weight:640; letter-spacing:-.03em; line-height:1.28; margin:14px 0; overflow-wrap:anywhere; }\n.dg-pr-byline i { font-style:normal; }\n.dg-pr-avatar { width:22px; height:22px; flex-shrink:0; display:inline-grid; place-items:center; border-radius:50%; background:light-dark(#e0e5dd,#39423b); color:light-dark(#39553e,#c5d6bd); font-size:11px; font-weight:650; }\n.dg-pr-refs { margin-top:11px; }\n.dg-pr-refs code { background:var(--dg-card); border-radius:5px; padding:2px 7px; font-size:12px; }\n.dg-pr-columns { display:grid; grid-template-columns:minmax(0,1fr) minmax(170px,25%); gap:clamp(20px,3.5%,54px); }\n.dg-pr-columns article,.dg-pr-facts,.dg-pr-event>div { min-width:0; }\n.dg-pr-prose { overflow-wrap:anywhere; line-height:1.8; }\n.dg-pr-prose>div+div { margin-top:13px; }\n.dg-pr-prose h3,.dg-pr-activity h3,.dg-pr-files h3 { font-size:17px; }\n.dg-pr-bullet { padding-left:17px; position:relative; }\n.dg-pr-bullet::before { content:'\u2022'; position:absolute; left:1px; color:var(--dg-muted); }\n.dg-pr-activity { border-top:1px solid var(--dg-line); margin-top:26px; padding-top:20px; }\n.dg-pr-activity h3,.dg-pr-files h3 { margin-bottom:13px; }\n.dg-pr-event { display:flex; align-items:baseline; gap:9px; border:1px solid var(--dg-line); border-radius:10px; padding:11px 13px; margin-top:7px; overflow-wrap:anywhere; }\n.dg-pr-event strong { font-size:13px; font-weight:500; }\n.dg-pr-event-icon { color:var(--dg-muted); align-self:flex-start; margin-top:2px; }\n.dg-pr-event small { margin-left:auto; flex-shrink:0; }\n.dg-pr-event p { white-space:pre-wrap; margin-top:5px; }\n.dg-pr-facts section { padding:0 0 16px; margin-bottom:14px; border-bottom:1px solid var(--dg-line); }\n.dg-pr-facts h3 { font-size:13px; color:var(--dg-muted); margin-bottom:12px; }\n.dg-pr-facts p,.dg-pr-pages { color:var(--dg-muted); font-size:13px; }\n.dg-pr-fact { margin:8px 0; font-size:13px; overflow-wrap:anywhere; }\n.dg-pr-fact small { margin-left:auto; flex-shrink:0; }\n.dg-pr-check { display:grid; place-items:center; border-radius:50%; width:16px; height:16px; color:var(--dg-muted); background:var(--dg-card); font-size:12px; }\n.dg-pr-check[data-status=SUCCESS] { color:var(--dg-green); background:color-mix(in srgb,var(--dg-green) 16%,transparent); }\n.dg-pr-check:is([data-status=FAILURE],[data-status=ERROR]) { color:var(--dg-red); }\n.dg-pr-files details { border:1px solid var(--dg-line); border-radius:10px; overflow:hidden; margin:10px 0; }\n.dg-pr-files summary { padding:11px 13px; background:var(--dg-card); cursor:pointer; overflow-wrap:anywhere; }\n.dg-pr-files summary::before { content:'\u203A'; color:var(--dg-muted); }\n.dg-pr-files details[open] summary::before { transform:rotate(90deg); }\n.dg-pr-files summary .dg-stats { margin-left:auto; font-size:12px; }\n.dg-pr-files details p,.dg-pr-pages { padding:12px; }\n.dg-pr-empty { margin:auto; padding:30px; text-align:center; overflow-wrap:anywhere; color:var(--dg-muted); }\n.dg-pr-empty button,.dg-pr-pages button { padding:5px 10px; background:var(--dg-card); }\n@container dshgit (max-width:1050px) {\n  .dg-pr-columns { grid-template-columns:minmax(0,1fr); }\n  .dg-pr-facts { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:18px; }\n}\n@container dshgit (max-width:720px) {\n  .dg-pr.dshgit { grid-template-columns:minmax(0,1fr); }\n  .dg-pr-back { display:block; }\n  .dg-pr[data-list=false] .dg-pr-inbox,.dg-pr[data-list=true] .dg-pr-reader { display:none; }\n  .dg-pr-inbox { border:0; }\n  .dg-pr-bar { min-height:48px; gap:4px; padding:8px; }\n  .dg-pr .dg-pr-segments button { padding:4px 8px; }\n  .dg-pr-event { flex-wrap:wrap; }\n}\n.dg-pr-page { display:flex; flex-direction:column; flex:1; width:100%; height:100%; min-width:0; min-height:0; color:var(--dsw-alias-label-primary,CanvasText); }\n.dg-pr-page>.dg-docked { flex:1; height:auto; }\n.dg-pr-page>p { margin:auto; }\n";
+
+// src/client.tsx
+var import_jsx_runtime5 = require("react/jsx-runtime");
+var inject = ["slots", "remote", "layout", "sidebarRight", "sidebarRightTabs"];
 async function apply(ctx) {
   await ctx.remote.$mount(contribution);
   ctx.effect(() => {
     const style = document.createElement("style");
-    style.textContent = panel_default;
+    style.textContent = panel_default + pull_panel_default;
     document.head.append(style);
     return () => style.remove();
   });
@@ -36017,7 +36368,7 @@ async function apply(ctx) {
     const container = document.createElement("div");
     document.body.append(container);
     const root = (0, import_client.createRoot)(container);
-    root.render(/* @__PURE__ */ (0, import_jsx_runtime4.jsx)(GitNotifications, {}));
+    root.render(/* @__PURE__ */ (0, import_jsx_runtime5.jsx)(GitNotifications, {}));
     return () => {
       root.unmount();
       container.remove();
@@ -36028,7 +36379,7 @@ async function apply(ctx) {
     kind: "dshgit",
     title: () => "\u53D8\u66F4",
     keepMounted: true,
-    guide: [{ id: "dshgit", order: 35, title: () => "DSHGit", description: () => "\u67E5\u770B\u53D8\u66F4\u3001\u63D0\u4EA4\u4E0E\u63A8\u9001", icon: () => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "branch" }) }]
+    guide: [{ id: "dshgit", order: 35, title: () => "DSHGit", description: () => "\u67E5\u770B\u53D8\u66F4\u3001\u63D0\u4EA4\u4E0E\u63A8\u9001", icon: () => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Icon, { name: "branch" }) }]
   }));
   ctx.inject(["remote.dshgit"], (scope) => {
     const remote = {
@@ -36036,20 +36387,38 @@ async function apply(ctx) {
       changes: (sessionId, signal) => scope.remote.dshgit.changes(sessionId, signal)
     };
     function Entry({ sessionId }) {
-      return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(GitLauncher, { sessionId, remote, onOpen: () => ctx.sidebarRight.openTab("dshgit") }, sessionId);
+      return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(GitLauncher, { sessionId, remote, onOpen: () => ctx.sidebarRight.openTab("dshgit") }, sessionId);
+    }
+    function PullWorkspace({ useSessions }) {
+      const sessions = useSessions((state) => state);
+      const workspaces = /* @__PURE__ */ new Map();
+      for (const id of sessions.ids) {
+        const session = sessions.byId[id];
+        if (!session?.cwd || session.origin === "subagent") continue;
+        const path = /^[A-Za-z]:[\\/]/.test(session.cwd) ? session.cwd.replaceAll("\\", "/").toLowerCase() : session.cwd;
+        if (!workspaces.has(path) || session.retainedBy?.mainView) workspaces.set(path, { sessionId: id, path: session.cwd });
+      }
+      return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "dg-pr-page", children: workspaces.size ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "dg-docked", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(PullPanel, { workspaces: [...workspaces.values()], remote }) }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { children: sessions.phase === "ready" ? "\u8BF7\u5148\u5728 DSH \u6253\u5F00\u4E00\u4E2A\u5DE5\u4F5C\u533A\u3002" : "\u6B63\u5728\u8BFB\u53D6\u5DE5\u4F5C\u533A\u2026" }) });
     }
     function Tab({ sessionId, useTabInfo }) {
       const { tab } = useTabInfo();
-      return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "dg-docked", children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(GitPanel, { sessionId, remote, active: tab.visible, onClose: () => tab.actions.close() }, sessionId) });
+      return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "dg-docked", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(GitPanel, { sessionId, remote, active: tab.visible, onClose: () => tab.actions.close() }, sessionId) });
     }
     scope.slots.inject("sidebar.right.pane.tab", () => scope.slots.register({
       name: "sidebar.right.pane.tab",
       key: "dshgit"
     }, Tab));
+    scope.slots.inject("main", () => scope.slots.register({ name: "main", key: "dshgit-pulls" }, PullWorkspace));
+    scope.slots.inject("sidebar.panellist", () => scope.slots.register({
+      name: "sidebar.panellist",
+      id: "dshgit-pulls",
+      order: 46,
+      label: "\u62C9\u53D6\u8BF7\u6C42"
+    }, ({ size }) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Icon, { name: "pr", size })));
     scope.slots.inject("sidebar.right.pane.tab.title", () => scope.slots.register({
       name: "sidebar.right.pane.tab.title",
       key: "dshgit"
-    }, () => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(import_jsx_runtime4.Fragment, { children: "\u53D8\u66F4" })));
+    }, () => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_jsx_runtime5.Fragment, { children: "\u53D8\u66F4" })));
     scope.slots.inject("conversation.session.header.utilities", () => scope.slots.register({
       name: "conversation.session.header.utilities",
       id: "dshgit",

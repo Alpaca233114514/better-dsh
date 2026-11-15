@@ -1,4 +1,5 @@
 import { basename } from 'node:path'
+import { pullDetail, pullSummary, pullFile, filesPerPage } from './pulls.ts'
 import { protectedBranch, type FileChange, type GitState, type Request, type Result } from './contracts.ts'
 import type { DescriptionGenerator, DescriptionInput } from './description.ts'
 
@@ -68,6 +69,12 @@ export class GitRepository {
   private git(cwd: string, args: string[], input?: string, allowed?: number[]) {
     return this.run('git', args, cwd, input, allowed)
   }
+  private async githubRepository(root: string) {
+    const origin = (await this.git(root, ['remote', 'get-url', 'origin'])).trim()
+    const match = /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([\w.-]+\/[\w.-]+?)(?:\.git)?$/.exec(origin)
+    if (!match) throw new Error('查看或创建 PR 需要 github.com 的 origin 远程仓库。')
+    return match[1]
+  }
   async scan(root: string, paths?: string[]) {
     const scope = paths ? ['--', ...paths] : []
     const files = parseStatus(await this.git(root, ['status', '--porcelain=v1', '-z', '--untracked-files=all', ...scope]))
@@ -107,6 +114,30 @@ export class GitRepository {
     return this.lastSnapshot = { state: { ...snapshot.state, files, ...sumStats(stats) }, stats }
   }
   async execute(cwd: string, request: Request, resolved = false, initialState?: GitState): Promise<Result> {
+    if (request.action === 'pullList' || request.action === 'pullDetail' || request.action === 'pullFiles') {
+      const repository = await this.githubRepository(cwd)
+      const repoArgs = ['--repo', 'github.com/' + repository]
+      if (request.action === 'pullList') {
+        const raw = await this.run('gh', ['pr', 'list', ...repoArgs, '--state', 'all', '--limit', '50',
+          '--json', Object.keys(pullSummary.shape).join(',')], cwd)
+        return { repository, pulls: pullSummary.array().parse(JSON.parse(raw)) }
+      }
+      if (!Number.isSafeInteger(request.number) || !request.number || request.number < 1) throw new Error('无效的 PR 编号。')
+      if (request.action === 'pullFiles') {
+        const endpoint = `repos/${repository}/pulls/${request.number}/files?per_page=${filesPerPage}&page=${request.page ?? 1}`
+        const raw = await this.run('gh', ['api', '--hostname', 'github.com', endpoint], cwd)
+        return { pullFiles: pullFile.array().parse(JSON.parse(raw)) }
+      }
+      const fields = Object.keys(pullDetail.shape)
+      const read = (fields: string[]) => this.run('gh', ['pr', 'view', String(request.number), ...repoArgs, '--json', fields.join(',')], cwd)
+      let raw: string
+      try { raw = await read(fields) }
+      catch (error) {
+        if (!/statusCheckRollup|check.?runs|resource not accessible/i.test((error as Error).message)) throw error
+        raw = await read(fields.filter(field => field !== 'statusCheckRollup'))
+      }
+      return { pull: pullDetail.parse(JSON.parse(raw)) }
+    }
     if (request.action === 'branches') return { branches: (await this.git(cwd, ['for-each-ref', '--format=%(refname:short)', 'refs/heads/'])).trim().split('\n').filter(Boolean) }
     const state = initialState ?? await this.state(cwd, resolved), root = state.root
     if (request.action === 'state') return { state }
@@ -163,10 +194,7 @@ export class GitRepository {
       return { state: await this.state(root, true), notice: '推送成功' }
     }
     if (request.action === 'prInfo' || request.action === 'createPR') {
-      const origin = (await this.git(root, ['remote', 'get-url', 'origin'])).trim()
-      const match = /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([^/\s]+\/[^/\s]+?)(?:\.git)?$/.exec(origin)
-      if (!match) throw new Error('创建 PR 需要 github.com 的 origin 远程仓库。')
-      const repository = match[1]
+      const repository = await this.githubRepository(root)
       if (request.action === 'prInfo') {
         const [owner, name] = repository.split('/')
         const query = 'query($owner:String!,$name:String!,$head:String!){repository(owner:$owner,name:$name){defaultBranchRef{name} pullRequests(first:1,headRefName:$head,states:OPEN,orderBy:{field:CREATED_AT,direction:DESC}){nodes{number title url}}}}'

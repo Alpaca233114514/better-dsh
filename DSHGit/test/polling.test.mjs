@@ -120,23 +120,33 @@ test('retained sidebar tabs unsubscribe while hidden and refresh when revealed',
 })
 
 test('client resolves the service proxy once instead of on every header render', async () => {
-  let Entry, Tab, definition, opened, serviceGets = 0
+  let Entry, navigation, Main, opened, serviceGets = 0
+  const tabs = new Map(), definitions = new Map()
   const cleanups = []
   const service = { async *changes(_sessionId, signal) { yield { changed: true }; await new Promise(resolve => signal.addEventListener('abort', resolve, { once: true })) }, async run() { return { ok: true, value: { state: structuredClone(state) } } } }
   const scope = {
     remote: new Proxy({}, { get(_target, property) { if (property === 'dshgit') { serviceGets++; return service } } }),
-    slots: { inject(_name, setup) { setup() }, register(meta, component) { if (meta.name === 'conversation.session.header.utilities') Entry = component; else if (meta.name === 'sidebar.right.pane.tab') Tab = component } },
+    slots: { inject(_name, setup) { setup() }, register(meta, component) {
+      if (meta.name === 'conversation.session.header.utilities') Entry = component
+      if (meta.name === 'sidebar.right.pane.tab') tabs.set(meta.key, component)
+      if (meta.name === 'sidebar.panellist') navigation = meta
+      if (meta.name === 'main') Main = { meta, component }
+    } },
   }
   const ctx = {
     remote: { async $mount() {} },
     effect(setup) { const dispose = setup(); if (dispose) cleanups.push(dispose); return () => {} },
-    sidebarRightTabs: { register(value) { definition = value; return () => {} } },
+    sidebarRightTabs: { register(value) { definitions.set(value.kind, value); return () => {} } },
     sidebarRight: { openTab(kind) { opened = kind } },
     inject(_deps, setup) { setup(scope) },
   }
   await act(async () => { await apply(ctx); await tick() })
   assert.equal(typeof Entry, 'function')
-  assert.equal(typeof Tab, 'function')
+  assert.equal(typeof tabs.get('dshgit'), 'function')
+  assert.equal(navigation.label, '拉取请求')
+  assert.equal(navigation.id, Main.meta.key)
+  assert.equal(typeof Main.component, 'function')
+  const definition = definitions.get('dshgit')
   assert.equal(definition.kind, 'dshgit')
   assert.equal(definition.guide[0].title(), 'DSHGit')
   assert.equal(definition.keepMounted, true)

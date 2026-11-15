@@ -8,7 +8,7 @@ import { TypertGatewayService } from '@deepseek-ai/dsh-api-gateway'
 await mkdir('.test-build', { recursive: true })
 await build({ entryPoints: ['src/host.ts'], outfile: '.test-build/host.mjs', bundle: true, platform: 'node', format: 'esm', target: 'es2022', external: ['@deepseek-ai/*', 'zod'] })
 const plugin = await import('../.test-build/host.mjs')
-async function bench(mode = 'workspace-write', deny = false, host = plugin, warm = false) {
+async function bench(mode = 'workspace-write', deny = false, host = plugin, warm = false, cold = false) {
   const root = (await mkdtemp('../.cache/dshgit-host-')).replaceAll('\\', '/')
   const { resolve } = await import('node:path')
   const workspace = resolve(root).replaceAll('\\', '/')
@@ -21,10 +21,11 @@ async function bench(mode = 'workspace-write', deny = false, host = plugin, warm
     local: { get: () => undefined, hasSeen: () => false },
     lookups: { definitions: () => [] },
   })
-  ctx.provide('sessions', { list: () => warm ? ['test', 'second'].map(id => ({ id, header: { cwd: workspace } })) : [], get: id => ({ id, header: { cwd: workspace } }) })
+  ctx.provide('sessions', { list: () => warm ? ['test', 'second'].map(id => ({ id, header: { cwd: workspace } })) : [], get: id => cold ? undefined : ({ id, header: { cwd: workspace } }) })
+  ctx.provide('sessionPersistence', { stat: async () => ({ header: { cwd: workspace } }) })
   ctx.provide('llm', { stream() { throw new Error('Unexpected model call') } })
   ctx.provide('sessionProjections', { snapshot: () => ({ values: {} }) })
-  ctx.provide('sandboxPolicy', { resolve: ({ session }) => ({ mode, workspaceRoot: workspace, sessionId: session.id }) })
+  ctx.provide('sandboxPolicy', { resolve: ({ session, mode: override }) => ({ mode: override ?? mode, workspaceRoot: workspace, sessionId: session?.id }) })
   ctx.provide('sandbox', { async confine(argv, policy) {
     wrapped.push({ argv, policy })
     if (deny) throw new Error('sandbox denied')
@@ -39,6 +40,7 @@ async function bench(mode = 'workspace-write', deny = false, host = plugin, warm
       if (args.includes('--show-toplevel')) text = args.includes('--git-common-dir') ? workspace + '\n' + workspace + '/.git\n' + workspace + '/.git\n' : workspace + '\n'
       if (args.includes('symbolic-ref')) text = 'codex/test\n'
       if (args.includes('get-url')) text = 'https://github.com/example/repo.git\n'
+      if (args.includes('pr') && args.includes('list')) text = '[]'
       if (args.includes('powershell.exe')) text = 'http://127.0.0.1:8123\n'
       if (args.includes('graphql')) text = JSON.stringify({ data: { repository: { defaultBranchRef: { name: 'main' }, pullRequests: { nodes: [] } } } })
       return { done: Promise.resolve({ exitCode: 0, signal: null }), collected: {
@@ -49,6 +51,23 @@ async function bench(mode = 'workspace-write', deny = false, host = plugin, warm
   const fiber = ctx.plugin(host); await fiber.await()
   return { ctx, fiber, spawns, wrapped, descriptors, service: ctx.get('dshgit') }
 }
+test('cold and live PR reads coalesce, cache without scanning the worktree and refresh on demand', async () => {
+  for (const cold of [false, true]) {
+    const b = await bench('workspace-write', false, plugin, false, cold)
+    try {
+      const request = { sessionId: 'test', action: 'pullList' }
+      const [first, second] = await Promise.all([b.service.run(request), b.service.run(request)])
+      assert.deepEqual(first, { repository: 'example/repo', pulls: [] })
+      assert.deepEqual(second, first)
+      await b.service.run(request)
+      assert.equal(b.spawns.filter(spec => spec.argv.includes('gh')).length, 1)
+      await b.service.run({ ...request, refresh: true })
+      assert.equal(b.spawns.filter(spec => spec.argv.includes('gh')).length, 2)
+      assert.ok(!b.spawns.some(spec => spec.argv.some(arg => ['status', 'diff', '--git-common-dir'].includes(arg))))
+      if (cold) assert.ok(b.wrapped.every(entry => entry.policy.mode === 'read-only'))
+    } finally { await b.fiber.dispose() }
+  }
+})
 test('native Cordis host registers strict Typert run and confines every managed process', async () => {
   const b = await bench()
   try {

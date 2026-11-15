@@ -11,6 +11,9 @@ import { descriptionGenerator } from './description.ts'
 
 import { RepositoryWatches } from './watch.ts'
 import { RepositoryCache } from './cache.ts'
+import { PullCache } from './pull-cache.ts'
+type Policy = ReturnType<Context['sandboxPolicy']['resolve']>
+type Persistence = { stat(id: string): Promise<{ header: { cwd?: string } } | undefined> }
 
 export const inject = ['sessions', 'typert', 'sandboxPolicy', 'sandbox', 'subprocess', 'llm', 'sessionProjections']
 const idleTTL = 10 * 60_000, maxIdleCaches = 16
@@ -18,6 +21,8 @@ type CacheRecord = { cache: Promise<RepositoryCache>; value?: RepositoryCache; a
 const mutations = new Set(['stage', 'unstage', 'commit', 'commitPush', 'push', 'switch', 'createBranch', 'createPR'])
 
 class GitService extends TypertRemoteService {
+  private pullCache = new PullCache<Result>()
+  private pullRuns = new Map<string, Set<AbortController>>()
   private watches = new RepositoryWatches()
   private caches = new Map<string, CacheRecord>()
   private sessionKeys = new Map<string, string>()
@@ -74,6 +79,7 @@ class GitService extends TypertRemoteService {
     for (let i = 0; i < retained.length - maxIdleCaches; i++) this.evictCache(retained[i][0])
   }
   private release(sessionId: string) {
+    for (const read of this.pullRuns.get(sessionId) ?? []) read.abort()
     this.sessionSignals.get(sessionId)?.abort()
     this.sessionSignals.delete(sessionId)
     const key = this.sessionKeys.get(sessionId)
@@ -126,6 +132,9 @@ class GitService extends TypertRemoteService {
     const session = this.ctx.sessions.get(sessionId as Parameters<Context['sessions']['get']>[0])
     if (!session?.header.cwd) throw new Error('请先打开工作区会话。')
     const policy = this.ctx.sandboxPolicy.resolve({ session })
+    return this.policyRunner(policy, lifetime)
+  }
+  private policyRunner(policy: Policy, lifetime = this.abort.signal): Runner {
     const execute = async (program: string, args: string[], cwd: string, input?: string, allowed = [0], env: Record<string, string> = {}) => {
       const timeout = AbortSignal.timeout(program === 'powershell.exe' ? 3000 : 120000)
       const signal = AbortSignal.any([this.abort.signal, lifetime, timeout])
@@ -179,6 +188,36 @@ class GitService extends TypertRemoteService {
     // SRC Gateway binds the parameter name; 保持 request 与远程描述一致。
     request = requestSchema.parse(request)
     const session = this.ctx.sessions.get(request.sessionId as Parameters<Context['sessions']['get']>[0])
+    if (['pullList', 'pullDetail', 'pullFiles'].includes(request.action)) {
+      // Cold reads use the stored header only. 读取冷会话的目录无需恢复对话或启动文件监听。
+      const stored = () => (this.ctx.get('sessionPersistence') as Persistence | undefined)?.stat(request.sessionId)
+      const cwd = session?.header.cwd ?? (await stored())?.header.cwd
+      if (!cwd) throw new Error('工作区目录未登记或已移除。')
+      const policy = session ? this.ctx.sandboxPolicy.resolve({ session }) :
+        { ...this.ctx.sandboxPolicy.resolve({ mode: 'read-only' }), workspaceRoot: cwd }
+      const { sessionId: _id, ...limits } = policy
+      const key = JSON.stringify([cwd, limits, request.action, request.number, request.page])
+      return this.pullCache.read(key, !!request.refresh, async () => {
+        this.abort.signal.throwIfAborted()
+        const live = this.ctx.sessions.get(request.sessionId as Parameters<Context['sessions']['get']>[0])
+        if (session && (live?.header.cwd !== cwd || JSON.stringify(this.ctx.sandboxPolicy.resolve({ session: live })) !== JSON.stringify(policy))) {
+          throw new Error('会话权限已变化，请刷新。')
+        }
+        const abort = new AbortController()
+        const reads = this.pullRuns.get(request.sessionId) ?? new Set<AbortController>()
+        this.pullRuns.set(request.sessionId, reads)
+        reads.add(abort)
+        const repo = new GitRepository(this.policyRunner(policy, abort.signal))
+        try { return await repo.execute(cwd, request) }
+        catch (error) {
+          if (request.action === 'pullList' && /not a git repository|no such remote|需要 github\.com 的 origin/i.test((error as Error).message)) return { pulls: [] }
+          throw error
+        } finally {
+          reads.delete(abort)
+          if (!reads.size) this.pullRuns.delete(request.sessionId)
+        }
+      })
+    }
     if (!session?.header.cwd) throw new Error('请先打开工作区会话。')
     const policy = this.ctx.sandboxPolicy.resolve({ session })
     const write = mutations.has(request.action)

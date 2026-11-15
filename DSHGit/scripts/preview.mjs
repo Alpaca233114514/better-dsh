@@ -4,6 +4,15 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 const out = new URL('../../.cache/dshgit-preview/', import.meta.url)
 await mkdir(out, { recursive: true })
+if (process.argv.includes('--export')) {
+  const { outputFiles } = await build({ entryPoints: ['preview/main.tsx'], write: false, bundle: true, jsx: 'automatic',
+    format: 'iife', minify: true, loader: { '.css': 'text' }, define: { 'process.env.NODE_ENV': '"production"' } })
+  const script = outputFiles[0].text.replace(/<\/script/gi, '<\\/script')
+  const file = new URL('pull-requests.html', out)
+  await writeFile(file, `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DSHGit · 拉取请求</title><body data-view="pulls"><div id="root"></div><script>${script}</script></body></html>`)
+  console.log(fileURLToPath(file))
+  process.exit(0)
+}
 await build({ entryPoints: ['preview/main.tsx'], outfile: fileURLToPath(new URL('app.js', out)), bundle: true, jsx: 'automatic', format: 'esm', loader: { '.css': 'text' } })
 await writeFile(new URL('index.html', out), `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>DSHGit 开发预览</title><body><div id="root"></div><script type="module" src="/app.js"></script></body></html>`)
 const port = Number(process.env.DSHGIT_PREVIEW_PORT || 4318)
