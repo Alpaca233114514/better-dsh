@@ -48,7 +48,7 @@ export function PullDemo({ back }: { back: () => void }) {
   const [light, setLight] = useState(false)
   return <div className="pr-demo" style={{ colorScheme: light ? 'light' : 'dark' }}><style>{styles}</style><style>{`
     .pr-demo { height:100dvh; display:grid; grid-template:50px minmax(0,1fr) / clamp(170px,16vw,230px) minmax(0,1fr); background:light-dark(#f7f7f8,#1c1c1e); color:light-dark(#28282a,#ededed); font:14px/1.5 "Segoe UI","Microsoft YaHei",sans-serif; }
-    .pr-demo .dg-pr { --dg-bg:light-dark(#fff,#19191b); --dg-card:light-dark(#f3f3f5,#252527); --dg-hover:light-dark(#e7e7eb,#323235); --dg-line:light-dark(#e1e1e5,#333336); }
+    .pr-demo .dg-review { --dg-bg:light-dark(#fff,#19191b); --dg-card:light-dark(#f3f3f5,#252527); --dg-hover:light-dark(#e7e7eb,#323235); --dg-line:light-dark(#e1e1e5,#333336); }
     .pr-demo-top { grid-column:2; display:flex; align-items:center; gap:14px; padding:0 18px; border-bottom:1px solid light-dark(#ddd,#333); }
     .pr-demo-top b { font-size:15px; letter-spacing:-.4px; } .pr-demo-top span { color:light-dark(#636365,#aaa); }
     .pr-demo-top small { margin-left:auto; color:light-dark(#666,#aaa); }

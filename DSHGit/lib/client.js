@@ -36140,14 +36140,49 @@ function Stats({ additions, deletions }) {
     ] })
   ] });
 }
+function Inline({ text }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(import_jsx_runtime4.Fragment, { children: text.split(/(\*\*[^*\n]+\*\*|`[^`\n]+`|\[[^\]\n]+\]\(https?:\/\/[^\s)]+\))/g).map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("strong", { children: part.slice(2, -2) }, i);
+    if (part.startsWith("`") && part.endsWith("`")) return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("code", { children: part.slice(1, -1) }, i);
+    const link = /^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/.exec(part);
+    return link ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("a", { href: link[2], target: "_blank", rel: "noreferrer", children: link[1] }, i) : part;
+  }) });
+}
 function Description({ body }) {
   return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "dg-pr-prose", children: (body.trim() || "\u5C1A\u672A\u586B\u5199\u8BF4\u660E\u3002").split(/\r?\n\s*\n/).map((block, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { children: block.split(/\r?\n/).map((line, j) => {
     if (/^#{1,6}\s/.test(line)) return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("h3", { children: line.replace(/^#+\s+/, "") }, j);
-    if (/^[-*]\s/.test(line)) return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "dg-pr-bullet", children: line.slice(2) }, j);
-    return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { children: line }, j);
+    if (/^[-*]\s/.test(line)) return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "dg-pr-bullet", children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Inline, { text: line.slice(2) }) }, j);
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Inline, { text: line }) }, j);
   }) }, i)) });
 }
-function Summary({ pr }) {
+function Heading({ pr, repository }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("header", { className: "dg-review-heading", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-kicker", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { "data-kind": kind(pr), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "pr" }),
+        states[kind(pr)]
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("b", { title: repository, children: [
+        repository.split("/").at(-1),
+        " #",
+        pr.number
+      ] })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("h2", { children: pr.title }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-byline", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "dg-pr-avatar", children: pr.author?.login[0].toUpperCase() ?? "?" }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("strong", { children: pr.author?.login ?? "\u672A\u77E5\u7528\u6237" }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("time", { dateTime: pr.updatedAt, children: date5(pr.updatedAt) }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("i", { children: "\xB7" }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { className: "dg-pr-refs", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { title: pr.headRefName, children: pr.headRefName }),
+        " \u2192 ",
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { title: pr.baseRefName, children: pr.baseRefName })
+      ] })
+    ] })
+  ] });
+}
+function Summary({ pr, repository }) {
   const reviews = pr.latestReviews.map((r2) => ({ who: r2.author?.login ?? "\u672A\u77E5\u7528\u6237", state: statuses[r2.state] ?? r2.state }));
   const requested = pr.reviewRequests.map((r2) => ({ who: r2.login ?? r2.name ?? "\u5BA1\u67E5\u8005", state: "\u5F85\u5BA1\u67E5" }));
   const activity = [
@@ -36156,6 +36191,7 @@ function Summary({ pr }) {
   ].sort((a, b) => b.at.localeCompare(a.at));
   return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-columns", children: [
     /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("article", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Heading, { pr, repository }),
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Description, { body: pr.body }),
       /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("section", { className: "dg-pr-activity", children: [
         /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("h3", { children: [
@@ -36164,20 +36200,27 @@ function Summary({ pr }) {
         ] }),
         activity.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { className: "dg-muted", children: "\u6682\u65E0\u6D3B\u52A8" }),
         activity.map((item, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-event", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "dg-pr-event-icon", children: item.sha ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "commit" }) : "\u25CC" }),
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-event-head", children: [
+            item.sha ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "commit" }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "dg-pr-avatar", children: item.title[0].toUpperCase() }),
             /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("strong", { children: item.title }),
-            item.text && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { children: item.text })
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("small", { children: [
+              item.sha && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("code", { children: item.sha }),
+              " ",
+              date5(item.at)
+            ] })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("small", { children: [
-            item.sha && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("code", { children: item.sha }),
-            " ",
-            date5(item.at)
-          ] })
+          item.text && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Description, { body: item.text })
         ] }, i))
       ] })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("aside", { className: "dg-pr-facts", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("section", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("h3", { children: "\u8BA8\u8BBA" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-fact", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "dg-pr-talk", "aria-hidden": "true", children: "\u25CC" }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: pr.comments.length ? `${pr.comments.length} \u6761\u8BC4\u8BBA` : "\u6682\u65E0\u8BC4\u8BBA" })
+        ] })
+      ] }),
       /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("section", { children: [
         /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("h3", { children: "\u5BA1\u67E5\u8005" }),
         [...requested, ...reviews].map((r2, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-fact", children: [
@@ -36240,7 +36283,7 @@ function PullPanel({ remote, workspaces, demo = false }) {
   const { pulls, errors, done, total } = usePullInbox(remote, workspaces, revision);
   const loading = done < total;
   const matches = pulls.filter((p) => [p.repository, p.title, p.author?.login, "#" + p.number, p.url].some((s) => s?.toLowerCase().includes(query.toLowerCase().trim())));
-  const selected = matches.find((p) => p.url === url2) ?? matches[0];
+  const selected = matches.find((p) => p.url === url2) ?? matches.find((p) => kind(p) === "OPEN") ?? matches[0];
   const sessionId = selected?.sessionId ?? "", repository = selected?.repository;
   const detail = usePullRead(remote, sessionId, "pullDetail", revision, !!selected, selected?.number);
   const pr = detail?.value?.pull;
@@ -36249,52 +36292,58 @@ function PullPanel({ remote, workspaces, demo = false }) {
     setSection("summary");
     setShowList(false);
   }
-  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dshgit dg-pr", "data-list": showList, children: [
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dshgit dg-review", "data-list": showList, children: [
     /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("nav", { className: "dg-pr-inbox", "aria-label": "\u62C9\u53D6\u8BF7\u6C42\u5217\u8868", children: [
       /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("header", { children: [
         /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("h2", { children: "\u62C9\u53D6\u8BF7\u6C42" }),
         /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { "aria-label": "\u5237\u65B0\u62C9\u53D6\u8BF7\u6C42", disabled: loading, onClick: () => setRevision((r2) => r2 + 1), children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "refresh" }) })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { className: "dg-pr-search", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { "aria-hidden": "true", children: "\u2315" }),
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "search", "aria-label": "\u641C\u7D22\u62C9\u53D6\u8BF7\u6C42", placeholder: "\u641C\u7D22\u6807\u9898\u3001\u7F16\u53F7\u6216 PR \u94FE\u63A5", value: query, onChange: (e) => setQuery(e.target.value) })
-      ] }),
-      loading && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-progress", role: "status", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("progress", { value: done, max: total }),
-        "\u6B63\u5728\u8BFB\u53D6 Git \u4ED3\u5E93\u4E0E PR \xB7 ",
-        done,
-        "/",
-        total
-      ] }),
-      errors.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("details", { className: "dg-pr-errors", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("summary", { children: [
-          errors.length,
-          " \u4E2A\u5DE5\u4F5C\u533A\u8BFB\u53D6\u5931\u8D25"
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("svg", { "aria-hidden": "true", width: "16", height: "16", viewBox: "0 0 20 20", fill: "none", stroke: "currentColor", strokeWidth: "1.6", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("circle", { cx: "8", cy: "8", r: "5.5" }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("path", { d: "m12 12 5 5" })
         ] }),
-        errors.map((e) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { children: e }, e))
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "search", "aria-label": "\u641C\u7D22\u62C9\u53D6\u8BF7\u6C42", placeholder: "\u641C\u7D22\u6216\u7C98\u8D34 PR \u94FE\u63A5", value: query, onChange: (e) => setQuery(e.target.value) })
       ] }),
-      ["OPEN", "DRAFT", "MERGED", "CLOSED"].map((state) => {
-        const group = matches.filter((p) => kind(p) === state);
-        return group.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("section", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("h3", { children: [
-            states[state],
-            " ",
-            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("small", { children: group.length })
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-list", children: [
+        loading && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-progress", role: "status", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("progress", { value: done, max: total }),
+          "\u6B63\u5728\u8BFB\u53D6 Git \u4ED3\u5E93\u4E0E PR \xB7 ",
+          done,
+          "/",
+          total
+        ] }),
+        errors.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("details", { className: "dg-pr-errors", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("summary", { children: [
+            errors.length,
+            " \u4E2A\u5DE5\u4F5C\u533A\u8BFB\u53D6\u5931\u8D25"
           ] }),
-          group.map((p) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("button", { className: "dg-pr-item", "aria-current": p.url === selected?.url, onClick: () => select(p.url), children: [
-            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("strong", { children: p.title }),
-            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("small", { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { "data-kind": kind(p), children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "pr" }) }),
-              p.repository.split("/").at(-1),
-              " #",
-              p.number,
-              " \xB7 ",
-              date5(p.updatedAt)
-            ] })
-          ] }, p.url))
-        ] }, state);
-      }),
-      !loading && !matches.length && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { className: "dg-muted", children: query ? "\u6CA1\u6709\u5339\u914D\u7684\u62C9\u53D6\u8BF7\u6C42" : errors.length ? "\u6682\u65E0\u53EF\u663E\u793A\u7684\u62C9\u53D6\u8BF7\u6C42" : "\u5DE5\u4F5C\u533A\u6682\u65E0\u62C9\u53D6\u8BF7\u6C42" })
+          errors.map((e) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { children: e }, e))
+        ] }),
+        ["OPEN", "DRAFT", "MERGED", "CLOSED"].map((state) => {
+          const group = matches.filter((p) => kind(p) === state);
+          return group.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("section", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("h3", { children: [
+              states[state],
+              " ",
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("small", { children: group.length })
+            ] }),
+            group.map((p) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("button", { className: "dg-pr-item", "aria-current": p.url === selected?.url, onClick: () => select(p.url), children: [
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("strong", { title: p.title, children: p.title }),
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("small", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "dg-pr-avatar", children: p.author?.login[0].toUpperCase() ?? "?" }),
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { title: p.repository, children: [
+                  p.repository.split("/").at(-1),
+                  " #",
+                  p.number
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("time", { dateTime: p.updatedAt, children: date5(p.updatedAt) })
+              ] })
+            ] }, p.url))
+          ] }, state);
+        }),
+        !loading && !matches.length && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { className: "dg-muted", children: query ? "\u6CA1\u6709\u5339\u914D\u7684\u62C9\u53D6\u8BF7\u6C42" : errors.length ? "\u6682\u65E0\u53EF\u663E\u793A\u7684\u62C9\u53D6\u8BF7\u6C42" : "\u5DE5\u4F5C\u533A\u6682\u65E0\u62C9\u53D6\u8BF7\u6C42" })
+      ] })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("main", { className: "dg-pr-reader", children: [
       /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-bar", children: [
@@ -36315,43 +36364,16 @@ function PullPanel({ remote, workspaces, demo = false }) {
         /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "pr" }),
         /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { children: query ? "\u6CA1\u6709\u5339\u914D\u7684\u62C9\u53D6\u8BF7\u6C42" : errors.length ? "\u6682\u65E0\u53EF\u663E\u793A\u7684\u62C9\u53D6\u8BF7\u6C42\uFF0C\u8BF7\u67E5\u770B\u5DE5\u4F5C\u533A\u8BFB\u53D6\u7ED3\u679C\u3002" : "\u5DE5\u4F5C\u533A\u6682\u65E0\u62C9\u53D6\u8BF7\u6C42" }),
         query && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { onClick: () => setQuery(""), children: "\u6E05\u9664\u641C\u7D22" })
-      ] }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-scroll", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("header", { className: "dg-pr-heading", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-kicker", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { "data-kind": kind(pr), children: [
-              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "pr" }),
-              states[kind(pr)]
-            ] }),
-            repository,
-            " ",
-            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("b", { children: [
-              "#",
-              pr.number
-            ] })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("h2", { children: pr.title }),
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-byline", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "dg-pr-avatar", children: pr.author?.login[0].toUpperCase() ?? "?" }),
-            pr.author?.login ?? "\u672A\u77E5\u7528\u6237",
-            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("i", { children: "\xB7" }),
-            date5(pr.updatedAt),
-            " \u66F4\u65B0"
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-pr-refs", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "branch" }),
-            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("code", { children: pr.headRefName }),
-            " \u2192 ",
-            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("code", { children: pr.baseRefName })
-          ] })
-        ] }),
-        section === "summary" ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Summary, { pr }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(FileChanges, { pr, remote, sessionId, revision, active: true })
-      ] }, pr.url)
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "dg-pr-scroll", children: section === "summary" ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Summary, { pr, repository }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Heading, { pr, repository }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(FileChanges, { pr, remote, sessionId, revision, active: true })
+      ] }) }, pr.url)
     ] })
   ] });
 }
 
 // src/pull-panel.css
-var pull_panel_default = ".dg-pr.dshgit { display:grid; grid-template-columns:clamp(220px,23%,296px) minmax(0,1fr); overflow:hidden; }\n.dg-pr :is(h2,h3,p) { margin:0; }\n.dg-pr h3 { font-size:15px; font-weight:600; }\n.dg-pr small { color:var(--dg-muted); font-size:12px; font-weight:400; }\n.dg-pr-inbox { overflow:auto; padding:20px 10px; background:color-mix(in srgb,var(--dg-card) 56%,var(--dg-bg)); border-right:1px solid var(--dg-line); }\n.dg-pr-inbox header,.dg-pr-inbox h3,.dg-pr-pages,.dg-pr-fact,.dg-pr-bar,.dg-pr-kicker,.dg-pr-byline,.dg-pr-refs,.dg-pr-segments,.dg-pr-item small,.dg-pr-files summary { display:flex; align-items:center; gap:8px; }\n.dg-pr-inbox header { padding:0 8px; justify-content:space-between; }\n.dg-pr-inbox header h2 { font-size:19px; letter-spacing:-.4px; }\n.dg-pr-inbox header button { display:grid; place-items:center; padding:6px; color:var(--dg-muted); }\n.dg-pr-inbox header svg { width:16px; height:16px; }\n.dg-pr-progress,.dg-pr-errors { margin:0 8px 15px; font-size:12px; color:var(--dg-muted); overflow-wrap:anywhere; }\n.dg-pr-progress progress { display:block; width:100%; height:4px; margin-bottom:6px; }\n.dg-pr-errors summary { cursor:pointer; }\n.dg-pr-errors p { margin-top:7px; }\n.dg-pr-search { display:flex; align-items:center; gap:8px; margin:18px 4px 22px; padding:7px 12px; border-radius:18px; background:var(--dg-card); border:1px solid var(--dg-line); color:var(--dg-muted); }\n.dg-pr-search span { font:22px/1 monospace; }\n.dg-pr-search input { width:100%; min-width:0; background:none; border:0; font-size:13px; }\n.dg-pr-inbox section { margin-bottom:21px; }\n.dg-pr-inbox h3 { color:var(--dg-muted); font-size:12px; padding:0 10px 7px; }\n.dg-pr-inbox h3 small,.dg-pr-activity h3 small,.dg-pr-files h3 small { font-variant-numeric:tabular-nums; margin-inline-start:4px; }\n.dg-pr .dg-pr-item { display:block; width:100%; text-align:left; padding:11px 12px; margin-bottom:2px; }\n.dg-pr-item[aria-current=true],.dg-pr .dg-pr-segments [aria-pressed=true] { background:var(--dg-hover); }\n.dg-pr-item strong { font-size:14px; line-height:1.55; font-weight:550; overflow-wrap:anywhere; }\n.dg-pr-item small { margin-top:5px; gap:5px; }\n.dg-pr-item svg { width:14px; height:14px; vertical-align:middle; }\n.dg-pr [data-kind=OPEN] { color:var(--dg-green); }\n.dg-pr [data-kind=MERGED] { color:light-dark(#7848af,#c09aeb); }\n.dg-pr [data-kind=CLOSED] { color:var(--dg-red); }\n.dg-pr [data-kind=DRAFT] { color:var(--dg-muted); }\n.dg-pr-reader { min-width:0; display:flex; flex-direction:column; overflow:hidden; }\n.dg-pr-bar { min-height:65px; padding:12px clamp(16px,3%,42px); border-bottom:1px solid var(--dg-line); flex-wrap:wrap; }\n.dg-pr-segments { gap:2px; background:var(--dg-card); padding:3px; border-radius:20px; }\n.dg-pr .dg-pr-segments button { border-radius:16px; padding:5px 12px; display:flex; align-items:center; gap:8px; font-size:13px; }\n.dg-pr-segments .dg-stats { font-size:12px; }\n.dg-pr-bar a { margin-left:auto; display:flex; align-items:center; gap:6px; color:var(--dg-muted); text-decoration:none; }\n.dg-pr-bar a svg { width:15px; }\n.dg-pr-back { display:none; }\n.dg-pr-scroll { overflow:auto; padding:clamp(16px,3.3%,46px); }\n.dg-pr-heading { margin-bottom:30px; }\n.dg-pr-kicker,.dg-pr-byline,.dg-pr-refs { flex-wrap:wrap; font-size:13px; color:var(--dg-muted); overflow-wrap:anywhere; }\n.dg-pr-kicker b { font:inherit; }\n.dg-pr-kicker span { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; background:color-mix(in srgb,currentColor 12%,transparent); font-weight:600; }\n.dg-pr-kicker svg,.dg-pr-refs svg,.dg-pr-event-icon svg,.dg-pr-files summary svg { width:16px; height:16px; flex-shrink:0; }\n.dg-pr-heading h2 { font-size:clamp(22px,2.3cqw,34px); font-weight:640; letter-spacing:-.03em; line-height:1.28; margin:14px 0; overflow-wrap:anywhere; }\n.dg-pr-byline i { font-style:normal; }\n.dg-pr-avatar { width:22px; height:22px; flex-shrink:0; display:inline-grid; place-items:center; border-radius:50%; background:light-dark(#e0e5dd,#39423b); color:light-dark(#39553e,#c5d6bd); font-size:11px; font-weight:650; }\n.dg-pr-refs { margin-top:11px; }\n.dg-pr-refs code { background:var(--dg-card); border-radius:5px; padding:2px 7px; font-size:12px; }\n.dg-pr-columns { display:grid; grid-template-columns:minmax(0,1fr) minmax(170px,25%); gap:clamp(20px,3.5%,54px); }\n.dg-pr-columns article,.dg-pr-facts,.dg-pr-event>div { min-width:0; }\n.dg-pr-prose { overflow-wrap:anywhere; line-height:1.8; }\n.dg-pr-prose>div+div { margin-top:13px; }\n.dg-pr-prose h3,.dg-pr-activity h3,.dg-pr-files h3 { font-size:17px; }\n.dg-pr-bullet { padding-left:17px; position:relative; }\n.dg-pr-bullet::before { content:'\u2022'; position:absolute; left:1px; color:var(--dg-muted); }\n.dg-pr-activity { border-top:1px solid var(--dg-line); margin-top:26px; padding-top:20px; }\n.dg-pr-activity h3,.dg-pr-files h3 { margin-bottom:13px; }\n.dg-pr-event { display:flex; align-items:baseline; gap:9px; border:1px solid var(--dg-line); border-radius:10px; padding:11px 13px; margin-top:7px; overflow-wrap:anywhere; }\n.dg-pr-event strong { font-size:13px; font-weight:500; }\n.dg-pr-event-icon { color:var(--dg-muted); align-self:flex-start; margin-top:2px; }\n.dg-pr-event small { margin-left:auto; flex-shrink:0; }\n.dg-pr-event p { white-space:pre-wrap; margin-top:5px; }\n.dg-pr-facts section { padding:0 0 16px; margin-bottom:14px; border-bottom:1px solid var(--dg-line); }\n.dg-pr-facts h3 { font-size:13px; color:var(--dg-muted); margin-bottom:12px; }\n.dg-pr-facts p,.dg-pr-pages { color:var(--dg-muted); font-size:13px; }\n.dg-pr-fact { margin:8px 0; font-size:13px; overflow-wrap:anywhere; }\n.dg-pr-fact small { margin-left:auto; flex-shrink:0; }\n.dg-pr-check { display:grid; place-items:center; border-radius:50%; width:16px; height:16px; color:var(--dg-muted); background:var(--dg-card); font-size:12px; }\n.dg-pr-check[data-status=SUCCESS] { color:var(--dg-green); background:color-mix(in srgb,var(--dg-green) 16%,transparent); }\n.dg-pr-check:is([data-status=FAILURE],[data-status=ERROR]) { color:var(--dg-red); }\n.dg-pr-files details { border:1px solid var(--dg-line); border-radius:10px; overflow:hidden; margin:10px 0; }\n.dg-pr-files summary { padding:11px 13px; background:var(--dg-card); cursor:pointer; overflow-wrap:anywhere; }\n.dg-pr-files summary::before { content:'\u203A'; color:var(--dg-muted); }\n.dg-pr-files details[open] summary::before { transform:rotate(90deg); }\n.dg-pr-files summary .dg-stats { margin-left:auto; font-size:12px; }\n.dg-pr-files details p,.dg-pr-pages { padding:12px; }\n.dg-pr-empty { margin:auto; padding:30px; text-align:center; overflow-wrap:anywhere; color:var(--dg-muted); }\n.dg-pr-empty button,.dg-pr-pages button { padding:5px 10px; background:var(--dg-card); }\n@container dshgit (max-width:1050px) {\n  .dg-pr-columns { grid-template-columns:minmax(0,1fr); }\n  .dg-pr-facts { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:18px; }\n}\n@container dshgit (max-width:720px) {\n  .dg-pr.dshgit { grid-template-columns:minmax(0,1fr); }\n  .dg-pr-back { display:block; }\n  .dg-pr[data-list=false] .dg-pr-inbox,.dg-pr[data-list=true] .dg-pr-reader { display:none; }\n  .dg-pr-inbox { border:0; }\n  .dg-pr-bar { min-height:48px; gap:4px; padding:8px; }\n  .dg-pr .dg-pr-segments button { padding:4px 8px; }\n  .dg-pr-event { flex-wrap:wrap; }\n}\n.dg-pr-page { display:flex; flex-direction:column; flex:1; width:100%; height:100%; min-width:0; min-height:0; color:var(--dsw-alias-label-primary,CanvasText); }\n.dg-pr-page>.dg-docked { flex:1; height:auto; }\n.dg-pr-page>p { margin:auto; }\n";
+var pull_panel_default = ".dg-review.dshgit { display:grid; grid-template-columns:clamp(218px,22cqw,292px) minmax(0,1fr); overflow:hidden; background:var(--dg-bg); }\n.dg-review :is(h2,h3,p) { margin:0; }\n.dg-review h3 { font-size:15px; font-weight:600; }\n.dg-review small { color:var(--dg-muted); font-size:12px; font-weight:400; }\n.dg-pr-inbox { min-height:0; display:flex; flex-direction:column; padding:19px 0 0; background:color-mix(in srgb,var(--dg-bg) 72%,var(--dg-card)); border-inline-end:1px solid color-mix(in srgb,var(--dg-line) 55%,transparent); }\n.dg-pr-list { overflow:auto; padding:0 8px 18px; scrollbar-width:thin; scrollbar-color:var(--dg-line) transparent; }\n.dg-pr-inbox header,.dg-pr-inbox h3,.dg-pr-pages,.dg-pr-fact,.dg-pr-bar,.dg-pr-kicker,.dg-pr-byline,.dg-pr-refs,.dg-pr-segments,.dg-pr-item small,.dg-pr-files summary { display:flex; align-items:center; gap:8px; }\n.dg-pr-inbox header { padding:0 16px; justify-content:space-between; }\n.dg-pr-inbox header h2 { font-size:19px; letter-spacing:-.4px; }\n.dg-pr-inbox header button { display:grid; place-items:center; padding:6px; color:var(--dg-muted); }\n.dg-pr-inbox header svg { width:16px; height:16px; }\n.dg-pr-progress,.dg-pr-errors { margin:0 8px 15px; font-size:12px; color:var(--dg-muted); overflow-wrap:anywhere; }\n.dg-pr-progress progress { display:block; width:100%; height:4px; margin-bottom:6px; }\n.dg-pr-errors summary { cursor:pointer; }\n.dg-pr-errors p { margin-top:7px; }\n.dg-pr-search { display:flex; align-items:center; gap:8px; margin:16px 10px 19px; padding:0 12px; min-height:36px; border-radius:20px; background:var(--dg-card); color:var(--dg-muted); }\n.dg-pr-search svg { flex:none; }\n.dg-review .dg-pr-search input[type=search] { width:100%; min-width:0; background:none; border:0; border-radius:0; padding:5px 0; font-size:13px; }\n.dg-pr-search:focus-within { outline:2px solid var(--dsw-alias-state-business-primary,#5787dc); }\n.dg-review .dg-pr-search input:focus-visible { outline:0; }\n.dg-pr-inbox section { margin-bottom:21px; }\n.dg-pr-inbox h3 { color:var(--dg-muted); font-size:13px; padding:0 9px 8px; }\n.dg-pr-inbox h3 small,.dg-pr-activity h3 small,.dg-pr-files h3 small { font-variant-numeric:tabular-nums; margin-inline-start:4px; }\n.dg-review .dg-pr-item { display:block; width:100%; text-align:left; padding:9px 10px; margin-bottom:2px; }\n.dg-pr-item[aria-current=true],.dg-review .dg-pr-segments [aria-pressed=true] { background:var(--dg-hover); }\n.dg-pr-item strong { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:14px; line-height:1.48; font-weight:500; overflow-wrap:anywhere; }\n.dg-pr-item small { margin-top:5px; gap:5px; }\n.dg-pr-item small>span:nth-child(2) { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }\n.dg-pr-item small time { margin-inline-start:auto; flex:none; font-size:11px; }\n.dg-pr-item .dg-pr-avatar { width:16px; height:16px; font-size:9px; }\n.dg-pr-item svg { width:14px; height:14px; vertical-align:middle; }\n.dg-review [data-kind=OPEN] { color:var(--dg-green); }\n.dg-review [data-kind=MERGED] { color:light-dark(#7848af,#c09aeb); }\n.dg-review [data-kind=CLOSED] { color:var(--dg-red); }\n.dg-review [data-kind=DRAFT] { color:var(--dg-muted); }\n.dg-pr-reader { min-width:0; display:flex; flex-direction:column; overflow:hidden; }\n.dg-pr-bar { min-height:60px; padding:12px clamp(16px,2.4cqw,32px); flex-wrap:wrap; }\n.dg-pr-segments { gap:2px; background:var(--dg-card); padding:3px; border-radius:20px; }\n.dg-review .dg-pr-segments button { border-radius:16px; padding:5px 12px; display:flex; align-items:center; gap:8px; font-size:13px; }\n.dg-pr-segments .dg-stats { font-size:12px; }\n.dg-pr-bar a { margin-left:auto; display:flex; align-items:center; gap:7px; padding:6px 12px; border-radius:18px; background:var(--dg-card); font-size:13px; color:var(--dg-text); text-decoration:none; }\n.dg-pr-bar a svg { width:15px; }\n.dg-pr-back { display:none; }\n.dg-pr-scroll { overflow:auto; padding:8px clamp(16px,2.4cqw,32px) 40px; scrollbar-width:thin; }\n.dg-review-heading { display:block; margin-bottom:28px; }\n.dg-pr-kicker,.dg-pr-byline,.dg-pr-refs { flex-wrap:wrap; font-size:13px; color:var(--dg-muted); overflow-wrap:anywhere; }\n.dg-pr-kicker b { font:inherit; }\n.dg-pr-kicker span { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; background:color-mix(in srgb,currentColor 12%,transparent); font-weight:600; }\n.dg-pr-kicker svg,.dg-pr-refs svg,.dg-pr-event-icon svg,.dg-pr-files summary svg { width:16px; height:16px; flex-shrink:0; }\n.dg-review .dg-review-heading h2 { font-size:clamp(24px,2.55cqw,34px); font-weight:640; letter-spacing:-.025em; line-height:1.22; margin:12px 0; text-wrap:pretty; overflow-wrap:anywhere; }\n.dg-pr-byline strong { color:var(--dg-text); font-weight:500; }\n.dg-pr-byline i { font-style:normal; }\n.dg-pr-avatar { width:22px; height:22px; flex-shrink:0; display:inline-grid; place-items:center; border-radius:50%; background:light-dark(#e0e5dd,#39423b); color:light-dark(#39553e,#c5d6bd); font-size:11px; font-weight:650; }\n.dg-pr-refs { min-width:0; gap:6px; }\n.dg-pr-columns { display:grid; grid-template-columns:minmax(0,1fr); gap:24px; }\n.dg-pr-columns article,.dg-pr-facts,.dg-pr-event>div { min-width:0; }\n.dg-pr-prose { overflow-wrap:anywhere; font-size:14px; line-height:1.75; }\n.dg-pr-prose code { padding:1px 4px; border-radius:4px; background:var(--dg-card); font: .9em ui-monospace,Consolas,monospace; }\n.dg-pr-prose a { color:inherit; text-underline-offset:3px; }\n.dg-pr-prose>div+div { margin-top:13px; }\n.dg-pr-prose h3,.dg-pr-activity h3,.dg-pr-files h3 { font-size:17px; }\n.dg-pr-bullet { padding-left:17px; position:relative; }\n.dg-pr-bullet::before { content:'\u2022'; position:absolute; left:1px; color:var(--dg-muted); }\n.dg-pr-activity { border-top:1px solid var(--dg-line); margin-top:26px; padding-top:20px; }\n.dg-pr-activity h3,.dg-pr-files h3 { margin-bottom:13px; }\n.dg-pr-event { border:1px solid color-mix(in srgb,var(--dg-line) 58%,transparent); border-radius:11px; padding:11px 13px; margin-top:8px; overflow-wrap:anywhere; }\n.dg-pr-event-head { display:flex; align-items:center; gap:9px; }\n.dg-pr-event-head svg { width:16px; flex:none; color:var(--dg-muted); }\n.dg-pr-event .dg-pr-prose { padding:12px 0 3px; }\n.dg-pr-event strong { font-size:13px; font-weight:500; }\n.dg-pr-event small { margin-left:auto; flex-shrink:0; }\n.dg-pr-event p { white-space:pre-wrap; margin-top:5px; }\n.dg-pr-facts { min-width:0; display:grid; align-content:start; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:16px; }\n.dg-pr-facts section { padding:0 0 14px; border-bottom:1px solid color-mix(in srgb,var(--dg-line) 55%,transparent); }\n.dg-pr-facts h3 { font-size:13px; color:var(--dg-muted); margin-bottom:12px; }\n.dg-pr-facts p,.dg-pr-pages { color:var(--dg-muted); font-size:13px; }\n.dg-pr-fact { margin:8px 0; font-size:13px; overflow-wrap:anywhere; }\n.dg-pr-fact>span:nth-child(2) { min-width:0; }\n.dg-pr-talk { color:var(--dg-muted); font-size:17px; }\n.dg-pr-fact small { margin-left:auto; flex-shrink:0; }\n.dg-pr-check { display:grid; place-items:center; border-radius:50%; width:16px; height:16px; color:var(--dg-muted); background:var(--dg-card); font-size:12px; }\n.dg-pr-check[data-status=SUCCESS] { color:var(--dg-green); background:color-mix(in srgb,var(--dg-green) 16%,transparent); }\n.dg-pr-check:is([data-status=FAILURE],[data-status=ERROR]) { color:var(--dg-red); }\n.dg-pr-files details { border:1px solid var(--dg-line); border-radius:10px; overflow:hidden; margin:10px 0; }\n.dg-pr-files summary { padding:11px 13px; background:var(--dg-card); cursor:pointer; overflow-wrap:anywhere; }\n.dg-pr-files summary::before { content:'\u203A'; color:var(--dg-muted); }\n.dg-pr-files details[open] summary::before { transform:rotate(90deg); }\n.dg-pr-files summary .dg-stats { margin-left:auto; font-size:12px; }\n.dg-pr-files details p,.dg-pr-pages { padding:12px; }\n.dg-pr-empty { margin:auto; padding:30px; text-align:center; overflow-wrap:anywhere; color:var(--dg-muted); }\n.dg-pr-empty button,.dg-pr-pages button { padding:5px 10px; background:var(--dg-card); }\n@container dshgit (min-width:900px) {\n  .dg-pr-columns { grid-template-columns:minmax(0,1fr) clamp(156px,17cqw,244px); gap:clamp(20px,2.4cqw,40px); }\n  .dg-pr-facts { grid-template-columns:minmax(0,1fr); padding-top:5px; }\n}\n@container dshgit (max-width:720px) {\n  .dg-review.dshgit { grid-template-columns:minmax(0,1fr); }\n  .dg-pr-back { display:block; }\n  .dg-review[data-list=false] .dg-pr-inbox,.dg-review[data-list=true] .dg-pr-reader { display:none; }\n  .dg-pr-inbox { border:0; }\n  .dg-pr-bar { min-height:48px; gap:4px; padding:8px; }\n  .dg-review .dg-pr-segments button { padding:4px 8px; }\n  .dg-pr-event { flex-wrap:wrap; }\n}\n.dg-pr-page { display:flex; flex-direction:column; flex:1; width:100%; height:100%; min-width:0; min-height:0; color:var(--dsw-alias-label-primary,CanvasText); }\n.dg-pr-page>.dg-docked { flex:1; height:auto; }\n.dg-pr-page>p { margin:auto; }\n";
 
 // src/client.tsx
 var import_jsx_runtime5 = require("react/jsx-runtime");
