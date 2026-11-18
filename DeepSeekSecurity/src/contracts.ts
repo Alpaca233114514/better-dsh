@@ -47,9 +47,10 @@ export type FindingRequest = z.infer<typeof findingRequestSchema>
 export const repairResultSchema = z.object({ conversationId: z.string().min(1), workspace: z.string(), findingId: z.string(), warning: z.string().optional() })
 export type RepairResult = z.infer<typeof repairResultSchema>
 export const canRepair = (status: FindingStatus) => status === 'new' || status === 'triaged' || status === 'in_progress'
+export const severityOrder = ['critical', 'high', 'medium', 'low', 'info', 'unknown'] as const
 export const findingSchema = z.object({
   id: z.string(), taskId: z.string(), title: z.string(), summary: z.string(),
-  severity: z.enum(['critical', 'high', 'medium', 'low', 'info', 'unknown']),
+  severity: z.enum(severityOrder),
   locations: z.array(z.object({ path: z.string(), startLine: z.number().optional(), endLine: z.number().optional() })),
   remediation: z.string(), validation: z.string(), attackPath: z.string(), evidence: z.string(),
   firstSeen: z.string(), lastSeen: z.string(), occurrences: z.number().int().positive(),

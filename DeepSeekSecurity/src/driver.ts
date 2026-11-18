@@ -12,7 +12,7 @@ import type { RunHooks, ScanDriver } from './manager.ts'
 import { pluginRoot, record, string, Workbench } from './workbench.ts'
 import { workspaceTools } from './workspace-tools.ts'
 import { ScanIsolation } from './scan-isolation.ts'
-import { ultraService } from './ultra.ts'
+import { applySessionModelSelection } from './ultra.ts'
 import { sessionLocation } from './session-location.ts'
 
 declare module '@deepseek-ai/dsh-llm' {
@@ -106,13 +106,12 @@ export class DshScanDriver implements ScanDriver {
       if ('error' in resolved) throw resolved.error
       const agent = resolved.agent
       await setup(agent.ctx, agent)
-      const selection = { provider: task.provider, model: task.model,
-        ...(task.reasoningEffort ? { reasoningEffort: ReasoningEffortId(task.reasoningEffort) } : {}) }
-      if (task.ultra) {
-        const ultra = ultraService(this.ctx)
-        if (!ultra?.providerAvailable()) throw new Error('Ultra 插件已不可用，请重新选择推理强度。')
-        await ultra.select({ sessionId: created.sessionId, selection: { ...selection, reasoningEffort: 'max' }, ultra: true })
-      } else await this.ctx.sessionController.selectModel({ sessionId: created.sessionId, ...selection })
+      await applySessionModelSelection(
+        this.ctx,
+        created.sessionId,
+        { provider: task.provider, model: task.model, reasoningEffort: task.reasoningEffort },
+        task.ultra,
+      )
       await this.ctx.sessionController.rename({ sessionId: created.sessionId, title: `安全扫描 · ${task.workspace.split(/[\\/]/).filter(Boolean).at(-1) ?? task.workspace}` })
       await hooks.update({ conversationId: created.sessionId })
       return { agent, dispose: async () => {} }

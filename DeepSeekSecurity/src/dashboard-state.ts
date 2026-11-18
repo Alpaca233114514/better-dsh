@@ -1,4 +1,16 @@
-import { dashboardSchema, stateSchema, repairResultSchema, canRepair, type RepairResult, type Dashboard, type FindingStatus, type SecurityRemote, type StartRequest, type Task } from './contracts.ts'
+import {
+  dashboardSchema,
+  stateSchema,
+  repairResultSchema,
+  canRepair,
+  severityOrder,
+  type RepairResult,
+  type Dashboard,
+  type FindingStatus,
+  type SecurityRemote,
+  type StartRequest,
+  type Task,
+} from './contracts.ts'
 
 export type DashboardSnapshot = { data: Dashboard | null; error: string | null; loading: boolean; busy: boolean }
 
@@ -42,90 +54,99 @@ export class DashboardObserver {
       if (this.live && version === this.version && this.snapshot.data) this.timer = setTimeout(() => { void this.refresh() }, 2500)
     }
   }
-  async act(kind: 'start' | 'cancel', options: Omit<StartRequest, 'sessionId'> = {}, onStarted?: (task: Task) => Promise<void>) {
+  private async runAction(
+    fn: (isCurrent: () => boolean) => Promise<boolean>,
+    formatError: (error: unknown) => string = message,
+  ) {
     if (!this.live || this.snapshot.busy) return false
     clearTimeout(this.timer)
     const version = ++this.version
+    const isCurrent = () => this.live && version === this.version
     this.actionError = null
     this.publish({ busy: true, error: null })
-    let success = false
     try {
+      return await fn(isCurrent)
+    } catch (error) {
+      if (isCurrent()) {
+        this.actionError = formatError(error)
+        this.publish({ error: this.actionError })
+      }
+      return false
+    } finally {
+      if (isCurrent()) {
+        this.publish({ busy: false })
+        void this.refresh()
+      }
+    }
+  }
+
+  async act(kind: 'start' | 'cancel', options: Omit<StartRequest, 'sessionId'> = {}, onStarted?: (task: Task) => Promise<void>) {
+    return this.runAction(async isCurrent => {
       const request = { ...options, sessionId: this.sessionId }
-      const result = kind === 'start' ? await this.remote.start(request) : await this.remote.cancel({ sessionId: this.sessionId, taskId: this.snapshot.data?.tasks[0]?.id })
-      if (!this.live || version !== this.version) return false
+      const result = kind === 'start'
+        ? await this.remote.start(request)
+        : await this.remote.cancel({ sessionId: this.sessionId, taskId: this.snapshot.data?.tasks[0]?.id })
+      if (!isCurrent()) return false
       if (!result.ok) throw new Error(result.error.message)
       const state = stateSchema.parse(result.value)
       if (kind === 'start' && onStarted) {
         if (!state.task) throw new Error('扫描启动后没有返回扫描记录。')
         await onStarted(state.task)
       }
-      success = true
-    } catch (error) {
-      if (this.live && version === this.version) { this.actionError = message(error); this.publish({ error: this.actionError }) }
-    } finally {
-      if (this.live && version === this.version) { this.publish({ busy: false }); void this.refresh() }
-    }
-    return success
+      return true
+    })
   }
+
   async setFindingStatus(findingId: string, status: FindingStatus) {
-    if (!this.live || this.snapshot.busy) return
-    clearTimeout(this.timer)
-    const version = ++this.version
-    this.actionError = null
-    this.publish({ busy: true, error: null })
-    try {
-      if (!this.snapshot.data?.capabilities.findingStatusEditing) throw new Error('状态编辑接口尚未加载，请完整退出并重新打开 DSH。')
+    const endpointHint = '状态编辑接口尚未加载，请完整退出并重新打开 DSH。'
+    await this.runAction(async isCurrent => {
+      if (!this.snapshot.data?.capabilities.findingStatusEditing) throw new Error(endpointHint)
       const result = await this.remote.setFindingStatus({ sessionId: this.sessionId, findingId, status })
-      if (!this.live || version !== this.version) return
+      if (!isCurrent()) return false
       if (!result.ok) throw new Error(result.error.message)
       this.publish({ data: dashboardSchema.parse(result.value) })
-    } catch (error) {
-      if (this.live && version === this.version) {
-        this.actionError = /HTTP 404/.test(message(error)) ? '状态编辑接口尚未加载，请完整退出并重新打开 DSH。' : message(error)
-        this.publish({ error: this.actionError })
-      }
-    } finally {
-      if (this.live && version === this.version) { this.publish({ busy: false }); void this.refresh() }
-    }
+      return true
+    }, error => hostEndpointError(error, endpointHint))
   }
+
   async repairFinding(findingId: string, openConversation: (id: string) => Promise<void>) {
-    if (!this.live || this.snapshot.busy) return false
-    clearTimeout(this.timer)
-    const version = ++this.version
-    this.actionError = null
-    this.publish({ busy: true, error: null })
-    try {
+    const endpointHint = '修复接口尚未加载，请完整退出并重新打开 DSH。'
+    return this.runAction(async isCurrent => {
       const data = this.snapshot.data
-      if (!data?.capabilities.findingRepair) throw new Error('修复接口尚未加载，请完整退出并重新打开 DSH。')
-      const finding = data.findings.find(finding => finding.id === findingId)
+      if (!data?.capabilities.findingRepair) throw new Error(endpointHint)
+      const finding = data.findings.find(item => item.id === findingId)
       if (!finding || !canRepair(finding.status)) throw new Error('该发现已结束处置，请先重新打开其状态。')
       let repair = this.repairConversations.get(findingId)
       if (!repair) {
         const result = await this.remote.repairFinding({ sessionId: this.sessionId, findingId })
         if (!result.ok) throw new Error(result.error.message)
         repair = repairResultSchema.parse(result.value)
-        if (repair.findingId !== findingId || repair.workspace !== data.workspace) throw new Error('修复会话与当前发现不匹配。')
+        if (repair.findingId !== findingId || repair.workspace !== data.workspace) {
+          throw new Error('修复会话与当前发现不匹配。')
+        }
         // 导航失败重试只打开已建会话，避免重复发送修复。 Retry navigation without launching another repair.
         this.repairConversations.set(findingId, repair)
       }
-      if (!this.live || version !== this.version) return false
+      if (!isCurrent()) return false
       await openConversation(repair.conversationId)
       this.repairConversations.delete(findingId)
-      if (repair.warning) { this.actionError = repair.warning; this.publish({ error: repair.warning }) }
-      return true
-    } catch (error) {
-      if (this.live && version === this.version) {
-        this.actionError = /HTTP 404/.test(message(error)) ? '修复接口尚未加载，请完整退出并重新打开 DSH。' : message(error)
-        this.publish({ error: this.actionError })
+      if (repair.warning) {
+        this.actionError = repair.warning
+        this.publish({ error: repair.warning })
       }
-      return false
-    } finally {
-      if (this.live && version === this.version) { this.publish({ busy: false }); void this.refresh() }
-    }
+      return true
+    }, error => hostEndpointError(error, endpointHint))
   }
 }
 
-function message(error: unknown) { return error instanceof Error ? error.message : String(error) }
+function message(error: unknown) {
+  return error instanceof Error ? error.message : String(error)
+}
+
+function hostEndpointError(error: unknown, notFoundHint: string) {
+  const text = message(error)
+  return /HTTP 404/.test(text) ? notFoundHint : text
+}
 
 /** 聚合仅改变展示标识，写入仍由原仓库观察器执行。 Aggregate display IDs; route writes to the owning observer. */
 export class FindingsObserver {
@@ -156,8 +177,9 @@ export class FindingsObserver {
       this.routes.set(id, { observer, id: finding.id })
       return { ...finding, id }
     }))
-    const order = ['critical', 'high', 'medium', 'low', 'info', 'unknown']
-    findings.sort((a, b) => order.indexOf(a.severity) - order.indexOf(b.severity) || b.lastSeen.localeCompare(a.lastSeen))
+    findings.sort(
+      (a, b) => severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity) || b.lastSeen.localeCompare(a.lastSeen),
+    )
     const errors = [...this.observers].flatMap(([id, observer]) => observer.getSnapshot().error ? [`${observer.getSnapshot().data?.workspace ?? id}：${observer.getSnapshot().error}`] : [])
     this.snapshot = {
       loading: snapshots.some(snapshot => snapshot.loading), busy: snapshots.some(snapshot => snapshot.busy),

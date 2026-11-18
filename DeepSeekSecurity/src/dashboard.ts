@@ -1,5 +1,4 @@
-import { findingSchema, type Finding, type Task } from './contracts.ts'
-import type { Details } from './contracts.ts'
+import { findingSchema, severityOrder, type Details, type Finding, type Task } from './contracts.ts'
 
 const object = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
 const text = (value: unknown) => typeof value === 'string' ? value : value == null ? '' : JSON.stringify(value, null, 2)
@@ -33,6 +32,7 @@ export function projectFindings(scans: { task: Task; details: Details }[]): Find
       found.set(id, value)
     }
   }
-  const order = ['critical', 'high', 'medium', 'low', 'info', 'unknown']
-  return [...found.values()].sort((a, b) => order.indexOf(a.severity) - order.indexOf(b.severity) || b.lastSeen.localeCompare(a.lastSeen))
+  return [...found.values()].sort(
+    (a, b) => severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity) || b.lastSeen.localeCompare(a.lastSeen),
+  )
 }

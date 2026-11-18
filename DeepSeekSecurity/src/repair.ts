@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import type { Context } from '@deepseek-ai/cordis'
 import type { SessionRequestId } from '@deepseek-ai/dsh-api-session-controller'
 import { canRepair, type Dashboard, type Finding, type RepairResult, type Task } from './contracts.ts'
-import { ultraService } from './ultra.ts'
+import { applySessionModelSelection } from './ultra.ts'
 import { sessionLocation } from './session-location.ts'
 
 export function repairPrompt(workspace: string, finding: Finding, task: Task): string {
@@ -30,11 +30,7 @@ export async function startFindingRepair(ctx: Context, workspace: string, findin
   if (!selection) throw new Error('请先为当前工作区选择 DSH 模型。')
   const created = await ctx.sessionController.create(await sessionLocation(ctx, workspace, sourceSessionId))
   const { ultra: enabled, ...model } = selection
-  if (enabled) {
-    const ultra = ultraService(ctx)
-    if (!ultra?.providerAvailable()) throw new Error('Ultra 插件已不可用，请重新选择推理强度。')
-    await ultra.select({ sessionId: created.sessionId, selection: { ...model, reasoningEffort: 'max' }, ultra: true })
-  } else await ctx.sessionController.selectModel({ sessionId: created.sessionId, ...model })
+  await applySessionModelSelection(ctx, created.sessionId, model, enabled)
   await ctx.sessionController.rename({ sessionId: created.sessionId, title: `修复 · ${finding.title.replace(/\s+/g, ' ').trim().slice(0, 48) || '安全发现'}` })
   const receipt = await ctx.sessionController.prompt({ sessionId: created.sessionId,
     requestId: randomUUID() as SessionRequestId, mode: 'queue',
