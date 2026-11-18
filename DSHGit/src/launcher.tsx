@@ -2,20 +2,35 @@ import { followChanges } from './refresh.ts'
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { unwrap, type GitRemote, type GitState } from './contracts.ts'
-import { Icon } from './panel.tsx'
+import { Icon } from './icons.tsx'
 
 /** The header slot owns this card; only its own conversation reserves space. */
-export function GitLauncher({ sessionId, remote, onOpen }: { sessionId: string; remote: GitRemote; onOpen: () => void }) {
-  const [expanded, setExpanded] = useState<boolean | null>(null), [wide, setWide] = useState(true)
+export function GitLauncher({
+  sessionId,
+  remote,
+  onOpen,
+}: {
+  sessionId: string
+  remote: GitRemote
+  onOpen: () => void
+}) {
+  const [expanded, setExpanded] = useState<boolean | null>(null)
+  const [wide, setWide] = useState(true)
   const visible = expanded ?? wide
   const [host, setHost] = useState<HTMLElement | null>(null)
-  const [state, setState] = useState<GitState>(), [error, setError] = useState('')
-  const trigger = useRef<HTMLButtonElement>(null), changes = useRef<HTMLButtonElement>(null)
+  const [state, setState] = useState<GitState>()
+  const [error, setError] = useState('')
+  const trigger = useRef<HTMLButtonElement>(null)
+  const changes = useRef<HTMLButtonElement>(null)
   const id = useId()
+
   // The host may pass a fresh service proxy on every parent render. Polling is
   // keyed to the session, not to the proxy's identity.
   const remoteRef = useRef(remote)
-  useEffect(() => { remoteRef.current = remote }, [remote])
+  useEffect(() => {
+    remoteRef.current = remote
+  }, [remote])
+
   useEffect(() => {
     const header = trigger.current?.closest('header')
     const root = trigger.current?.closest<HTMLElement>('[data-phase]')
@@ -27,21 +42,24 @@ export function GitLauncher({ sessionId, remote, onOpen }: { sessionId: string; 
     const measure = () => {
       // Desktop can mount the header before its column has a measured width.
       if (!root.clientWidth) return
-      const wide = root.clientWidth >= 900
-      root.setAttribute('data-dg-wide', String(wide))
-      setWide(wide)
-      if (wasWide !== undefined && wide !== wasWide) setExpanded(null)
-      wasWide = wide
+      const nextWide = root.clientWidth >= 900
+      root.setAttribute('data-dg-wide', String(nextWide))
+      setWide(nextWide)
+      if (wasWide !== undefined && nextWide !== wasWide) setExpanded(null)
+      wasWide = nextWide
       root.style.setProperty('--dg-header-height', `${header.offsetHeight}px`)
     }
     measure()
     const observer = new ResizeObserver(measure)
-    observer.observe(root); observer.observe(header)
+    observer.observe(root)
+    observer.observe(header)
     return () => {
-      observer.disconnect(); root.removeAttribute('data-dg-wide')
+      observer.disconnect()
+      root.removeAttribute('data-dg-wide')
       root.style.removeProperty('--dg-header-height')
     }
   }, [])
+
   useEffect(() => {
     if (!host || !visible) return
     host.classList.add('dg-host')
@@ -52,40 +70,120 @@ export function GitLauncher({ sessionId, remote, onOpen }: { sessionId: string; 
       return !!body
     }
     // Native slots may insert wrappers and resolve the body after the header.
-    const observer = new MutationObserver(() => { if (attach()) observer.disconnect() })
+    const observer = new MutationObserver(() => {
+      if (attach()) observer.disconnect()
+    })
     if (!attach()) observer.observe(host, { childList: true, subtree: true })
-    return () => { observer.disconnect(); body?.classList.remove('dg-conversation-body'); host.classList.remove('dg-host') }
+    return () => {
+      observer.disconnect()
+      body?.classList.remove('dg-conversation-body')
+      host.classList.remove('dg-host')
+    }
   }, [host, visible])
+
   useEffect(() => {
     if (!visible) return
-    let alive = true, pending = false
+    let alive = true
+    let pending = false
     const load = async () => {
       if (pending) return
       pending = true
       try {
         const result = unwrap(await remoteRef.current.run({ sessionId, action: 'state' }))
-        if (alive) { setState(result.state); setError('') }
-      } catch (e) { if (alive) setError((e as Error).message) }
-      finally { pending = false }
+        if (alive) {
+          setState(result.state)
+          setError('')
+        }
+      } catch (err) {
+        if (alive) setError((err as Error).message)
+      } finally {
+        pending = false
+      }
     }
     const stop = followChanges(() => remoteRef.current, sessionId, load, setError)
-    return () => { alive = false; stop() }
+    return () => {
+      alive = false
+      stop()
+    }
   }, [sessionId, visible])
-  const closeCard = () => { setExpanded(false); trigger.current?.focus() }
-  return <>
-    <button ref={trigger} type="button" className="dg-launcher" title={visible ? '收起 DSHGit' : '展开 DSHGit'} aria-label={visible ? '收起 DSHGit' : '展开 DSHGit'} aria-expanded={visible} aria-controls={id} onClick={() => setExpanded(!visible)} accessKey="g"><Icon name="branch"/></button>
-    {visible && createPortal(<aside id={id} className={`dg-sidebar${host ? '' : ' dg-sidebar-floating'}`} aria-label="DSHGit 工作区" onKeyDown={event => {
-      if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeCard() }
-    }}>
-      <div className="dg-sidebar-heading"><span title={state?.root}>{state?.name ?? '工作区'}</span><button type="button" aria-label="收起 DSHGit" title="收起" onClick={closeCard}><Icon name="close"/></button></div>
-      {error ? <div className="dg-sidebar-error" role="alert">{error}</div> : <>
-        <button ref={changes} type="button" className="dg-sidebar-changes" onClick={onOpen} disabled={!state}>
-          <Icon name="changes"/><span>变更</span>{state && <span className="dg-stats"><b>+{state.additions.toLocaleString()}</b><em>-{state.deletions.toLocaleString()}</em></span>}
-        </button>
-        <div className="dg-sidebar-section"><span>当前分支</span><span>{state ? `${state.files.length} 个变更` : '正在读取…'}</span></div>
-        {state && <><div className="dg-sidebar-branch" title={state.branch || 'Detached HEAD'}><Icon name="branch"/><span>{state.branch || 'Detached HEAD'}</span></div>
-          <button type="button" className="dg-sidebar-open" onClick={onOpen}>查看全部<Icon name="chevron"/></button></>}
-      </>}
-    </aside>, host ?? document.body)}
-  </>
+
+  const closeCard = () => {
+    setExpanded(false)
+    trigger.current?.focus()
+  }
+
+  return (
+    <>
+      <button
+        ref={trigger}
+        type="button"
+        className="dg-launcher"
+        title={visible ? '收起 DSHGit' : '展开 DSHGit'}
+        aria-label={visible ? '收起 DSHGit' : '展开 DSHGit'}
+        aria-expanded={visible}
+        aria-controls={id}
+        onClick={() => setExpanded(!visible)}
+        accessKey="g"
+      >
+        <Icon name="branch" />
+      </button>
+      {visible &&
+        createPortal(
+          <aside
+            id={id}
+            className={`dg-sidebar${host ? '' : ' dg-sidebar-floating'}`}
+            aria-label="DSHGit 工作区"
+            onKeyDown={event => {
+              if (event.key === 'Escape') {
+                event.preventDefault()
+                event.stopPropagation()
+                closeCard()
+              }
+            }}
+          >
+            <div className="dg-sidebar-heading">
+              <span title={state?.root}>{state?.name ?? '工作区'}</span>
+              <button type="button" aria-label="收起 DSHGit" title="收起" onClick={closeCard}>
+                <Icon name="close" />
+              </button>
+            </div>
+            {error ? (
+              <div className="dg-sidebar-error" role="alert">
+                {error}
+              </div>
+            ) : (
+              <>
+                <button ref={changes} type="button" className="dg-sidebar-changes" onClick={onOpen} disabled={!state}>
+                  <Icon name="changes" />
+                  <span>变更</span>
+                  {state && (
+                    <span className="dg-stats">
+                      <b>+{state.additions.toLocaleString()}</b>
+                      <em>-{state.deletions.toLocaleString()}</em>
+                    </span>
+                  )}
+                </button>
+                <div className="dg-sidebar-section">
+                  <span>当前分支</span>
+                  <span>{state ? `${state.files.length} 个变更` : '正在读取…'}</span>
+                </div>
+                {state && (
+                  <>
+                    <div className="dg-sidebar-branch" title={state.branch || 'Detached HEAD'}>
+                      <Icon name="branch" />
+                      <span>{state.branch || 'Detached HEAD'}</span>
+                    </div>
+                    <button type="button" className="dg-sidebar-open" onClick={onOpen}>
+                      查看全部
+                      <Icon name="chevron" />
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </aside>,
+          host ?? document.body,
+        )}
+    </>
+  )
 }

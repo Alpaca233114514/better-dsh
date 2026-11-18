@@ -21446,11 +21446,227 @@ function followChanges(remote, sessionId, load, error62) {
 }
 
 // src/launcher.tsx
-var import_react2 = require("react");
+var import_react = require("react");
 var import_react_dom = require("react-dom");
 
+// src/icons.tsx
+var import_jsx_runtime = require("react/jsx-runtime");
+function Icon({ name }) {
+  if (name === "github") {
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", { width: "20", height: "20", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656" }) });
+  }
+  const paths = {
+    branch: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "6", cy: "5", r: "2" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "18", cy: "5", r: "2" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "6", cy: "19", r: "2" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M6 7v10M18 7c0 6-12 3-12 9" })
+    ] }),
+    changes: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", { x: "5", y: "3", width: "14", height: "18", rx: "3" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M9 9h6m-3-3v6m-3 4h6" })
+    ] }),
+    pr: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "6", cy: "5", r: "2" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "6", cy: "19", r: "2" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "18", cy: "19", r: "2" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M6 7v10m6-14 3 3-3 3m3-3c3 0 3 4 3 6v5" })
+    ] }),
+    commit: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "12", cy: "12", r: "4" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M2 12h6m8 0h6" })
+    ] }),
+    push: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m8 10 4-4 4 4m-4-4v15M6 16H5a4 4 0 0 1-1-8 8 8 0 0 1 15 0 4 4 0 0 1 0 8h-1" }) }),
+    close: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m6 6 12 12M6 18 18 6" }),
+    refresh: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M20 7v5h-5M4 17v-5h5m11-1A8 8 0 0 0 6 6m-2 7a8 8 0 0 0 14 5" }) }),
+    chevron: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m6 9 6 6 6-6" }),
+    files: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm3-2V3h6l2 2h5" })
+  };
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+    "svg",
+    {
+      width: "20",
+      height: "20",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: "1.7",
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+      "aria-hidden": "true",
+      children: paths[name]
+    }
+  );
+}
+
+// src/launcher.tsx
+var import_jsx_runtime2 = require("react/jsx-runtime");
+function GitLauncher({
+  sessionId,
+  remote,
+  onOpen
+}) {
+  const [expanded, setExpanded] = (0, import_react.useState)(null);
+  const [wide, setWide] = (0, import_react.useState)(true);
+  const visible = expanded ?? wide;
+  const [host, setHost] = (0, import_react.useState)(null);
+  const [state, setState] = (0, import_react.useState)();
+  const [error62, setError] = (0, import_react.useState)("");
+  const trigger = (0, import_react.useRef)(null);
+  const changes = (0, import_react.useRef)(null);
+  const id = (0, import_react.useId)();
+  const remoteRef = (0, import_react.useRef)(remote);
+  (0, import_react.useEffect)(() => {
+    remoteRef.current = remote;
+  }, [remote]);
+  (0, import_react.useEffect)(() => {
+    const header = trigger.current?.closest("header");
+    const root = trigger.current?.closest("[data-phase]");
+    if (!header || !root) return;
+    setHost(root);
+    let wasWide;
+    const measure = () => {
+      if (!root.clientWidth) return;
+      const nextWide = root.clientWidth >= 900;
+      root.setAttribute("data-dg-wide", String(nextWide));
+      setWide(nextWide);
+      if (wasWide !== void 0 && nextWide !== wasWide) setExpanded(null);
+      wasWide = nextWide;
+      root.style.setProperty("--dg-header-height", `${header.offsetHeight}px`);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(root);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      root.removeAttribute("data-dg-wide");
+      root.style.removeProperty("--dg-header-height");
+    };
+  }, []);
+  (0, import_react.useEffect)(() => {
+    if (!host || !visible) return;
+    host.classList.add("dg-host");
+    let body = null;
+    const attach = () => {
+      body = host.querySelector("[data-conversation-content]");
+      body?.classList.add("dg-conversation-body");
+      return !!body;
+    };
+    const observer = new MutationObserver(() => {
+      if (attach()) observer.disconnect();
+    });
+    if (!attach()) observer.observe(host, { childList: true, subtree: true });
+    return () => {
+      observer.disconnect();
+      body?.classList.remove("dg-conversation-body");
+      host.classList.remove("dg-host");
+    };
+  }, [host, visible]);
+  (0, import_react.useEffect)(() => {
+    if (!visible) return;
+    let alive = true;
+    let pending2 = false;
+    const load = async () => {
+      if (pending2) return;
+      pending2 = true;
+      try {
+        const result = unwrap(await remoteRef.current.run({ sessionId, action: "state" }));
+        if (alive) {
+          setState(result.state);
+          setError("");
+        }
+      } catch (err) {
+        if (alive) setError(err.message);
+      } finally {
+        pending2 = false;
+      }
+    };
+    const stop = followChanges(() => remoteRef.current, sessionId, load, setError);
+    return () => {
+      alive = false;
+      stop();
+    };
+  }, [sessionId, visible]);
+  const closeCard = () => {
+    setExpanded(false);
+    trigger.current?.focus();
+  };
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+      "button",
+      {
+        ref: trigger,
+        type: "button",
+        className: "dg-launcher",
+        title: visible ? "\u6536\u8D77 DSHGit" : "\u5C55\u5F00 DSHGit",
+        "aria-label": visible ? "\u6536\u8D77 DSHGit" : "\u5C55\u5F00 DSHGit",
+        "aria-expanded": visible,
+        "aria-controls": id,
+        onClick: () => setExpanded(!visible),
+        accessKey: "g",
+        children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { name: "branch" })
+      }
+    ),
+    visible && (0, import_react_dom.createPortal)(
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+        "aside",
+        {
+          id,
+          className: `dg-sidebar${host ? "" : " dg-sidebar-floating"}`,
+          "aria-label": "DSHGit \u5DE5\u4F5C\u533A",
+          onKeyDown: (event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
+              closeCard();
+            }
+          },
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "dg-sidebar-heading", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { title: state?.root, children: state?.name ?? "\u5DE5\u4F5C\u533A" }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { type: "button", "aria-label": "\u6536\u8D77 DSHGit", title: "\u6536\u8D77", onClick: closeCard, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { name: "close" }) })
+            ] }),
+            error62 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "dg-sidebar-error", role: "alert", children: error62 }) : /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { ref: changes, type: "button", className: "dg-sidebar-changes", onClick: onOpen, disabled: !state, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { name: "changes" }),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: "\u53D8\u66F4" }),
+                state && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "dg-stats", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("b", { children: [
+                    "+",
+                    state.additions.toLocaleString()
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("em", { children: [
+                    "-",
+                    state.deletions.toLocaleString()
+                  ] })
+                ] })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "dg-sidebar-section", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: "\u5F53\u524D\u5206\u652F" }),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: state ? `${state.files.length} \u4E2A\u53D8\u66F4` : "\u6B63\u5728\u8BFB\u53D6\u2026" })
+              ] }),
+              state && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "dg-sidebar-branch", title: state.branch || "Detached HEAD", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { name: "branch" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: state.branch || "Detached HEAD" })
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { type: "button", className: "dg-sidebar-open", onClick: onOpen, children: [
+                  "\u67E5\u770B\u5168\u90E8",
+                  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { name: "chevron" })
+                ] })
+              ] })
+            ] })
+          ]
+        }
+      ),
+      host ?? document.body
+    )
+  ] });
+}
+
 // src/panel.tsx
-var import_react = require("react");
+var import_react3 = require("react");
 
 // src/operations.ts
 var pending = /* @__PURE__ */ new Map();
@@ -21494,6 +21710,9 @@ async function runOperation(remote, request, workspace) {
     emit();
   }
 }
+
+// src/diff-view.tsx
+var import_react2 = require("react");
 
 // node_modules/highlight.js/es/languages/dockerfile.js
 function dockerfile(hljs) {
@@ -35405,45 +35624,14 @@ function highlightDiff(text, path) {
   return result;
 }
 
-// src/panel.tsx
-var import_jsx_runtime = require("react/jsx-runtime");
-function Icon({ name }) {
-  if (name === "github") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", { width: "20", height: "20", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656" }) });
-  const paths = {
-    branch: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "6", cy: "5", r: "2" }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "18", cy: "5", r: "2" }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "6", cy: "19", r: "2" }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M6 7v10M18 7c0 6-12 3-12 9" })
-    ] }),
-    changes: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", { x: "5", y: "3", width: "14", height: "18", rx: "3" }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M9 9h6m-3-3v6m-3 4h6" })
-    ] }),
-    pr: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "6", cy: "5", r: "2" }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "6", cy: "19", r: "2" }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "18", cy: "19", r: "2" }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M6 7v10m6-14 3 3-3 3m3-3c3 0 3 4 3 6v5" })
-    ] }),
-    commit: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "12", cy: "12", r: "4" }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M2 12h6m8 0h6" })
-    ] }),
-    push: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m8 10 4-4 4 4m-4-4v15M6 16H5a4 4 0 0 1-1-8 8 8 0 0 1 15 0 4 4 0 0 1 0 8h-1" }) }),
-    close: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m6 6 12 12M6 18 18 6" }),
-    refresh: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M20 7v5h-5M4 17v-5h5m11-1A8 8 0 0 0 6 6m-2 7a8 8 0 0 0 14 5" }) }),
-    chevron: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m6 9 6 6 6-6" }),
-    files: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm3-2V3h6l2 2h5" })
-  };
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: paths[name] });
-}
-var isStaged = (index) => index !== " " && index !== "?";
-var safeUrl = (url2) => /^https:\/\/[^/]+\//.test(url2) ? url2 : void 0;
+// src/diff-view.tsx
+var import_jsx_runtime3 = require("react/jsx-runtime");
 function DiffContent({ text, path }) {
-  const highlighted = (0, import_react.useMemo)(() => highlightDiff(text, path), [text, path]);
-  let oldLine = 0, newLine = 0, inHunk = false;
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", { "aria-label": "\u6587\u4EF6\u5DEE\u5F02\u5185\u5BB9", children: text.split("\n").map((line, index) => {
+  const highlighted = (0, import_react2.useMemo)(() => highlightDiff(text, path), [text, path]);
+  let oldLine = 0;
+  let newLine = 0;
+  let inHunk = false;
+  return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("pre", { "aria-label": "\u6587\u4EF6\u5DEE\u5F02\u5185\u5BB9", children: text.split("\n").map((line, index) => {
     const hunk = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line);
     if (hunk) {
       oldLine = Number(hunk[1]);
@@ -35452,62 +35640,271 @@ function DiffContent({ text, path }) {
     }
     if (line.startsWith("diff --git ")) inHunk = false;
     if (/^(diff --git |index |--- |\+\+\+ )/.test(line) && !inHunk) return null;
-    const added = inHunk && line.startsWith("+"), removed = inHunk && line.startsWith("-");
+    const added = inHunk && line.startsWith("+");
+    const removed = inHunk && line.startsWith("-");
     const context = inHunk && line.startsWith(" ");
-    const before = removed || context ? oldLine++ : "", after = added || context ? newLine++ : "";
+    const before = removed || context ? oldLine++ : "";
+    const after = added || context ? newLine++ : "";
     const tokens = highlighted.get(index);
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: `dg-code-line${hunk ? " dg-hunk" : added ? " dg-added" : removed ? " dg-removed" : ""}`, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "dg-line-number", "aria-hidden": "true", children: before }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "dg-line-number", "aria-hidden": "true", children: after }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: tokens ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "dg-diff-marker", children: line[0] }),
-        tokens.map((token, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: token.className || void 0, children: token.text }, i))
+    const lineClass = hunk ? " dg-hunk" : added ? " dg-added" : removed ? " dg-removed" : "";
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: `dg-code-line${lineClass}`, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "dg-line-number", "aria-hidden": "true", children: before }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "dg-line-number", "aria-hidden": "true", children: after }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("code", { children: tokens ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "dg-diff-marker", children: line[0] }),
+        tokens.map((token, tokenIndex) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: token.className || void 0, children: token.text }, tokenIndex))
       ] }) : line || " " })
     ] }, index);
   }) });
 }
-function GitPanel({ sessionId, remote, onClose, active = true }) {
-  const [state, setState] = (0, import_react.useState)();
-  const [error62, setError] = (0, import_react.useState)(""), [loadError, setLoadError] = (0, import_react.useState)("");
-  const busy = (0, import_react.useSyncExternalStore)(subscribeOperations, () => pendingOperation(sessionId));
-  const commitId = (0, import_react.useId)();
-  const [view, setView] = (0, import_react.useState)("changes");
-  const [commitOpen, setCommitOpen] = (0, import_react.useState)(false), [message, setMessage] = (0, import_react.useState)(""), [include, setInclude] = (0, import_react.useState)(true);
-  const [branches, setBranches] = (0, import_react.useState)([]), [newBranch, setNewBranch] = (0, import_react.useState)("");
-  const [branchPrefix, setBranchPrefix] = (0, import_react.useState)(() => {
+
+// src/commit-dialog.tsx
+var import_jsx_runtime4 = require("react/jsx-runtime");
+function CommitDialog({
+  commitDialog,
+  commitId,
+  messageInput,
+  state,
+  branches,
+  branchPrefix,
+  newBranch,
+  hasChanges,
+  message,
+  include,
+  busy,
+  writable,
+  canCommit,
+  canPush,
+  pr,
+  onClose,
+  onBranchPrefix,
+  onNewBranch,
+  onMessage,
+  onInclude,
+  onAct,
+  onOpenPR
+}) {
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+    "dialog",
+    {
+      ref: commitDialog,
+      id: commitId,
+      className: "dg-commit-shade",
+      "aria-label": "\u63D0\u4EA4\u4E0E\u63A8\u9001",
+      onCancel: (event) => {
+        event.preventDefault();
+        onClose();
+      },
+      onClick: onClose,
+      children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("section", { className: "dg-commit-card", onClick: (event) => event.stopPropagation(), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-branch-select", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "branch" }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+            "select",
+            {
+              "aria-label": "\u5F53\u524D\u5206\u652F",
+              value: state.branch,
+              disabled: !writable,
+              onChange: (event) => onAct("switch", { branch: event.target.value }),
+              children: [
+                !state.branch && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: "", children: "Detached HEAD" }),
+                Array.from(/* @__PURE__ */ new Set([state.branch, ...branches])).filter(Boolean).map((branch) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { children: branch }, branch))
+              ]
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-new-branch", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-branch-name", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+              "input",
+              {
+                className: "dg-prefix",
+                "aria-label": "\u5206\u652F\u524D\u7F00",
+                title: "\u5206\u652F\u524D\u7F00\uFF08\u53EF\u4FEE\u6539\u6216\u7559\u7A7A\uFF09",
+                value: branchPrefix,
+                onChange: (event) => onBranchPrefix(event.target.value),
+                placeholder: "\u524D\u7F00"
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { "aria-hidden": "true", children: "/" }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+              "input",
+              {
+                "aria-label": "\u65B0\u5206\u652F\u540D\u79F0",
+                value: newBranch,
+                onChange: (event) => onNewBranch(event.target.value),
+                placeholder: "\u65B0\u5206\u652F"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+            "button",
+            {
+              disabled: !writable || !newBranch.trim(),
+              onClick: () => {
+                const prefix = branchPrefix.trim().replace(/\/+$/, "");
+                onAct("createBranch", { branch: prefix ? `${prefix}/${newBranch.trim()}` : newBranch.trim() });
+              },
+              children: "\u521B\u5EFA\u5206\u652F"
+            }
+          )
+        ] }),
+        hasChanges && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+            "textarea",
+            {
+              ref: messageInput,
+              className: "dg-message",
+              "aria-label": "\u63D0\u4EA4\u4FE1\u606F",
+              disabled: !!busy,
+              value: message,
+              onChange: (event) => onMessage(event.target.value),
+              placeholder: "\u63D0\u4EA4\u4FE1\u606F\uFF08\u7559\u7A7A\u81EA\u52A8\u751F\u6210\uFF09\u2026",
+              rows: 3
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-include", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { className: "dg-check", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+                "input",
+                {
+                  type: "checkbox",
+                  checked: include,
+                  disabled: !!busy,
+                  onChange: (event) => onInclude(event.target.checked)
+                }
+              ),
+              "\u5305\u542B\u672A\u6682\u5B58\u7684\u66F4\u6539"
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { className: "dg-stats", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("b", { children: [
+                "+",
+                state.additions.toLocaleString()
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("em", { children: [
+                "-",
+                state.deletions.toLocaleString()
+              ] })
+            ] })
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "dg-commit-actions", children: [
+          hasChanges && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+              "button",
+              {
+                disabled: !canCommit,
+                onClick: () => onAct("commit", { message, includeUnstaged: include }),
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "commit" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: "\u63D0\u4EA4" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("kbd", { children: "Ctrl/\u2318 \u21B5" })
+                ]
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+              "button",
+              {
+                disabled: !canCommit,
+                onClick: () => onAct("commitPush", { message, includeUnstaged: include }),
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "push" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: "\u63D0\u4EA4\u5E76\u63A8\u9001" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("kbd", { children: "Ctrl/\u2318 \u21E7 \u21B5" })
+                ]
+              }
+            )
+          ] }),
+          !hasChanges && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("button", { disabled: !canPush, onClick: () => onAct("push"), children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "push" }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: "\u63A8\u9001" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("button", { disabled: !!busy, onClick: onOpenPR, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "github" }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: pr ? "\u67E5\u770B Pull Request" : "\u521B\u5EFA Pull Request" })
+          ] }),
+          hasChanges && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("button", { disabled: !canPush, onClick: () => onAct("push"), children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "push" }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: "\u63A8\u9001" })
+          ] })
+        ] })
+      ] })
+    }
+  );
+}
+
+// src/panel.tsx
+var import_jsx_runtime5 = require("react/jsx-runtime");
+var isStaged = (index) => index !== " " && index !== "?";
+var safeUrl = (url2) => /^https:\/\/[^/]+\//.test(url2) ? url2 : void 0;
+function GitPanel({
+  sessionId,
+  remote,
+  onClose: _onClose,
+  active = true
+}) {
+  const [state, setState] = (0, import_react3.useState)();
+  const [error62, setError] = (0, import_react3.useState)("");
+  const [loadError, setLoadError] = (0, import_react3.useState)("");
+  const busy = (0, import_react3.useSyncExternalStore)(subscribeOperations, () => pendingOperation(sessionId));
+  const commitId = (0, import_react3.useId)();
+  const [view, setView] = (0, import_react3.useState)("changes");
+  const [commitOpen, setCommitOpen] = (0, import_react3.useState)(false);
+  const [message, setMessage] = (0, import_react3.useState)("");
+  const [include, setInclude] = (0, import_react3.useState)(true);
+  const [branches, setBranches] = (0, import_react3.useState)([]);
+  const [newBranch, setNewBranch] = (0, import_react3.useState)("");
+  const [branchPrefix, setBranchPrefix] = (0, import_react3.useState)(() => {
     try {
       return window.localStorage.getItem("dshgit.branchPrefix") ?? "DSH";
     } catch {
       return "DSH";
     }
   });
-  const [diff2, setDiff] = (0, import_react.useState)("\u9009\u62E9\u6587\u4EF6\u67E5\u770B\u5DEE\u5F02"), [selected, setSelected] = (0, import_react.useState)("");
-  const [filesOpen, setFilesOpen] = (0, import_react.useState)(false);
-  const [pr, setPR] = (0, import_react.useState)(), [prError, setPRError] = (0, import_react.useState)("");
-  const [base, setBase] = (0, import_react.useState)(""), [title, setTitle] = (0, import_react.useState)(""), [body, setBody] = (0, import_react.useState)(""), [draft, setDraft] = (0, import_react.useState)(false);
-  const alive = (0, import_react.useRef)(true), operation = (0, import_react.useRef)(false), generation = (0, import_react.useRef)(0), diffGeneration = (0, import_react.useRef)(0);
-  const previousBusy = (0, import_react.useRef)(busy);
-  const prHeading = (0, import_react.useRef)(null);
-  const commitTrigger = (0, import_react.useRef)(null), messageInput = (0, import_react.useRef)(null);
-  const commitDialog = (0, import_react.useRef)(null);
-  const remoteRef = (0, import_react.useRef)(remote);
-  (0, import_react.useEffect)(() => {
+  const [diff2, setDiff] = (0, import_react3.useState)("\u9009\u62E9\u6587\u4EF6\u67E5\u770B\u5DEE\u5F02");
+  const [selected, setSelected] = (0, import_react3.useState)("");
+  const [filesOpen, setFilesOpen] = (0, import_react3.useState)(false);
+  const [pr, setPR] = (0, import_react3.useState)();
+  const [prError, setPRError] = (0, import_react3.useState)("");
+  const [base, setBase] = (0, import_react3.useState)("");
+  const [title, setTitle] = (0, import_react3.useState)("");
+  const [body, setBody] = (0, import_react3.useState)("");
+  const [draft, setDraft] = (0, import_react3.useState)(false);
+  const alive = (0, import_react3.useRef)(true);
+  const operation = (0, import_react3.useRef)(false);
+  const generation = (0, import_react3.useRef)(0);
+  const diffGeneration = (0, import_react3.useRef)(0);
+  const previousBusy = (0, import_react3.useRef)(busy);
+  const prHeading = (0, import_react3.useRef)(null);
+  const commitTrigger = (0, import_react3.useRef)(null);
+  const messageInput = (0, import_react3.useRef)(null);
+  const commitDialog = (0, import_react3.useRef)(null);
+  const remoteRef = (0, import_react3.useRef)(remote);
+  (0, import_react3.useEffect)(() => {
     remoteRef.current = remote;
   }, [remote]);
-  const call = (0, import_react.useCallback)(async (action, extra = {}) => unwrap(await remoteRef.current.run({ ...extra, sessionId, action })), [sessionId]);
-  const load = (0, import_react.useCallback)(async (refresh = false) => {
-    const version2 = generation.current;
-    try {
-      const result = await call("state", refresh ? { refresh: true } : {});
-      if (alive.current && !pendingOperation(sessionId) && !operation.current && version2 === generation.current) {
-        setState(result.state);
-        setLoadError("");
+  const call = (0, import_react3.useCallback)(
+    async (action, extra = {}) => unwrap(await remoteRef.current.run({ ...extra, sessionId, action })),
+    [sessionId]
+  );
+  const load = (0, import_react3.useCallback)(
+    async (refresh = false) => {
+      const version2 = generation.current;
+      try {
+        const result = await call("state", refresh ? { refresh: true } : {});
+        if (alive.current && !pendingOperation(sessionId) && !operation.current && version2 === generation.current) {
+          setState(result.state);
+          setLoadError("");
+        }
+      } catch (err) {
+        if (alive.current && !pendingOperation(sessionId) && !operation.current && version2 === generation.current) {
+          setLoadError(err.message);
+        }
       }
-    } catch (e) {
-      if (alive.current && !pendingOperation(sessionId) && !operation.current && version2 === generation.current) setLoadError(e.message);
-    }
-  }, [call, sessionId]);
-  const loadPR = (0, import_react.useCallback)(async () => {
+    },
+    [call, sessionId]
+  );
+  const loadPR = (0, import_react3.useCallback)(async () => {
     const version2 = generation.current;
     try {
       const result = await call("prInfo");
@@ -35516,11 +35913,13 @@ function GitPanel({ sessionId, remote, onClose, active = true }) {
         setBase((value) => value || result.base || "");
         setPRError("");
       }
-    } catch (e) {
-      if (alive.current && version2 === generation.current) setPRError(e.message);
+    } catch (err) {
+      if (alive.current && version2 === generation.current) {
+        setPRError(err.message);
+      }
     }
   }, [call]);
-  (0, import_react.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     alive.current = true;
     return () => {
       alive.current = false;
@@ -35528,42 +35927,47 @@ function GitPanel({ sessionId, remote, onClose, active = true }) {
       diffGeneration.current++;
     };
   }, []);
-  (0, import_react.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     if (!active) return;
     void call("branches").then((result) => {
       if (alive.current) setBranches(result.branches ?? []);
     }).catch(() => {
     });
-    const stop = followChanges(() => remoteRef.current, sessionId, async () => {
-      if (!operation.current) await load();
-    }, setLoadError);
+    const stop = followChanges(
+      () => remoteRef.current,
+      sessionId,
+      async () => {
+        if (!operation.current) await load();
+      },
+      setLoadError
+    );
     return () => {
       stop();
       generation.current++;
       diffGeneration.current++;
     };
-  }, [load, call, active]);
-  (0, import_react.useEffect)(() => {
+  }, [load, call, active, sessionId]);
+  (0, import_react3.useEffect)(() => {
     if (previousBusy.current && !busy && active && !operation.current) void load();
     previousBusy.current = busy;
   }, [active, busy, load]);
-  (0, import_react.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     if (!active) setCommitOpen(false);
   }, [active]);
-  (0, import_react.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     if (!commitOpen) return;
     const dialog = commitDialog.current;
     dialog.showModal();
     messageInput.current?.focus();
     return () => dialog.close();
   }, [commitOpen]);
-  (0, import_react.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     try {
       window.localStorage.setItem("dshgit.branchPrefix", branchPrefix);
     } catch {
     }
   }, [branchPrefix]);
-  (0, import_react.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     if (view === "pr") prHeading.current?.focus();
   }, [view]);
   const openPR = () => {
@@ -35593,7 +35997,7 @@ function GitPanel({ sessionId, remote, onClose, active = true }) {
         setSelected("");
         setDiff("\u9009\u62E9\u6587\u4EF6\u67E5\u770B\u5DEE\u5F02");
       }
-      if (["switch", "createBranch"].includes(action)) {
+      if (action === "switch" || action === "createBranch") {
         setNewBranch("");
         setSelected("");
         setDiff("\u9009\u62E9\u6587\u4EF6\u67E5\u770B\u5DEE\u5F02");
@@ -35608,8 +36012,8 @@ function GitPanel({ sessionId, remote, onClose, active = true }) {
         setSelected("");
         setDiff("\u9009\u62E9\u6587\u4EF6\u67E5\u770B\u5DEE\u5F02");
       }
-    } catch (e) {
-      if (alive.current) setError(e.message);
+    } catch (err) {
+      if (alive.current) setError(err.message);
     } finally {
       operation.current = false;
       if (alive.current) void load();
@@ -35622,11 +36026,11 @@ function GitPanel({ sessionId, remote, onClose, active = true }) {
     try {
       const result = await call("diff", { path, staged });
       if (alive.current && version2 === diffGeneration.current) setDiff(result.text ?? "");
-    } catch (e) {
-      if (alive.current && version2 === diffGeneration.current) setDiff(e.message);
+    } catch (err) {
+      if (alive.current && version2 === diffGeneration.current) setDiff(err.message);
     }
   };
-  (0, import_react.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     if (!active || busy || !state || selected) return;
     const first = state.files[0];
     if (first) void showDiff(first.path, isStaged(first.index));
@@ -35639,371 +36043,333 @@ function GitPanel({ sessionId, remote, onClose, active = true }) {
     setCommitOpen(false);
     commitTrigger.current?.focus();
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "dshgit", "aria-label": "DSHGit", "aria-busy": !!busy, onKeyDown: (event) => {
-    if (event.key === "Escape" && commitOpen) {
-      event.preventDefault();
-      event.stopPropagation();
-      closeCommit();
-    }
-    if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && commitOpen && canCommit) {
-      event.preventDefault();
-      event.stopPropagation();
-      void act(event.shiftKey ? "commitPush" : "commit", { message, includeUnstaged: include });
-    }
-  }, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { className: "dg-toolbar", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", { className: "dg-summary-pill", title: "\u5DE5\u4F5C\u533A\u53D8\u66F4", "aria-pressed": view === "changes", onClick: () => setView("changes"), children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "\u53D8\u66F4" }),
-        state && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "dg-stats", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("b", { children: [
-            "+",
-            state.additions.toLocaleString()
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("em", { children: [
-            "-",
-            state.deletions.toLocaleString()
-          ] })
-        ] })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", { className: "dg-branch-pill", title: state ? `${state.name} \xB7 ${state.branch || "Detached HEAD"}${state.upstream ? ` \u2192 ${state.upstream}\uFF08\u2191 ${state.ahead} \u2193 ${state.behind}\uFF09` : " \xB7 \u5C1A\u672A\u5173\u8054\u4E0A\u6E38"}` : "\u6B63\u5728\u8BFB\u53D6\u5206\u652F", "aria-label": "\u9009\u62E9\u5206\u652F", disabled: !state || !!busy, onClick: () => setCommitOpen((value) => !value), children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "branch" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: state?.branch || "\u5206\u652F" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "chevron" })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-tools", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { title: pr ? "\u67E5\u770B Pull Request" : "\u521B\u5EFA Pull Request", "aria-label": pr ? "\u67E5\u770B Pull Request" : "\u521B\u5EFA Pull Request", "aria-pressed": view === "pr", disabled: !state || !!busy, onClick: openPR, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "github" }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { title: "\u5237\u65B0", "aria-label": "\u5237\u65B0 Git \u72B6\u6001", disabled: !!busy, onClick: () => {
-          void load(true);
-          if (view === "pr") void loadPR();
-        }, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "refresh" }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { title: "\u6587\u4EF6\u5217\u8868", "aria-label": "\u6587\u4EF6\u5217\u8868", "aria-expanded": filesOpen, onClick: () => {
-          setView("changes");
-          setFilesOpen((value) => !value);
-        }, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "files" }) })
-      ] })
-    ] }),
-    (error62 || loadError) && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "dg-alert", role: "alert", children: error62 || loadError }),
-    !state ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "dg-empty", children: error62 || loadError ? "\u8BF7\u786E\u8BA4\u5F53\u524D\u5DE5\u4F5C\u533A\u4E3A Git \u4ED3\u5E93\u3002" : "\u6B63\u5728\u8BFB\u53D6\u5DE5\u4F5C\u533A\u2026" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-      view === "changes" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-workspace", "data-files-open": filesOpen, children: [
-        filesOpen && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-files", children: [
-          ["staged", "working"].map((group) => {
-            const files = state.files.filter((f) => group === "staged" ? isStaged(f.index) : f.worktree !== " ");
-            return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { "aria-label": group === "staged" ? "\u5DF2\u6682\u5B58" : "\u672A\u6682\u5B58", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h3", { children: [
-                group === "staged" ? "\u5DF2\u6682\u5B58" : "\u672A\u6682\u5B58",
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: files.length })
-              ] }),
-              files.map((file2) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-file", "data-active": selected === `${group === "staged"}:${file2.path}`, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", { className: "dg-file-name", title: file2.original ? `${file2.original} \u2192 ${file2.path}` : file2.path, onClick: () => {
-                  void showDiff(file2.path, group === "staged");
-                }, children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "dg-status", children: file2.index === "?" ? "U" : group === "staged" ? file2.index : file2.worktree }),
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: file2.path })
-                ] }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "dg-stage", disabled: !writable, "aria-label": `${group === "staged" ? "\u53D6\u6D88\u6682\u5B58" : "\u6682\u5B58"} ${file2.path}`, title: group === "staged" ? "\u53D6\u6D88\u6682\u5B58" : "\u6682\u5B58", onClick: () => {
-                  void act(group === "staged" ? "unstage" : "stage", { path: file2.path });
-                }, children: group === "staged" ? "\u2212" : "+" })
-              ] }, file2.path))
-            ] }, group);
-          }),
-          !state.files.length && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-empty", children: [
-            "\u5DE5\u4F5C\u533A\u5E72\u51C0",
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "dg-muted", children: "\u6240\u6709\u53D8\u66F4\u5747\u5DF2\u63D0\u4EA4" })
-          ] })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-diff", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-diff-title", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "changes" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { title: selected ? selected.slice(selected.indexOf(":") + 1) : "", children: selected ? selected.slice(selected.indexOf(":") + 1) : "\u6587\u4EF6\u5DEE\u5F02" })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DiffContent, { text: diff2, path: selected.slice(selected.indexOf(":") + 1) })
-        ] })
-      ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-pr", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-pr-heading", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "github" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", { ref: prHeading, tabIndex: -1, children: pr ? "Pull Request" : "\u521B\u5EFA Pull Request" })
-        ] }),
-        prError && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "dg-alert", role: "alert", children: prError }),
-        pr ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-pr-existing", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "dg-muted", children: [
-            "#",
-            pr.number
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", { children: pr.title }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", { href: safeUrl(pr.url), target: "_blank", rel: "noreferrer", children: "\u5728 GitHub \u4E2D\u6253\u5F00 \u2197" })
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", { onSubmit: (event) => {
+  const selectedPath = selected ? selected.slice(selected.indexOf(":") + 1) : "";
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
+    "section",
+    {
+      className: "dshgit",
+      "aria-label": "DSHGit",
+      "aria-busy": !!busy,
+      onKeyDown: (event) => {
+        if (event.key === "Escape" && commitOpen) {
           event.preventDefault();
-          void act("createPR", { title, body, base, draft });
-        }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
-            "\u76EE\u6807\u5206\u652F",
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, value: base, onChange: (e) => setBase(e.target.value), placeholder: "main" })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
-            "\u6807\u9898",
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { maxLength: 256, disabled: !!busy, value: title, onChange: (e) => setTitle(e.target.value), placeholder: "\u7559\u7A7A\u7531\u6A21\u578B\u6839\u636E\u53D8\u66F4\u751F\u6210" })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
-            "\u63CF\u8FF0",
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", { rows: 3, disabled: !!busy, value: body, onChange: (e) => setBody(e.target.value), placeholder: "\u7559\u7A7A\u7531\u5F53\u524D\u4F1A\u8BDD\u6A21\u578B\u6839\u636E\u63D0\u4EA4\u548C\u5DEE\u5F02\u751F\u6210" })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-form-footer", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { className: "dg-check", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { type: "checkbox", checked: draft, onChange: (e) => setDraft(e.target.checked) }),
-              "\u521B\u5EFA\u4E3A\u8349\u7A3F"
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "dg-primary", disabled: !canPush || !base.trim() || !!prError, type: "submit", children: busy === "createPR" ? !title.trim() || !body.trim() ? "\u6B63\u5728\u751F\u6210\u5E76\u521B\u5EFA\u2026" : "\u6B63\u5728\u521B\u5EFA\u2026" : "\u521B\u5EFA PR" })
-          ] })
-        ] })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("footer", { className: "dg-footer", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "dg-muted", role: "status", children: busy ? ["commit", "commitPush"].includes(busy) && !message.trim() ? "\u6B63\u5728\u751F\u6210\u8BF4\u660E\u5E76\u63D0\u4EA4\u2026" : "\u6B63\u5728\u6267\u884C Git \u64CD\u4F5C\u2026" : state.writable === false ? "\u53EA\u8BFB\u5DE5\u4F5C\u533A" : state.files.length ? `${state.files.length} \u4E2A\u53D8\u66F4\u6587\u4EF6` : "\u6CA1\u6709\u5F85\u63D0\u4EA4\u7684\u53D8\u66F4" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", { ref: commitTrigger, className: "dg-primary", "aria-expanded": commitOpen, "aria-controls": commitId, disabled: !!busy, onClick: () => setCommitOpen((value) => !value), children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "commit" }),
-          "\u63D0\u4EA4\u4E0E\u63A8\u9001",
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "chevron" })
-        ] })
-      ] }),
-      commitOpen && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dialog", { ref: commitDialog, id: commitId, className: "dg-commit-shade", "aria-label": "\u63D0\u4EA4\u4E0E\u63A8\u9001", onCancel: (event) => {
-        event.preventDefault();
-        closeCommit();
-      }, onClick: closeCommit, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "dg-commit-card", onClick: (e) => e.stopPropagation(), children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-branch-select", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "branch" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", { "aria-label": "\u5F53\u524D\u5206\u652F", value: state.branch, disabled: !writable, onChange: (e) => {
-            void act("switch", { branch: e.target.value });
-          }, children: [
-            !state.branch && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "", children: "Detached HEAD" }),
-            Array.from(/* @__PURE__ */ new Set([state.branch, ...branches])).filter(Boolean).map((branch) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { children: branch }, branch))
-          ] })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-new-branch", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-branch-name", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { className: "dg-prefix", "aria-label": "\u5206\u652F\u524D\u7F00", title: "\u5206\u652F\u524D\u7F00\uFF08\u53EF\u4FEE\u6539\u6216\u7559\u7A7A\uFF09", value: branchPrefix, onChange: (e) => setBranchPrefix(e.target.value), placeholder: "\u524D\u7F00" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { "aria-hidden": "true", children: "/" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { "aria-label": "\u65B0\u5206\u652F\u540D\u79F0", value: newBranch, onChange: (e) => setNewBranch(e.target.value), placeholder: "\u65B0\u5206\u652F" })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { disabled: !writable || !newBranch.trim(), onClick: () => {
-            const prefix = branchPrefix.trim().replace(/\/+$/, "");
-            void act("createBranch", { branch: prefix ? `${prefix}/${newBranch.trim()}` : newBranch.trim() });
-          }, children: "\u521B\u5EFA\u5206\u652F" })
-        ] }),
-        hasChanges && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", { ref: messageInput, className: "dg-message", "aria-label": "\u63D0\u4EA4\u4FE1\u606F", disabled: !!busy, value: message, onChange: (e) => setMessage(e.target.value), placeholder: "\u63D0\u4EA4\u4FE1\u606F\uFF08\u7559\u7A7A\u81EA\u52A8\u751F\u6210\uFF09\u2026", rows: 3 }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-include", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { className: "dg-check", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { type: "checkbox", checked: include, disabled: !!busy, onChange: (e) => setInclude(e.target.checked) }),
-              "\u5305\u542B\u672A\u6682\u5B58\u7684\u66F4\u6539"
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "dg-stats", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("b", { children: [
-                "+",
-                state.additions.toLocaleString()
-              ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("em", { children: [
-                "-",
-                state.deletions.toLocaleString()
-              ] })
-            ] })
-          ] })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dg-commit-actions", children: [
-          hasChanges && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", { disabled: !canCommit, onClick: () => {
-              void act("commit", { message, includeUnstaged: include });
-            }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "commit" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "\u63D0\u4EA4" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("kbd", { children: "Ctrl/\u2318 \u21B5" })
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", { disabled: !canCommit, onClick: () => {
-              void act("commitPush", { message, includeUnstaged: include });
-            }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "push" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "\u63D0\u4EA4\u5E76\u63A8\u9001" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("kbd", { children: "Ctrl/\u2318 \u21E7 \u21B5" })
-            ] })
-          ] }),
-          !hasChanges && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", { disabled: !canPush, onClick: () => {
-            void act("push");
-          }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "push" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "\u63A8\u9001" })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", { disabled: !!busy, onClick: openPR, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "github" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: pr ? "\u67E5\u770B Pull Request" : "\u521B\u5EFA Pull Request" })
-          ] }),
-          hasChanges && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", { disabled: !canPush, onClick: () => {
-            void act("push");
-          }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { name: "push" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "\u63A8\u9001" })
-          ] })
-        ] })
-      ] }) })
-    ] })
-  ] });
-}
-
-// src/launcher.tsx
-var import_jsx_runtime2 = require("react/jsx-runtime");
-function GitLauncher({ sessionId, remote, onOpen }) {
-  const [expanded, setExpanded] = (0, import_react2.useState)(null), [wide, setWide] = (0, import_react2.useState)(true);
-  const visible = expanded ?? wide;
-  const [host, setHost] = (0, import_react2.useState)(null);
-  const [state, setState] = (0, import_react2.useState)(), [error62, setError] = (0, import_react2.useState)("");
-  const trigger = (0, import_react2.useRef)(null), changes = (0, import_react2.useRef)(null);
-  const id = (0, import_react2.useId)();
-  const remoteRef = (0, import_react2.useRef)(remote);
-  (0, import_react2.useEffect)(() => {
-    remoteRef.current = remote;
-  }, [remote]);
-  (0, import_react2.useEffect)(() => {
-    const header = trigger.current?.closest("header");
-    const root = trigger.current?.closest("[data-phase]");
-    if (!header || !root) return;
-    setHost(root);
-    let wasWide;
-    const measure = () => {
-      if (!root.clientWidth) return;
-      const wide2 = root.clientWidth >= 900;
-      root.setAttribute("data-dg-wide", String(wide2));
-      setWide(wide2);
-      if (wasWide !== void 0 && wide2 !== wasWide) setExpanded(null);
-      wasWide = wide2;
-      root.style.setProperty("--dg-header-height", `${header.offsetHeight}px`);
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(root);
-    observer.observe(header);
-    return () => {
-      observer.disconnect();
-      root.removeAttribute("data-dg-wide");
-      root.style.removeProperty("--dg-header-height");
-    };
-  }, []);
-  (0, import_react2.useEffect)(() => {
-    if (!host || !visible) return;
-    host.classList.add("dg-host");
-    let body = null;
-    const attach = () => {
-      body = host.querySelector("[data-conversation-content]");
-      body?.classList.add("dg-conversation-body");
-      return !!body;
-    };
-    const observer = new MutationObserver(() => {
-      if (attach()) observer.disconnect();
-    });
-    if (!attach()) observer.observe(host, { childList: true, subtree: true });
-    return () => {
-      observer.disconnect();
-      body?.classList.remove("dg-conversation-body");
-      host.classList.remove("dg-host");
-    };
-  }, [host, visible]);
-  (0, import_react2.useEffect)(() => {
-    if (!visible) return;
-    let alive = true, pending2 = false;
-    const load = async () => {
-      if (pending2) return;
-      pending2 = true;
-      try {
-        const result = unwrap(await remoteRef.current.run({ sessionId, action: "state" }));
-        if (alive) {
-          setState(result.state);
-          setError("");
+          event.stopPropagation();
+          closeCommit();
         }
-      } catch (e) {
-        if (alive) setError(e.message);
-      } finally {
-        pending2 = false;
-      }
-    };
-    const stop = followChanges(() => remoteRef.current, sessionId, load, setError);
-    return () => {
-      alive = false;
-      stop();
-    };
-  }, [sessionId, visible]);
-  const closeCard = () => {
-    setExpanded(false);
-    trigger.current?.focus();
-  };
-  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { ref: trigger, type: "button", className: "dg-launcher", title: visible ? "\u6536\u8D77 DSHGit" : "\u5C55\u5F00 DSHGit", "aria-label": visible ? "\u6536\u8D77 DSHGit" : "\u5C55\u5F00 DSHGit", "aria-expanded": visible, "aria-controls": id, onClick: () => setExpanded(!visible), accessKey: "g", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { name: "branch" }) }),
-    visible && (0, import_react_dom.createPortal)(/* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("aside", { id, className: `dg-sidebar${host ? "" : " dg-sidebar-floating"}`, "aria-label": "DSHGit \u5DE5\u4F5C\u533A", onKeyDown: (event) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopPropagation();
-        closeCard();
-      }
-    }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "dg-sidebar-heading", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { title: state?.root, children: state?.name ?? "\u5DE5\u4F5C\u533A" }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { type: "button", "aria-label": "\u6536\u8D77 DSHGit", title: "\u6536\u8D77", onClick: closeCard, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { name: "close" }) })
-      ] }),
-      error62 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "dg-sidebar-error", role: "alert", children: error62 }) : /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { ref: changes, type: "button", className: "dg-sidebar-changes", onClick: onOpen, disabled: !state, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { name: "changes" }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: "\u53D8\u66F4" }),
-          state && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "dg-stats", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("b", { children: [
-              "+",
-              state.additions.toLocaleString()
+        if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && commitOpen && canCommit) {
+          event.preventDefault();
+          event.stopPropagation();
+          void act(event.shiftKey ? "commitPush" : "commit", { message, includeUnstaged: include });
+        }
+      },
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("header", { className: "dg-toolbar", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
+            "button",
+            {
+              className: "dg-summary-pill",
+              title: "\u5DE5\u4F5C\u533A\u53D8\u66F4",
+              "aria-pressed": view === "changes",
+              onClick: () => setView("changes"),
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { children: "\u53D8\u66F4" }),
+                state && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "dg-stats", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("b", { children: [
+                    "+",
+                    state.additions.toLocaleString()
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("em", { children: [
+                    "-",
+                    state.deletions.toLocaleString()
+                  ] })
+                ] })
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
+            "button",
+            {
+              className: "dg-branch-pill",
+              title: state ? `${state.name} \xB7 ${state.branch || "Detached HEAD"}${state.upstream ? ` \u2192 ${state.upstream}\uFF08\u2191 ${state.ahead} \u2193 ${state.behind}\uFF09` : " \xB7 \u5C1A\u672A\u5173\u8054\u4E0A\u6E38"}` : "\u6B63\u5728\u8BFB\u53D6\u5206\u652F",
+              "aria-label": "\u9009\u62E9\u5206\u652F",
+              disabled: !state || !!busy,
+              onClick: () => setCommitOpen((value) => !value),
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Icon, { name: "branch" }),
+                /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { children: state?.branch || "\u5206\u652F" }),
+                /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Icon, { name: "chevron" })
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "dg-tools", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+              "button",
+              {
+                title: pr ? "\u67E5\u770B Pull Request" : "\u521B\u5EFA Pull Request",
+                "aria-label": pr ? "\u67E5\u770B Pull Request" : "\u521B\u5EFA Pull Request",
+                "aria-pressed": view === "pr",
+                disabled: !state || !!busy,
+                onClick: openPR,
+                children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Icon, { name: "github" })
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+              "button",
+              {
+                title: "\u5237\u65B0",
+                "aria-label": "\u5237\u65B0 Git \u72B6\u6001",
+                disabled: !!busy,
+                onClick: () => {
+                  void load(true);
+                  if (view === "pr") void loadPR();
+                },
+                children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Icon, { name: "refresh" })
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+              "button",
+              {
+                title: "\u6587\u4EF6\u5217\u8868",
+                "aria-label": "\u6587\u4EF6\u5217\u8868",
+                "aria-expanded": filesOpen,
+                onClick: () => {
+                  setView("changes");
+                  setFilesOpen((value) => !value);
+                },
+                children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Icon, { name: "files" })
+              }
+            )
+          ] })
+        ] }),
+        (error62 || loadError) && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "dg-alert", role: "alert", children: error62 || loadError }),
+        !state ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "dg-empty", children: error62 || loadError ? "\u8BF7\u786E\u8BA4\u5F53\u524D\u5DE5\u4F5C\u533A\u4E3A Git \u4ED3\u5E93\u3002" : "\u6B63\u5728\u8BFB\u53D6\u5DE5\u4F5C\u533A\u2026" }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
+          view === "changes" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "dg-workspace", "data-files-open": filesOpen, children: [
+            filesOpen && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "dg-files", children: [
+              ["staged", "working"].map((group) => {
+                const staged = group === "staged";
+                const files = state.files.filter((f) => staged ? isStaged(f.index) : f.worktree !== " ");
+                const titleLabel = staged ? "\u5DF2\u6682\u5B58" : "\u672A\u6682\u5B58";
+                return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("section", { "aria-label": titleLabel, children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("h3", { children: [
+                    titleLabel,
+                    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { children: files.length })
+                  ] }),
+                  files.map((file2) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
+                    "div",
+                    {
+                      className: "dg-file",
+                      "data-active": selected === `${staged}:${file2.path}`,
+                      children: [
+                        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
+                          "button",
+                          {
+                            className: "dg-file-name",
+                            title: file2.original ? `${file2.original} \u2192 ${file2.path}` : file2.path,
+                            onClick: () => {
+                              void showDiff(file2.path, staged);
+                            },
+                            children: [
+                              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "dg-status", children: file2.index === "?" ? "U" : staged ? file2.index : file2.worktree }),
+                              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { children: file2.path })
+                            ]
+                          }
+                        ),
+                        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+                          "button",
+                          {
+                            className: "dg-stage",
+                            disabled: !writable,
+                            "aria-label": `${staged ? "\u53D6\u6D88\u6682\u5B58" : "\u6682\u5B58"} ${file2.path}`,
+                            title: staged ? "\u53D6\u6D88\u6682\u5B58" : "\u6682\u5B58",
+                            onClick: () => {
+                              void act(staged ? "unstage" : "stage", { path: file2.path });
+                            },
+                            children: staged ? "\u2212" : "+"
+                          }
+                        )
+                      ]
+                    },
+                    file2.path
+                  ))
+                ] }, group);
+              }),
+              !state.files.length && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "dg-empty", children: [
+                "\u5DE5\u4F5C\u533A\u5E72\u51C0",
+                /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("br", {}),
+                /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "dg-muted", children: "\u6240\u6709\u53D8\u66F4\u5747\u5DF2\u63D0\u4EA4" })
+              ] })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("em", { children: [
-              "-",
-              state.deletions.toLocaleString()
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "dg-diff", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "dg-diff-title", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Icon, { name: "changes" }),
+                /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { title: selectedPath, children: selectedPath || "\u6587\u4EF6\u5DEE\u5F02" })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(DiffContent, { text: diff2, path: selectedPath })
             ] })
-          ] })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "dg-sidebar-section", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: "\u5F53\u524D\u5206\u652F" }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: state ? `${state.files.length} \u4E2A\u53D8\u66F4` : "\u6B63\u5728\u8BFB\u53D6\u2026" })
-        ] }),
-        state && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "dg-sidebar-branch", title: state.branch || "Detached HEAD", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { name: "branch" }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: state.branch || "Detached HEAD" })
+          ] }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "dg-pr", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "dg-pr-heading", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Icon, { name: "github" }),
+              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("h2", { ref: prHeading, tabIndex: -1, children: pr ? "Pull Request" : "\u521B\u5EFA Pull Request" })
+            ] }),
+            prError && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "dg-alert", role: "alert", children: prError }),
+            pr ? /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "dg-pr-existing", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "dg-muted", children: [
+                "#",
+                pr.number
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("h3", { children: pr.title }),
+              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("a", { href: safeUrl(pr.url), target: "_blank", rel: "noreferrer", children: "\u5728 GitHub \u4E2D\u6253\u5F00 \u2197" })
+            ] }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
+              "form",
+              {
+                onSubmit: (event) => {
+                  event.preventDefault();
+                  void act("createPR", { title, body, base, draft });
+                },
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("label", { children: [
+                    "\u76EE\u6807\u5206\u652F",
+                    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+                      "input",
+                      {
+                        required: true,
+                        value: base,
+                        onChange: (event) => setBase(event.target.value),
+                        placeholder: "main"
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("label", { children: [
+                    "\u6807\u9898",
+                    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+                      "input",
+                      {
+                        maxLength: 256,
+                        disabled: !!busy,
+                        value: title,
+                        onChange: (event) => setTitle(event.target.value),
+                        placeholder: "\u7559\u7A7A\u7531\u6A21\u578B\u6839\u636E\u53D8\u66F4\u751F\u6210"
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("label", { children: [
+                    "\u63CF\u8FF0",
+                    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+                      "textarea",
+                      {
+                        rows: 3,
+                        disabled: !!busy,
+                        value: body,
+                        onChange: (event) => setBody(event.target.value),
+                        placeholder: "\u7559\u7A7A\u7531\u5F53\u524D\u4F1A\u8BDD\u6A21\u578B\u6839\u636E\u63D0\u4EA4\u548C\u5DEE\u5F02\u751F\u6210"
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "dg-form-footer", children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("label", { className: "dg-check", children: [
+                      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+                        "input",
+                        {
+                          type: "checkbox",
+                          checked: draft,
+                          onChange: (event) => setDraft(event.target.checked)
+                        }
+                      ),
+                      "\u521B\u5EFA\u4E3A\u8349\u7A3F"
+                    ] }),
+                    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+                      "button",
+                      {
+                        className: "dg-primary",
+                        disabled: !canPush || !base.trim() || !!prError,
+                        type: "submit",
+                        children: busy === "createPR" ? !title.trim() || !body.trim() ? "\u6B63\u5728\u751F\u6210\u5E76\u521B\u5EFA\u2026" : "\u6B63\u5728\u521B\u5EFA\u2026" : "\u521B\u5EFA PR"
+                      }
+                    )
+                  ] })
+                ]
+              }
+            )
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { type: "button", className: "dg-sidebar-open", onClick: onOpen, children: [
-            "\u67E5\u770B\u5168\u90E8",
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { name: "chevron" })
-          ] })
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("footer", { className: "dg-footer", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "dg-muted", role: "status", children: busy ? ["commit", "commitPush"].includes(busy) && !message.trim() ? "\u6B63\u5728\u751F\u6210\u8BF4\u660E\u5E76\u63D0\u4EA4\u2026" : "\u6B63\u5728\u6267\u884C Git \u64CD\u4F5C\u2026" : state.writable === false ? "\u53EA\u8BFB\u5DE5\u4F5C\u533A" : state.files.length ? `${state.files.length} \u4E2A\u53D8\u66F4\u6587\u4EF6` : "\u6CA1\u6709\u5F85\u63D0\u4EA4\u7684\u53D8\u66F4" }),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
+              "button",
+              {
+                ref: commitTrigger,
+                className: "dg-primary",
+                "aria-expanded": commitOpen,
+                "aria-controls": commitId,
+                disabled: !!busy,
+                onClick: () => setCommitOpen((value) => !value),
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Icon, { name: "commit" }),
+                  "\u63D0\u4EA4\u4E0E\u63A8\u9001",
+                  /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Icon, { name: "chevron" })
+                ]
+              }
+            )
+          ] }),
+          commitOpen && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+            CommitDialog,
+            {
+              commitDialog,
+              commitId,
+              messageInput,
+              state,
+              branches,
+              branchPrefix,
+              newBranch,
+              hasChanges,
+              message,
+              include,
+              busy: busy ?? null,
+              writable,
+              canCommit,
+              canPush,
+              pr,
+              onClose: closeCommit,
+              onBranchPrefix: setBranchPrefix,
+              onNewBranch: setNewBranch,
+              onMessage: setMessage,
+              onInclude: setInclude,
+              onAct: (action, extra) => {
+                void act(action, extra);
+              },
+              onOpenPR: openPR
+            }
+          )
         ] })
-      ] })
-    ] }), host ?? document.body)
-  ] });
+      ]
+    }
+  );
 }
 
 // src/notifications.tsx
-var import_react3 = require("react");
-var import_jsx_runtime3 = require("react/jsx-runtime");
+var import_react4 = require("react");
+var import_jsx_runtime6 = require("react/jsx-runtime");
 function Toast({ notice }) {
-  (0, import_react3.useEffect)(() => {
+  (0, import_react4.useEffect)(() => {
     if (notice.error) return;
     const timer = setTimeout(() => dismissNotice(notice.id), 6e3);
     return () => clearTimeout(timer);
   }, [notice]);
-  return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "dg-toast", "data-error": notice.error, role: notice.error ? "alert" : "status", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "dg-toast-symbol", "aria-hidden": "true", children: notice.error ? "!" : "\u2713" }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: notice.message }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { type: "button", "aria-label": "\u5173\u95ED\u901A\u77E5", onClick: () => dismissNotice(notice.id), children: "\xD7" })
+  return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "dg-toast", "data-error": notice.error, role: notice.error ? "alert" : "status", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "dg-toast-symbol", "aria-hidden": "true", children: notice.error ? "!" : "\u2713" }),
+    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { children: notice.message }),
+    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { type: "button", "aria-label": "\u5173\u95ED\u901A\u77E5", onClick: () => dismissNotice(notice.id), children: "\xD7" })
   ] });
 }
 function GitNotifications() {
-  const notices2 = (0, import_react3.useSyncExternalStore)(subscribeOperations, getNotices);
-  return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "dg-toasts", "aria-label": "DSHGit \u64CD\u4F5C\u901A\u77E5", children: notices2.map((notice) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Toast, { notice }, notice.id)) });
+  const notices2 = (0, import_react4.useSyncExternalStore)(subscribeOperations, getNotices);
+  return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "dg-toasts", "aria-label": "DSHGit \u64CD\u4F5C\u901A\u77E5", children: notices2.map((notice) => /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Toast, { notice }, notice.id)) });
 }
 
 // src/panel.css
-var panel_default = ".dshgit,.dg-launcher,.dg-sidebar,.dg-toasts {\r\n  --dg-bg: var(--dsw-alias-bg-base, light-dark(#fff,#202020));\r\n  --dg-card: var(--dsw-alias-bg-module-platform, light-dark(#f7f7f8,#2c2c2c));\r\n  --dg-text: var(--dsw-alias-label-primary, light-dark(#242424,#f1f1f1));\r\n  --dg-muted: var(--dsw-alias-label-tertiary, light-dark(#737373,#a1a1a1));\r\n  --dg-line: var(--dsw-alias-border-l2, light-dark(#e2e2e5,#434343));\r\n  --dg-hover: var(--dsw-alias-interactive-bg-hover, light-dark(#ededf0,#3b3b3b));\r\n  --dg-green: var(--dsw-alias-state-success-primary, light-dark(#148049,#33c97c));\r\n  --dg-red: var(--dsw-alias-state-error-primary, light-dark(#cb3939,#ff6262));\r\n  font: inherit; color: var(--dg-text); box-sizing: border-box;\r\n}\r\n.dg-launcher { display:inline-flex; align-items:center; gap:6px; border:0; border-radius:8px; padding:6px 9px; background:transparent; cursor:pointer; font-size:13px; }\r\n.dg-launcher:hover { background:var(--dg-hover); }\r\n.dg-host { position:relative; }\r\n.dg-host[data-dg-wide=true] .dg-conversation-body { margin-right:328px; min-width:0; }\r\n.dg-sidebar { position:absolute; top:calc(var(--dg-header-height,76px) + 18px); right:18px; width:292px; max-width:calc(100% - 36px); max-height:calc(100% - var(--dg-header-height,76px) - 36px); overflow:auto; padding:10px; border:1px solid var(--dg-line); border-radius:16px; background:var(--dg-card); font-size:13px; line-height:1.5; z-index:5; text-align:left; }\r\n.dg-sidebar-floating { position:fixed; top:90px; max-height:calc(100dvh - 110px); }\r\n.dg-sidebar * { box-sizing:border-box; }\r\n.dg-sidebar button { font:inherit; color:inherit; border:0; background:transparent; cursor:pointer; border-radius:8px; }\r\n.dg-sidebar button:hover { background:var(--dg-hover); }\r\n.dg-sidebar button:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary,#5787dc); outline-offset:2px; }\r\n.dg-sidebar button:disabled { cursor:default; opacity:.5; }\r\n.dg-sidebar-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 4px 6px 10px; color:var(--dg-muted); }\r\n.dg-sidebar-heading>span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-sidebar-heading button { display:grid; place-items:center; width:26px; height:26px; flex-shrink:0; }\r\n.dg-sidebar-heading svg { width:15px; height:15px; }\r\n.dg-sidebar .dg-sidebar-changes { display:flex; align-items:center; gap:10px; width:100%; padding:7px 10px; background:var(--dg-hover); text-align:left; }\r\n.dg-sidebar-changes>span:first-of-type { flex:1; }\r\n.dg-sidebar .dg-stats { font-size:12px; }\r\n.dg-sidebar svg { width:17px; height:17px; flex-shrink:0; }\r\n.dg-sidebar-section { display:flex; justify-content:space-between; gap:8px; margin:12px 10px 7px; padding-top:10px; border-top:1px solid var(--dg-line); color:var(--dg-muted); font-size:12px; }\r\n.dg-sidebar-branch { display:flex; gap:10px; align-items:center; padding:5px 10px; color:var(--dg-muted); }\r\n.dg-sidebar-branch span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-sidebar-open { display:flex; align-items:center; gap:8px; width:100%; padding:7px 10px; text-align:left; }\r\n.dg-sidebar-open svg { transform:rotate(-90deg); margin-left:auto; }\r\n.dg-sidebar-error { color:var(--dg-red); padding:8px 10px; overflow-wrap:anywhere; }\r\n.dshgit { display:flex; flex-direction:column; height:min(760px,calc(100dvh - 44px)); position:relative; text-align:left; font-size:14px; line-height:1.5; }\r\n.dshgit * { box-sizing:border-box; }\r\n.dshgit button,.dshgit input,.dshgit textarea,.dshgit select { font:inherit; color:inherit; }\r\n.dshgit button { cursor:pointer; border:0; background:transparent; border-radius:10px; }\r\n.dshgit button:hover:not(:disabled) { background:var(--dg-hover); }\r\n.dshgit button:disabled { opacity:.36; cursor:default; }\r\n.dshgit :is(button,input,textarea,select,a):focus-visible,.dg-launcher:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary,#5787dc); outline-offset:2px; }\r\n.dg-tools { display:flex; gap:2px; flex-shrink:0; border-radius:18px; padding:3px; background:var(--dg-card); }\r\n.dg-tools button { display:grid; place-items:center; width:28px; height:28px; color:var(--dg-muted); }\r\n.dg-muted { color:var(--dg-muted); font-weight:400; }\r\n.dg-stats { display:inline-flex; align-items:center; gap:7px; font-size:14px; white-space:nowrap; font-variant-numeric:tabular-nums; }\r\n.dg-stats b { color:var(--dg-green); font-weight:400; }\r\n.dg-stats em { color:var(--dg-red); font-style:normal; }\r\n.dg-workspace { display:grid; grid-template-columns:minmax(0,1fr); flex:1; min-height:0; border-top:1px solid var(--dg-line); }\r\n.dg-files { overflow:auto; border-right:1px solid var(--dg-line); padding:10px; }\r\n.dg-files h3 { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--dg-muted); font-weight:500; margin:8px 10px; }\r\n.dg-files h3 span { font-variant-numeric:tabular-nums; }\r\n.dg-file { display:flex; border-radius:8px; margin:2px 0; }\r\n.dg-file[data-active=true] { background:var(--dg-hover); }\r\n.dshgit .dg-file-name { min-width:0; padding:8px; display:flex; align-items:center; flex:1; text-align:left; gap:8px; font-size:13px; }\r\n.dg-file-name>span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-status { font-size:11px; width:16px; flex-shrink:0; color:var(--dg-green); }\r\n.dshgit .dg-stage { width:30px; flex-shrink:0; color:var(--dg-muted); font-size:20px; }\r\n.dg-diff { display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--dg-bg); }\r\n.dg-diff-title { display:flex; align-items:center; gap:8px; padding:12px 16px; font-size:13px; border-bottom:1px solid var(--dg-line); color:var(--dg-muted); overflow-wrap:anywhere; }\r\n.dg-diff pre { flex:1; overflow:auto; margin:0; padding:0; font:12px/1.8 ui-monospace,Consolas,monospace; tab-size:4; }\r\n.dg-diff-title span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-diff-title svg { flex-shrink:0; width:16px; height:16px; }\r\n.dg-code-line { display:flex; min-width:100%; width:max-content; min-height:24px; }\r\n.dg-code-line code { padding-right:16px; font:inherit; white-space:pre; color:var(--dg-text); }\r\n.dg-added .dg-diff-marker { color:var(--dg-green); }\r\n.dg-removed .dg-diff-marker { color:var(--dg-red); }\r\n.dg-diff :is(.hljs-keyword,.hljs-selector-tag,.hljs-literal) { color:light-dark(#a626a4,#c792ea); }\r\n.dg-diff :is(.hljs-string,.hljs-regexp,.hljs-addition) { color:light-dark(#397300,#a3d98b); }\r\n.dg-diff :is(.hljs-comment,.hljs-quote) { color:light-dark(#68737d,#929da8); font-style:italic; }\r\n.dg-diff :is(.hljs-number,.hljs-symbol,.hljs-bullet) { color:light-dark(#9c5100,#f6b979); }\r\n.dg-diff :is(.hljs-title,.hljs-section,.hljs-attribute) { color:light-dark(#005cc5,#82aaff); }\r\n.dg-diff :is(.hljs-built_in,.hljs-type,.hljs-class,.hljs-attr) { color:light-dark(#865300,#ffcb8b); }\r\n.dg-diff :is(.hljs-variable,.hljs-template-variable,.hljs-selector-class,.hljs-selector-id,.hljs-tag,.hljs-name) { color:light-dark(#b2293e,#f07178); }\r\n.dg-diff :is(.hljs-meta,.hljs-deletion) { color:light-dark(#006f78,#89ddff); }\r\n.dg-diff .hljs-emphasis { font-style:italic; }\r\n.dg-diff .hljs-strong { font-weight:600; }\r\n.dg-line-number { flex:0 0 42px; padding-right:12px; color:var(--dg-muted); text-align:right; user-select:none; font-size:11px; }\r\n.dg-code-line.dg-added { background:color-mix(in srgb,var(--dg-green) 12%,transparent); }\r\n.dg-code-line.dg-removed { background:color-mix(in srgb,var(--dg-red) 12%,transparent); }\r\n.dg-code-line.dg-hunk { background:var(--dg-card); padding-block:5px; color:var(--dg-muted); }\r\n.dg-added { color:var(--dg-green); }\r\n.dg-removed { color:var(--dg-red); }\r\n.dg-hunk { color:var(--dsw-alias-state-business-primary,#7096d4); }\r\n.dg-empty { padding:38px 20px; text-align:center; color:var(--dg-muted); line-height:2; }\r\n.dg-footer { display:flex; justify-content:space-between; align-items:center; gap:12px; border-top:1px solid var(--dg-line); padding:14px 24px; flex-shrink:0; }\r\n.dshgit .dg-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:9px 15px; background:var(--dsw-alias-button-primary-fill,var(--dg-text)); color:var(--dsw-alias-label-primary-foreground,var(--dg-bg)); font-weight:500; white-space:nowrap; }\r\n.dshgit .dg-primary:hover:not(:disabled) { background:var(--dsw-alias-button-primary-hover,var(--dg-muted)); }\r\n.dg-alert,.dg-notice { margin:12px 24px 0; padding:10px 14px; border-radius:10px; overflow-wrap:anywhere; font-size:13px; max-height:110px; overflow:auto; flex-shrink:0; }\r\n.dg-alert { color:var(--dg-red); background:color-mix(in srgb,var(--dg-red) 9%,transparent); }\r\n.dg-notice { color:var(--dg-green); background:color-mix(in srgb,var(--dg-green) 8%,transparent); }\r\n.dg-pr { padding:20px 28px 28px; flex:1; min-height:0; overflow:auto; border-top:1px solid var(--dg-line); }\r\n.dg-pr-heading { display:flex; align-items:center; gap:10px; margin-bottom:18px; }\r\n.dg-pr h2 { font-size:18px; font-weight:500; margin:0; }\r\n.dg-pr form { max-width:680px; margin:auto; display:grid; grid-template-columns:150px minmax(0,1fr); gap:16px; }\r\n.dg-pr form>label:nth-child(3),.dg-form-footer { grid-column:1/-1; }\r\n.dg-pr label { display:flex; flex-direction:column; gap:7px; font-size:13px; }\r\n.dshgit :is(input:not([type=checkbox]),textarea,select) { border:1px solid var(--dg-line); border-radius:10px; background:var(--dg-bg); padding:9px 12px; min-width:0; }\r\n.dshgit input::placeholder,.dshgit textarea::placeholder { color:var(--dg-muted); opacity:1; }\r\n.dshgit textarea { resize:vertical; }\r\n.dg-pr .dg-alert { margin:0 0 18px; }\r\n.dg-form-footer { display:flex; align-items:center; justify-content:space-between; gap:16px; }\r\n.dshgit .dg-check { display:inline-flex; flex-direction:row; align-items:center; gap:9px; font-size:14px; cursor:pointer; }\r\n.dg-check input { width:17px; height:17px; accent-color:var(--dg-text); margin:0; }\r\n.dg-pr-existing { padding:18px 24px; border:1px solid var(--dg-line); border-radius:16px; background:var(--dg-card); }\r\n.dg-pr-existing h3 { font-size:18px; font-weight:500; }\r\n.dg-pr-existing a { color:var(--dg-text); text-underline-offset:4px; }\r\n.dg-commit-shade { position:fixed; inset:0; margin:auto; padding:0; border:0; width:380px; max-width:calc(100vw - 32px); max-height:calc(100dvh - 32px); background:transparent; color:var(--dg-text); overflow:visible; font-family:inherit; font-size:13px; line-height:1.5; }\r\n.dg-commit-shade::backdrop { background:#0003; backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); }\r\n.dg-commit-card { background:color-mix(in srgb,var(--dg-card) 78%,transparent); backdrop-filter:blur(24px) saturate(140%); -webkit-backdrop-filter:blur(24px) saturate(140%); border:1px solid color-mix(in srgb,var(--dg-line) 70%,transparent); border-radius:18px; padding:12px 8px 8px; box-shadow:0 16px 48px #0003,inset 0 1px 0 #ffffff12; width:100%; max-height:calc(100dvh - 32px); overflow:auto; animation:dg-appear 160ms ease-out; }\r\n.dg-commit-card svg { width:17px; height:17px; flex-shrink:0; }\r\n.dg-branch-select { display:flex; align-items:center; gap:8px; margin:0 10px 10px; }\r\n.dshgit .dg-branch-select select { flex:1; border:0; background:transparent; padding:3px; font-size:14px; }\r\n.dg-new-branch { display:flex; gap:6px; margin:0 6px 8px; }\r\n.dg-branch-name { display:flex; align-items:center; flex:1; min-width:0; border-radius:8px; background:color-mix(in srgb,var(--dg-bg) 45%,transparent); }\r\n.dg-branch-name>span { color:var(--dg-muted); }\r\n.dshgit .dg-branch-name input { flex:1; width:0; border:0; border-radius:6px; padding:7px 8px; background:transparent; font-size:12px; }\r\n.dshgit .dg-branch-name .dg-prefix { flex:0 1 66px; }\r\n.dg-new-branch button { padding:5px 8px; color:var(--dg-muted); font-size:12px; flex-shrink:0; }\r\n.dshgit .dg-message { width:100%; display:block; border:0; border-radius:8px; background:transparent; padding:10px 12px; font-size:13px; resize:none; min-height:76px; }\r\n.dg-include { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:10px 12px 12px; }\r\n.dg-commit-card .dg-check,.dg-commit-card .dg-stats { font-size:12px; }\r\n.dg-commit-card .dg-check input { width:14px; height:14px; }\r\n.dg-commit-actions { padding-top:6px; border-top:1px solid var(--dg-line); }\r\n.dg-commit-actions button { width:100%; display:flex; align-items:center; gap:10px; padding:8px 12px; min-height:36px; text-align:left; font-size:14px; }\r\n.dg-commit-actions button:first-child { background:var(--dg-hover); }\r\n.dg-commit-actions button>span { flex:1; }\r\n.dg-commit-actions kbd { color:var(--dg-muted); background:color-mix(in srgb,var(--dg-text) 8%,transparent); padding:0 6px; border-radius:6px; font-family:inherit; font-size:11px; line-height:1.8; }\r\n@keyframes dg-appear { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }\r\n@media(prefers-reduced-motion:reduce) { .dg-commit-card { animation:none; } }\r\n\r\n.dg-docked { height:100%; min-height:0; min-width:0; container: dshgit / inline-size; }\r\n.dg-docked .dshgit { height:100%; min-height:0; background:var(--dg-bg); }\r\n.dg-toasts { position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:10000; width:min(560px,calc(100vw - 32px)); display:flex; flex-direction:column; gap:10px; pointer-events:none; max-height:calc(100dvh - 40px); overflow:auto; }\r\n.dg-toast { display:flex; align-items:flex-start; gap:10px; border:1px solid var(--dg-line); border-radius:14px; padding:14px 16px; background:var(--dg-card); box-shadow:0 8px 32px #0003; font-size:14px; line-height:1.5; pointer-events:auto; }\r\n.dg-toast>span:nth-child(2) { flex:1; min-width:0; overflow-wrap:anywhere; white-space:pre-wrap; max-height:35dvh; overflow:auto; }\r\n.dg-toast-symbol { color:var(--dg-green); font-weight:600; }\r\n.dg-toast[data-error=true] .dg-toast-symbol { color:var(--dg-red); }\r\n.dg-toast button { border:0; background:transparent; color:var(--dg-muted); cursor:pointer; font-size:20px; line-height:1; padding:2px; }\r\n.dg-toast button:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary,#5787dc); outline-offset:3px; }\r\n@container dshgit (max-width: 760px) {\r\n  .dg-workspace[data-files-open=true] { grid-template-columns:minmax(150px,38%) minmax(0,1fr); }\r\n  .dg-footer { padding:12px 16px; flex-wrap:wrap; font-size:12px; }\r\n  .dg-pr { padding:16px; }\r\n  .dg-pr form { grid-template-columns:1fr; }\r\n  .dg-form-footer { flex-wrap:wrap; }\r\n}\r\n@container dshgit (max-width: 480px) {\r\n  .dg-workspace[data-files-open=true] { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(80px,38%) minmax(100px,1fr); }\r\n  .dg-files { border-right:0; border-bottom:1px solid var(--dg-line); padding:4px; }\r\n}\r\n\r\n.dg-toolbar { display:flex; align-items:center; gap:8px; padding:8px 10px; min-height:50px; flex-shrink:0; }\r\n.dshgit .dg-summary-pill,.dshgit .dg-branch-pill { display:flex; align-items:center; gap:8px; min-height:34px; padding:6px 12px; background:var(--dg-card); border-radius:18px; font-size:13px; white-space:nowrap; }\r\n.dg-summary-pill { flex-shrink:0; }\r\n.dg-summary-pill .dg-stats { font-size:12px; gap:4px; }\r\n.dg-branch-pill { flex:1; min-width:0; }\r\n.dg-branch-pill span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-branch-pill svg { width:14px; height:14px; flex-shrink:0; }\r\n.dg-branch-pill svg:last-child { margin-left:auto; }\r\n.dg-tools svg { width:17px; height:17px; }\r\n.dg-tools button[aria-pressed=true],.dg-tools button[aria-expanded=true] { color:var(--dg-text); background:var(--dg-hover); }\r\n.dg-workspace[data-files-open=true] { grid-template-columns:240px minmax(0,1fr); }\r\n@container dshgit (max-width: 760px) {\r\n  .dg-workspace[data-files-open=true] { grid-template-columns:minmax(150px,38%) minmax(0,1fr); }\r\n}\r\n@container dshgit (max-width: 480px) {\r\n  .dg-toolbar { gap:5px; padding:7px 6px; }\r\n  .dshgit .dg-summary-pill,.dshgit .dg-branch-pill { padding:6px 8px; gap:5px; }\r\n  .dg-branch-pill svg:first-child { display:none; }\r\n  .dg-workspace[data-files-open=true] { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(80px,38%) minmax(100px,1fr); }\r\n}\r\n";
+var panel_default = ".dshgit,.dg-launcher,.dg-sidebar,.dg-toasts {\r\n  --dg-bg: var(--dsw-alias-bg-base, light-dark(#fff,#202020));\r\n  --dg-card: var(--dsw-alias-bg-module-platform, light-dark(#f7f7f8,#2c2c2c));\r\n  --dg-text: var(--dsw-alias-label-primary, light-dark(#242424,#f1f1f1));\r\n  --dg-muted: var(--dsw-alias-label-tertiary, light-dark(#737373,#a1a1a1));\r\n  --dg-line: var(--dsw-alias-border-l2, light-dark(#e2e2e5,#434343));\r\n  --dg-hover: var(--dsw-alias-interactive-bg-hover, light-dark(#ededf0,#3b3b3b));\r\n  --dg-green: var(--dsw-alias-state-success-primary, light-dark(#148049,#33c97c));\r\n  --dg-red: var(--dsw-alias-state-error-primary, light-dark(#cb3939,#ff6262));\r\n  font: inherit; color: var(--dg-text); box-sizing: border-box;\r\n}\r\n.dg-launcher { display:inline-flex; align-items:center; gap:6px; border:0; border-radius:8px; padding:6px 9px; background:transparent; cursor:pointer; font-size:13px; }\r\n.dg-launcher:hover { background:var(--dg-hover); }\r\n.dg-host { position:relative; }\r\n.dg-host[data-dg-wide=true] .dg-conversation-body { margin-right:328px; min-width:0; }\r\n.dg-sidebar { position:absolute; top:calc(var(--dg-header-height,76px) + 18px); right:18px; width:292px; max-width:calc(100% - 36px); max-height:calc(100% - var(--dg-header-height,76px) - 36px); overflow:auto; padding:10px; border:1px solid var(--dg-line); border-radius:16px; background:var(--dg-card); font-size:13px; line-height:1.5; z-index:5; text-align:left; }\r\n.dg-sidebar-floating { position:fixed; top:90px; max-height:calc(100dvh - 110px); }\r\n.dg-sidebar * { box-sizing:border-box; }\r\n.dg-sidebar button { font:inherit; color:inherit; border:0; background:transparent; cursor:pointer; border-radius:8px; }\r\n.dg-sidebar button:hover { background:var(--dg-hover); }\r\n.dg-sidebar button:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary,#5787dc); outline-offset:2px; }\r\n.dg-sidebar button:disabled { cursor:default; opacity:.5; }\r\n.dg-sidebar-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 4px 6px 10px; color:var(--dg-muted); }\r\n.dg-sidebar-heading>span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-sidebar-heading button { display:grid; place-items:center; width:26px; height:26px; flex-shrink:0; }\r\n.dg-sidebar-heading svg { width:15px; height:15px; }\r\n.dg-sidebar .dg-sidebar-changes { display:flex; align-items:center; gap:10px; width:100%; padding:7px 10px; background:var(--dg-hover); text-align:left; }\r\n.dg-sidebar-changes>span:first-of-type { flex:1; }\r\n.dg-sidebar .dg-stats { font-size:12px; }\r\n.dg-sidebar svg { width:17px; height:17px; flex-shrink:0; }\r\n.dg-sidebar-section { display:flex; justify-content:space-between; gap:8px; margin:12px 10px 7px; padding-top:10px; border-top:1px solid var(--dg-line); color:var(--dg-muted); font-size:12px; }\r\n.dg-sidebar-branch { display:flex; gap:10px; align-items:center; padding:5px 10px; color:var(--dg-muted); }\r\n.dg-sidebar-branch span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-sidebar-open { display:flex; align-items:center; gap:8px; width:100%; padding:7px 10px; text-align:left; }\r\n.dg-sidebar-open svg { transform:rotate(-90deg); margin-left:auto; }\r\n.dg-sidebar-error { color:var(--dg-red); padding:8px 10px; overflow-wrap:anywhere; }\r\n.dshgit { display:flex; flex-direction:column; height:min(760px,calc(100dvh - 44px)); position:relative; text-align:left; font-size:14px; line-height:1.5; }\r\n.dshgit * { box-sizing:border-box; }\r\n.dshgit button,.dshgit input,.dshgit textarea,.dshgit select { font:inherit; color:inherit; }\r\n.dshgit button { cursor:pointer; border:0; background:transparent; border-radius:10px; }\r\n.dshgit button:hover:not(:disabled) { background:var(--dg-hover); }\r\n.dshgit button:disabled { opacity:.36; cursor:default; }\r\n.dshgit :is(button,input,textarea,select,a):focus-visible,.dg-launcher:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary,#5787dc); outline-offset:2px; }\r\n.dg-tools { display:flex; gap:2px; flex-shrink:0; border-radius:18px; padding:3px; background:var(--dg-card); }\r\n.dg-tools button { display:grid; place-items:center; width:28px; height:28px; color:var(--dg-muted); }\r\n.dg-muted { color:var(--dg-muted); font-weight:400; }\r\n.dg-stats { display:inline-flex; align-items:center; gap:7px; font-size:14px; white-space:nowrap; font-variant-numeric:tabular-nums; }\r\n.dg-stats b { color:var(--dg-green); font-weight:400; }\r\n.dg-stats em { color:var(--dg-red); font-style:normal; }\r\n.dg-workspace { display:grid; grid-template-columns:minmax(0,1fr); flex:1; min-height:0; border-top:1px solid var(--dg-line); }\r\n.dg-files { overflow:auto; border-right:1px solid var(--dg-line); padding:10px; }\r\n.dg-files h3 { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--dg-muted); font-weight:500; margin:8px 10px; }\r\n.dg-files h3 span { font-variant-numeric:tabular-nums; }\r\n.dg-file { display:flex; border-radius:8px; margin:2px 0; }\r\n.dg-file[data-active=true] { background:var(--dg-hover); }\r\n.dshgit .dg-file-name { min-width:0; padding:8px; display:flex; align-items:center; flex:1; text-align:left; gap:8px; font-size:13px; }\r\n.dg-file-name>span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-status { font-size:11px; width:16px; flex-shrink:0; color:var(--dg-green); }\r\n.dshgit .dg-stage { width:30px; flex-shrink:0; color:var(--dg-muted); font-size:20px; }\r\n.dg-diff { display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--dg-bg); }\r\n.dg-diff-title { display:flex; align-items:center; gap:8px; padding:12px 16px; font-size:13px; border-bottom:1px solid var(--dg-line); color:var(--dg-muted); overflow-wrap:anywhere; }\r\n.dg-diff pre { flex:1; overflow:auto; margin:0; padding:0; font:12px/1.8 ui-monospace,Consolas,monospace; tab-size:4; }\r\n.dg-diff-title span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-diff-title svg { flex-shrink:0; width:16px; height:16px; }\r\n.dg-code-line { display:flex; min-width:100%; width:max-content; min-height:24px; }\r\n.dg-code-line code { padding-right:16px; font:inherit; white-space:pre; color:var(--dg-text); }\r\n.dg-added .dg-diff-marker { color:var(--dg-green); }\r\n.dg-removed .dg-diff-marker { color:var(--dg-red); }\r\n.dg-diff :is(.hljs-keyword,.hljs-selector-tag,.hljs-literal) { color:light-dark(#a626a4,#c792ea); }\r\n.dg-diff :is(.hljs-string,.hljs-regexp,.hljs-addition) { color:light-dark(#397300,#a3d98b); }\r\n.dg-diff :is(.hljs-comment,.hljs-quote) { color:light-dark(#68737d,#929da8); font-style:italic; }\r\n.dg-diff :is(.hljs-number,.hljs-symbol,.hljs-bullet) { color:light-dark(#9c5100,#f6b979); }\r\n.dg-diff :is(.hljs-title,.hljs-section,.hljs-attribute) { color:light-dark(#005cc5,#82aaff); }\r\n.dg-diff :is(.hljs-built_in,.hljs-type,.hljs-class,.hljs-attr) { color:light-dark(#865300,#ffcb8b); }\r\n.dg-diff :is(.hljs-variable,.hljs-template-variable,.hljs-selector-class,.hljs-selector-id,.hljs-tag,.hljs-name) { color:light-dark(#b2293e,#f07178); }\r\n.dg-diff :is(.hljs-meta,.hljs-deletion) { color:light-dark(#006f78,#89ddff); }\r\n.dg-diff .hljs-emphasis { font-style:italic; }\r\n.dg-diff .hljs-strong { font-weight:600; }\r\n.dg-line-number { flex:0 0 42px; padding-right:12px; color:var(--dg-muted); text-align:right; user-select:none; font-size:11px; }\r\n.dg-code-line.dg-added { background:color-mix(in srgb,var(--dg-green) 12%,transparent); }\r\n.dg-code-line.dg-removed { background:color-mix(in srgb,var(--dg-red) 12%,transparent); }\r\n.dg-code-line.dg-hunk { background:var(--dg-card); padding-block:5px; color:var(--dg-muted); }\r\n.dg-added { color:var(--dg-green); }\r\n.dg-removed { color:var(--dg-red); }\r\n.dg-hunk { color:var(--dsw-alias-state-business-primary,#7096d4); }\r\n.dg-empty { padding:38px 20px; text-align:center; color:var(--dg-muted); line-height:2; }\r\n.dg-footer { display:flex; justify-content:space-between; align-items:center; gap:12px; border-top:1px solid var(--dg-line); padding:14px 24px; flex-shrink:0; }\r\n.dshgit .dg-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:9px 15px; background:var(--dsw-alias-button-primary-fill,var(--dg-text)); color:var(--dsw-alias-label-primary-foreground,var(--dg-bg)); font-weight:500; white-space:nowrap; }\r\n.dshgit .dg-primary:hover:not(:disabled) { background:var(--dsw-alias-button-primary-hover,var(--dg-muted)); }\r\n.dg-alert,.dg-notice { margin:12px 24px 0; padding:10px 14px; border-radius:10px; overflow-wrap:anywhere; font-size:13px; max-height:110px; overflow:auto; flex-shrink:0; }\r\n.dg-alert { color:var(--dg-red); background:color-mix(in srgb,var(--dg-red) 9%,transparent); }\r\n.dg-notice { color:var(--dg-green); background:color-mix(in srgb,var(--dg-green) 8%,transparent); }\r\n.dg-pr { padding:20px 28px 28px; flex:1; min-height:0; overflow:auto; border-top:1px solid var(--dg-line); }\r\n.dg-pr-heading { display:flex; align-items:center; gap:10px; margin-bottom:18px; }\r\n.dg-pr h2 { font-size:18px; font-weight:500; margin:0; }\r\n.dg-pr form { max-width:680px; margin:auto; display:grid; grid-template-columns:150px minmax(0,1fr); gap:16px; }\r\n.dg-pr form>label:nth-child(3),.dg-form-footer { grid-column:1/-1; }\r\n.dg-pr label { display:flex; flex-direction:column; gap:7px; font-size:13px; }\r\n.dshgit :is(input:not([type=checkbox]),textarea,select) { border:1px solid var(--dg-line); border-radius:10px; background:var(--dg-bg); padding:9px 12px; min-width:0; }\r\n.dshgit input::placeholder,.dshgit textarea::placeholder { color:var(--dg-muted); opacity:1; }\r\n.dshgit textarea { resize:vertical; }\r\n.dg-pr .dg-alert { margin:0 0 18px; }\r\n.dg-form-footer { display:flex; align-items:center; justify-content:space-between; gap:16px; }\r\n.dshgit .dg-check { display:inline-flex; flex-direction:row; align-items:center; gap:9px; font-size:14px; cursor:pointer; }\r\n.dg-check input { width:17px; height:17px; accent-color:var(--dg-text); margin:0; }\r\n.dg-pr-existing { padding:18px 24px; border:1px solid var(--dg-line); border-radius:16px; background:var(--dg-card); }\r\n.dg-pr-existing h3 { font-size:18px; font-weight:500; }\r\n.dg-pr-existing a { color:var(--dg-text); text-underline-offset:4px; }\r\n.dg-commit-shade { position:fixed; inset:0; margin:auto; padding:0; border:0; width:380px; max-width:calc(100vw - 32px); max-height:calc(100dvh - 32px); background:transparent; color:var(--dg-text); overflow:visible; font-family:inherit; font-size:13px; line-height:1.5; }\r\n.dg-commit-shade::backdrop { background:#0003; backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); }\r\n.dg-commit-card { background:color-mix(in srgb,var(--dg-card) 78%,transparent); backdrop-filter:blur(24px) saturate(140%); -webkit-backdrop-filter:blur(24px) saturate(140%); border:1px solid color-mix(in srgb,var(--dg-line) 70%,transparent); border-radius:18px; padding:12px 8px 8px; box-shadow:0 16px 48px #0003,inset 0 1px 0 #ffffff12; width:100%; max-height:calc(100dvh - 32px); overflow:auto; animation:dg-appear 160ms ease-out; }\r\n.dg-commit-card svg { width:17px; height:17px; flex-shrink:0; }\r\n.dg-branch-select { display:flex; align-items:center; gap:8px; margin:0 10px 10px; }\r\n.dshgit .dg-branch-select select { flex:1; border:0; background:transparent; padding:3px; font-size:14px; }\r\n.dg-new-branch { display:flex; gap:6px; margin:0 6px 8px; }\r\n.dg-branch-name { display:flex; align-items:center; flex:1; min-width:0; border-radius:8px; background:color-mix(in srgb,var(--dg-bg) 45%,transparent); }\r\n.dg-branch-name>span { color:var(--dg-muted); }\r\n.dshgit .dg-branch-name input { flex:1; width:0; border:0; border-radius:6px; padding:7px 8px; background:transparent; font-size:12px; }\r\n.dshgit .dg-branch-name .dg-prefix { flex:0 1 66px; }\r\n.dg-new-branch button { padding:5px 8px; color:var(--dg-muted); font-size:12px; flex-shrink:0; }\r\n.dshgit .dg-message { width:100%; display:block; border:0; border-radius:8px; background:transparent; padding:10px 12px; font-size:13px; resize:none; min-height:76px; }\r\n.dg-include { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:10px 12px 12px; }\r\n.dg-commit-card .dg-check,.dg-commit-card .dg-stats { font-size:12px; }\r\n.dg-commit-card .dg-check input { width:14px; height:14px; }\r\n.dg-commit-actions { padding-top:6px; border-top:1px solid var(--dg-line); }\r\n.dg-commit-actions button { width:100%; display:flex; align-items:center; gap:10px; padding:8px 12px; min-height:36px; text-align:left; font-size:14px; }\r\n.dg-commit-actions button:first-child { background:var(--dg-hover); }\r\n.dg-commit-actions button>span { flex:1; }\r\n.dg-commit-actions kbd { color:var(--dg-muted); background:color-mix(in srgb,var(--dg-text) 8%,transparent); padding:0 6px; border-radius:6px; font-family:inherit; font-size:11px; line-height:1.8; }\r\n@keyframes dg-appear { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }\r\n@media(prefers-reduced-motion:reduce) { .dg-commit-card { animation:none; } }\r\n\r\n.dg-docked { height:100%; min-height:0; min-width:0; container: dshgit / inline-size; }\r\n.dg-docked .dshgit { height:100%; min-height:0; background:var(--dg-bg); }\r\n.dg-toasts { position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:10000; width:min(560px,calc(100vw - 32px)); display:flex; flex-direction:column; gap:10px; pointer-events:none; max-height:calc(100dvh - 40px); overflow:auto; }\r\n.dg-toast { display:flex; align-items:flex-start; gap:10px; border:1px solid var(--dg-line); border-radius:14px; padding:14px 16px; background:var(--dg-card); box-shadow:0 8px 32px #0003; font-size:14px; line-height:1.5; pointer-events:auto; }\r\n.dg-toast>span:nth-child(2) { flex:1; min-width:0; overflow-wrap:anywhere; white-space:pre-wrap; max-height:35dvh; overflow:auto; }\r\n.dg-toast-symbol { color:var(--dg-green); font-weight:600; }\r\n.dg-toast[data-error=true] .dg-toast-symbol { color:var(--dg-red); }\r\n.dg-toast button { border:0; background:transparent; color:var(--dg-muted); cursor:pointer; font-size:20px; line-height:1; padding:2px; }\r\n.dg-toast button:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary,#5787dc); outline-offset:3px; }\r\n.dg-workspace[data-files-open=true] { grid-template-columns:240px minmax(0,1fr); }\r\n@container dshgit (max-width: 760px) {\r\n  .dg-workspace[data-files-open=true] { grid-template-columns:minmax(150px,38%) minmax(0,1fr); }\r\n  .dg-footer { padding:12px 16px; flex-wrap:wrap; font-size:12px; }\r\n  .dg-pr { padding:16px; }\r\n  .dg-pr form { grid-template-columns:1fr; }\r\n  .dg-form-footer { flex-wrap:wrap; }\r\n}\r\n@container dshgit (max-width: 480px) {\r\n  .dg-toolbar { gap:5px; padding:7px 6px; }\r\n  .dshgit .dg-summary-pill,.dshgit .dg-branch-pill { padding:6px 8px; gap:5px; }\r\n  .dg-branch-pill svg:first-child { display:none; }\r\n  .dg-workspace[data-files-open=true] { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(80px,38%) minmax(100px,1fr); }\r\n  .dg-files { border-right:0; border-bottom:1px solid var(--dg-line); padding:4px; }\r\n}\r\n\r\n.dg-toolbar { display:flex; align-items:center; gap:8px; padding:8px 10px; min-height:50px; flex-shrink:0; }\r\n.dshgit .dg-summary-pill,.dshgit .dg-branch-pill { display:flex; align-items:center; gap:8px; min-height:34px; padding:6px 12px; background:var(--dg-card); border-radius:18px; font-size:13px; white-space:nowrap; }\r\n.dg-summary-pill { flex-shrink:0; }\r\n.dg-summary-pill .dg-stats { font-size:12px; gap:4px; }\r\n.dg-branch-pill { flex:1; min-width:0; }\r\n.dg-branch-pill span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\r\n.dg-branch-pill svg { width:14px; height:14px; flex-shrink:0; }\r\n.dg-branch-pill svg:last-child { margin-left:auto; }\r\n.dg-tools svg { width:17px; height:17px; }\r\n.dg-tools button[aria-pressed=true],.dg-tools button[aria-expanded=true] { color:var(--dg-text); background:var(--dg-hover); }\r\n";
 
 // src/client.tsx
-var import_jsx_runtime4 = require("react/jsx-runtime");
+var import_jsx_runtime7 = require("react/jsx-runtime");
 var inject = ["slots", "remote", "sidebarRight", "sidebarRightTabs"];
 async function apply(ctx) {
   await ctx.remote.$mount(contribution);
@@ -36017,7 +36383,7 @@ async function apply(ctx) {
     const container = document.createElement("div");
     document.body.append(container);
     const root = (0, import_client.createRoot)(container);
-    root.render(/* @__PURE__ */ (0, import_jsx_runtime4.jsx)(GitNotifications, {}));
+    root.render(/* @__PURE__ */ (0, import_jsx_runtime7.jsx)(GitNotifications, {}));
     return () => {
       root.unmount();
       container.remove();
@@ -36028,7 +36394,7 @@ async function apply(ctx) {
     kind: "dshgit",
     title: () => "\u53D8\u66F4",
     keepMounted: true,
-    guide: [{ id: "dshgit", order: 35, title: () => "DSHGit", description: () => "\u67E5\u770B\u53D8\u66F4\u3001\u63D0\u4EA4\u4E0E\u63A8\u9001", icon: () => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Icon, { name: "branch" }) }]
+    guide: [{ id: "dshgit", order: 35, title: () => "DSHGit", description: () => "\u67E5\u770B\u53D8\u66F4\u3001\u63D0\u4EA4\u4E0E\u63A8\u9001", icon: () => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Icon, { name: "branch" }) }]
   }));
   ctx.inject(["remote.dshgit"], (scope) => {
     const remote = {
@@ -36036,11 +36402,11 @@ async function apply(ctx) {
       changes: (sessionId, signal) => scope.remote.dshgit.changes(sessionId, signal)
     };
     function Entry({ sessionId }) {
-      return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(GitLauncher, { sessionId, remote, onOpen: () => ctx.sidebarRight.openTab("dshgit") }, sessionId);
+      return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(GitLauncher, { sessionId, remote, onOpen: () => ctx.sidebarRight.openTab("dshgit") }, sessionId);
     }
     function Tab({ sessionId, useTabInfo }) {
       const { tab } = useTabInfo();
-      return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "dg-docked", children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(GitPanel, { sessionId, remote, active: tab.visible, onClose: () => tab.actions.close() }, sessionId) });
+      return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "dg-docked", children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(GitPanel, { sessionId, remote, active: tab.visible, onClose: () => tab.actions.close() }, sessionId) });
     }
     scope.slots.inject("sidebar.right.pane.tab", () => scope.slots.register({
       name: "sidebar.right.pane.tab",
@@ -36049,7 +36415,7 @@ async function apply(ctx) {
     scope.slots.inject("sidebar.right.pane.tab.title", () => scope.slots.register({
       name: "sidebar.right.pane.tab.title",
       key: "dshgit"
-    }, () => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(import_jsx_runtime4.Fragment, { children: "\u53D8\u66F4" })));
+    }, () => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(import_jsx_runtime7.Fragment, { children: "\u53D8\u66F4" })));
     scope.slots.inject("conversation.session.header.utilities", () => scope.slots.register({
       name: "conversation.session.header.utilities",
       id: "dshgit",
