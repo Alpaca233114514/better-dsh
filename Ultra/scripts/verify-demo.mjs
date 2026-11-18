@@ -1,8 +1,16 @@
 import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-const playwrightModule = process.env.PLAYWRIGHT_MODULE || 'C:/Users/Logan/Documents/GitHub/Papyrus_Desktop/node_modules/playwright/index.mjs';
-const { chromium } = await import(pathToFileURL(playwrightModule));
-const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH || 'C:/Users/Logan/AppData/Local/ms-playwright/chromium-1248/chrome-win64/chrome.exe' });
+
+const playwrightModule = process.env.PLAYWRIGHT_MODULE || 'playwright';
+const { chromium } = process.env.PLAYWRIGHT_MODULE
+  ? await import(pathToFileURL(resolve(playwrightModule)).href)
+  : createRequire(import.meta.url)('playwright');
+const browser = await chromium.launch({
+  headless: true,
+  ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}),
+});
 const errors = [], checks = [];
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });

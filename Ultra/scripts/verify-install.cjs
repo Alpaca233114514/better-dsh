@@ -1,8 +1,9 @@
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
-const profile = 'C:/Users/Logan/.dsh/profiles/desktop';
+const profile = process.env.DSH_DESKTOP_PROFILE || path.join(os.homedir(), '.dsh', 'profiles', 'desktop');
 const backup = fs.readFileSync(path.join(root, '.cache/ultra-desktop-backup-path.txt'), 'utf8');
 const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 const before = read(path.join(backup, 'package.json'));
