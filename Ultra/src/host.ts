@@ -16,21 +16,30 @@ export class UltraService extends TypertRemoteService {
     super(ctx, 'dshUltra');
     ctx.sessionProjections.register(projection);
     ctx.sessionProjections.onChanged((session: any, key: string) => { if (key === 'dshUltra' || key === 'modelSelection') this.notify(session.id); });
-    ctx.on('agent/status', ({ agent }: any) => { this.notify(agent.id); if (agent.session.header.parentSession) this.notify(agent.session.header.parentSession); });
+    ctx.on('agent/status', ({ agent }: any) => {
+      this.notify(agent.id);
+      if (agent.session.header.parentSession) this.notify(agent.session.header.parentSession);
+    });
     ctx.on('session/disposed', (session: any) => this.notify(session.id));
     ctx.on('subagent/provider-added', () => this.notifyAll());
     ctx.on('subagent/provider-removed', () => this.notifyAll());
     ctx.on('agent/created', ({ agent }: any) => this.notify(agent.id));
-    ctx.systemPrompt.section({ name: 'dsh-ultra', order: 8450, interpolate: false, text: ({ agent, toolSet }: any) => {
-      if (!agent) return '';
-      const enabled = this.active(agent.session);
-      const effort = 'max';
-      this.captured.set(agent, { enabled, effort });
-      if (!enabled) return '';
-      // 按当前步骤可见工具判断，安装包存在不代表启用。 Detect admitted tools, not installed packages.
-      const agentTeams = !!ctx.tools.get('spawn_teammate', agent, toolSet);
-      return `${policy.delegationInstructions('ultra', true, agentTeams)}\nUse the existing native ${agentTeams ? 'Agent Teams' : 'subagent'} tools exposed in this session. Follow their schemas for delegation, effort selection, messaging and waiting; preserve the host permission and review flow.`;
-    } });
+    ctx.systemPrompt.section({
+      name: 'dsh-ultra',
+      order: 8450,
+      interpolate: false,
+      text: ({ agent, toolSet }: any) => {
+        if (!agent) return '';
+        const enabled = this.active(agent.session);
+        const effort = 'max';
+        this.captured.set(agent, { enabled, effort });
+        if (!enabled) return '';
+        // 按当前步骤可见工具判断，安装包存在不代表启用。 Detect admitted tools, not installed packages.
+        const agentTeams = !!ctx.tools.get('spawn_teammate', agent, toolSet);
+        const toolLabel = agentTeams ? 'Agent Teams' : 'subagent';
+        return `${policy.delegationInstructions('ultra', true, agentTeams)}\nUse the existing native ${toolLabel} tools exposed in this session. Follow their schemas for delegation, effort selection, messaging and waiting; preserve the host permission and review flow.`;
+      },
+    });
     ctx.on('agent/request', async ({ agent }: any, next: () => Promise<any>) => {
       const resolved = await next(), captured = this.captured.get(agent);
       if (!captured?.enabled) return resolved;
@@ -41,11 +50,25 @@ export class UltraService extends TypertRemoteService {
 
   state(session: any): Stored { return this.ctx.sessionProjections.stateOf(session, 'dshUltra'); }
   record(session: any, type: string, value: unknown) { appendPluginRecord(session, `plugin:ultra/${type}` as never, value as never); }
-  active(session: any) { const state = this.state(session); return state.enabled && this.providerAvailable(); }
-  providerAvailable() { const provider = this.ctx.subagents.getProvider('spawn'); return !!provider?.prepareContinuable && !!provider.capabilities.agentOptions && !!provider.capabilities.depthLimit; }
-  notify(id: string) { for (const listener of this.watchers.get(id) ?? []) listener(); }
-  notifyAll() { for (const id of this.watchers.keys()) this.notify(id); }
-  session(id: string) { const session = this.ctx.sessions.get(id); if (!session) throw new Error('会话尚未就绪，请重新打开会话。'); return session; }
+  active(session: any) {
+    const state = this.state(session);
+    return state.enabled && this.providerAvailable();
+  }
+  providerAvailable() {
+    const provider = this.ctx.subagents.getProvider('spawn');
+    return !!provider?.prepareContinuable && !!provider.capabilities.agentOptions && !!provider.capabilities.depthLimit;
+  }
+  notify(id: string) {
+    for (const listener of this.watchers.get(id) ?? []) listener();
+  }
+  notifyAll() {
+    for (const id of this.watchers.keys()) this.notify(id);
+  }
+  session(id: string) {
+    const session = this.ctx.sessions.get(id);
+    if (!session) throw new Error('会话尚未就绪，请重新打开会话。');
+    return session;
+  }
   view(id: string): View {
     return this.projectView(id, this.state(this.session(id)));
   }
@@ -102,17 +125,25 @@ export class UltraService extends TypertRemoteService {
     const stopped = AbortSignal.any([signal, this.shutdown.signal]);
     let dirty = true, wake = () => {};
     const changed = () => { dirty = true; wake(); };
-    const set = this.watchers.get(sessionId) ?? new Set(); set.add(changed); this.watchers.set(sessionId, set);
+    const set = this.watchers.get(sessionId) ?? new Set();
+    set.add(changed);
+    this.watchers.set(sessionId, set);
     stopped.addEventListener('abort', changed);
     try {
       while (!stopped.aborted) {
-        if (!dirty) await new Promise<void>(resolve => { wake = resolve; if (dirty || stopped.aborted) resolve(); });
+        if (!dirty) {
+          await new Promise<void>(resolve => {
+            wake = resolve;
+            if (dirty || stopped.aborted) resolve();
+          });
+        }
         if (stopped.aborted) break;
         dirty = false;
         yield await this.readView(sessionId, stopped);
       }
     } finally {
-      set.delete(changed); if (!set.size) this.watchers.delete(sessionId);
+      set.delete(changed);
+      if (!set.size) this.watchers.delete(sessionId);
       stopped.removeEventListener('abort', changed);
     }
   }
