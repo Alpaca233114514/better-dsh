@@ -203,17 +203,20 @@ function Editor({ row, shortcuts, close }) {
   (0, import_react.useEffect)(() => {
     if (!recording) return;
     let disposed = false;
-    void shortcuts.recording(true).then(() => {
-      if (!disposed) {
-        setReady(true);
-        recorder.current?.focus();
+    void shortcuts.recording(true).then(
+      () => {
+        if (!disposed) {
+          setReady(true);
+          recorder.current?.focus();
+        }
+      },
+      () => {
+        if (!disposed) {
+          setMessage("\u65E0\u6CD5\u542F\u7528\u952E\u4F4D\u5F55\u5236\uFF0C\u8BF7\u91CD\u8BD5");
+          setRecording(false);
+        }
       }
-    }, () => {
-      if (!disposed) {
-        setMessage("\u65E0\u6CD5\u542F\u7528\u952E\u4F4D\u5F55\u5236\uFF0C\u8BF7\u91CD\u8BD5");
-        setRecording(false);
-      }
-    });
+    );
     return () => {
       disposed = true;
       void shortcuts.recording(false).catch(() => {
@@ -222,7 +225,9 @@ function Editor({ row, shortcuts, close }) {
   }, [recording, shortcuts]);
   const description = shortcuts.describeBinding(candidate);
   const conflicts = description.conflicts.filter((id) => id !== row.id);
-  const conflictLabels = conflicts.map((id) => [...catalog, ...fixed].find((item) => item.id === id)?.label ?? id);
+  const conflictLabels = conflicts.map(
+    (id) => [...catalog, ...fixed].find((item) => item.id === id)?.label ?? id
+  );
   const stale = revision !== config.revision;
   const invalid = description.issue !== null || conflicts.length > 0;
   async function save(edit) {
@@ -244,51 +249,102 @@ function Editor({ row, shortcuts, close }) {
       if (alive.current) setBusy(false);
     }
   }
-  return /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-editor", role: "group", "aria-label": `\u7F16\u8F91 ${row.label}`, "aria-busy": busy, "data-shortcut-modal": "shortcut-edit" }, /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-editor-main" }, /* @__PURE__ */ import_react.default.createElement(
-    "button",
+  const stopRecording = () => {
+    setRecording(false);
+    setReady(false);
+  };
+  return /* @__PURE__ */ import_react.default.createElement(
+    "div",
     {
-      ref: recorder,
-      type: "button",
-      className: "dk-recorder",
-      "aria-label": "\u5F55\u5236\u7EC4\u5408\u952E",
-      disabled: busy,
-      onClick: () => {
-        setMessage("");
-        if (!recording) {
-          setReady(false);
-          setRecording(true);
-        }
-      },
-      onBlur: () => {
-        setRecording(false);
-        setReady(false);
-      },
-      onKeyDown: (event) => {
-        if (!recording || !ready) return;
-        if (event.key === "Tab") return;
-        event.preventDefault();
-        event.stopPropagation();
-        if (event.key === "Escape") {
-          setRecording(false);
-          setReady(false);
-          return;
-        }
-        if (event.repeat || event.nativeEvent.isComposing || event.key === "Process" || event.key === "Dead" || event.nativeEvent.keyCode === 229 || event.getModifierState("AltGraph") || /^(Control|Alt|Shift|Meta)(Left|Right)$/.test(event.code)) return;
-        try {
-          const modifiers = ["control", "alt", "shift", "meta"].filter((key) => ({ control: event.ctrlKey, alt: event.altKey, shift: event.shiftKey, meta: event.metaKey })[key]);
-          const next = shortcuts.describeBinding({ code: event.code, modifiers }).binding;
-          setCandidate(next);
-          setMessage("");
-          setRecording(false);
-          setReady(false);
-        } catch (error) {
-          setMessage(`\u65E0\u6CD5\u5F55\u5236 ${event.code || event.key}\uFF1A${error instanceof Error ? error.message : "\u4E0D\u652F\u6301\u8FD9\u4E2A\u6309\u952E"}`);
-        }
-      }
+      className: "dk-editor",
+      role: "group",
+      "aria-label": `\u7F16\u8F91 ${row.label}`,
+      "aria-busy": busy,
+      "data-shortcut-modal": "shortcut-edit"
     },
-    recording ? ready ? "\u8BF7\u6309\u4E0B\u7EC4\u5408\u952E\u2026" : "\u51C6\u5907\u5F55\u5236\u2026" : /* @__PURE__ */ import_react.default.createElement(Keycaps, { keys: description.keys })
-  ), /* @__PURE__ */ import_react.default.createElement("span", { className: "dk-muted" }, "\u70B9\u51FB\u5F55\u5236 \xB7 Esc \u53D6\u6D88")), description.issue && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, failureMessage(description.issue)), conflicts.length > 0 && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, "\u4E0E\u300C", conflictLabels.join("\u3001"), "\u300D\u51B2\u7A81\uFF0C\u8BF7\u6362\u4E00\u4E2A\u7EC4\u5408\u952E\u3002"), stale && !busy && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, failureMessage("stale")), message && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, message), /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-actions" }, /* @__PURE__ */ import_react.default.createElement("button", { className: "dk-primary", disabled: busy || stale || invalid || config.status !== "ready", onClick: () => void save({ type: "set", id: row.id, binding: candidate }) }, busy ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58\u952E\u4F4D"), /* @__PURE__ */ import_react.default.createElement("button", { disabled: busy || stale || config.status !== "ready", onClick: () => void save({ type: "set", id: row.id, binding: null }) }, "\u89E3\u9664\u7ED1\u5B9A"), /* @__PURE__ */ import_react.default.createElement("button", { disabled: busy || stale || config.status !== "ready", onClick: () => void save({ type: "reset", id: row.id }) }, "\u6062\u590D\u9ED8\u8BA4"), /* @__PURE__ */ import_react.default.createElement("button", { disabled: busy, onClick: close }, "\u53D6\u6D88")));
+    /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-editor-main" }, /* @__PURE__ */ import_react.default.createElement(
+      "button",
+      {
+        ref: recorder,
+        type: "button",
+        className: "dk-recorder",
+        "aria-label": "\u5F55\u5236\u7EC4\u5408\u952E",
+        disabled: busy,
+        onClick: () => {
+          setMessage("");
+          if (!recording) {
+            setReady(false);
+            setRecording(true);
+          }
+        },
+        onBlur: stopRecording,
+        onKeyDown: (event) => {
+          if (!recording || !ready) return;
+          if (event.key === "Tab") return;
+          event.preventDefault();
+          event.stopPropagation();
+          if (event.key === "Escape") {
+            stopRecording();
+            return;
+          }
+          if (event.repeat || event.nativeEvent.isComposing || event.key === "Process" || event.key === "Dead" || event.nativeEvent.keyCode === 229 || event.getModifierState("AltGraph") || /^(Control|Alt|Shift|Meta)(Left|Right)$/.test(event.code)) {
+            return;
+          }
+          try {
+            const modifierMap = {
+              control: event.ctrlKey,
+              alt: event.altKey,
+              shift: event.shiftKey,
+              meta: event.metaKey
+            };
+            const modifiers = ["control", "alt", "shift", "meta"].filter((key) => modifierMap[key]);
+            const next = shortcuts.describeBinding({ code: event.code, modifiers }).binding;
+            setCandidate(next);
+            setMessage("");
+            stopRecording();
+          } catch (err) {
+            setMessage(
+              `\u65E0\u6CD5\u5F55\u5236 ${event.code || event.key}\uFF1A${err instanceof Error ? err.message : "\u4E0D\u652F\u6301\u8FD9\u4E2A\u6309\u952E"}`
+            );
+          }
+        }
+      },
+      recording ? ready ? "\u8BF7\u6309\u4E0B\u7EC4\u5408\u952E\u2026" : "\u51C6\u5907\u5F55\u5236\u2026" : /* @__PURE__ */ import_react.default.createElement(Keycaps, { keys: description.keys })
+    ), /* @__PURE__ */ import_react.default.createElement("span", { className: "dk-muted" }, "\u70B9\u51FB\u5F55\u5236 \xB7 Esc \u53D6\u6D88")),
+    description.issue && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, failureMessage(description.issue)),
+    conflicts.length > 0 && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, "\u4E0E\u300C", conflictLabels.join("\u3001"), "\u300D\u51B2\u7A81\uFF0C\u8BF7\u6362\u4E00\u4E2A\u7EC4\u5408\u952E\u3002"),
+    stale && !busy && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, failureMessage("stale")),
+    message && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, message),
+    /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-actions" }, /* @__PURE__ */ import_react.default.createElement(
+      "button",
+      {
+        className: "dk-primary",
+        disabled: busy || stale || invalid || config.status !== "ready",
+        onClick: () => void save({ type: "set", id: row.id, binding: candidate })
+      },
+      busy ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58\u952E\u4F4D"
+    ), /* @__PURE__ */ import_react.default.createElement(
+      "button",
+      {
+        disabled: busy || stale || config.status !== "ready",
+        onClick: () => void save({ type: "set", id: row.id, binding: null })
+      },
+      "\u89E3\u9664\u7ED1\u5B9A"
+    ), /* @__PURE__ */ import_react.default.createElement(
+      "button",
+      {
+        disabled: busy || stale || config.status !== "ready",
+        onClick: () => void save({ type: "reset", id: row.id })
+      },
+      "\u6062\u590D\u9ED8\u8BA4"
+    ), /* @__PURE__ */ import_react.default.createElement("button", { disabled: busy, onClick: close }, "\u53D6\u6D88"))
+  );
 }
+var toggleOptions = [
+  ["enabled", "\u542F\u7528\u6269\u5C55\u5FEB\u6377\u952E"],
+  ["sameWorkspace", "\u4EC5\u5207\u6362\u5F53\u524D\u5DE5\u4F5C\u533A\u4F1A\u8BDD"],
+  ["wrapSessions", "\u5FAA\u73AF\u5207\u6362\u4F1A\u8BDD"]
+];
 function Settings({ form, shortcuts }) {
   const state = useSnapshot(form);
   const config = useSnapshot(shortcuts.config);
@@ -302,7 +358,9 @@ function Settings({ form, shortcuts }) {
   const saving = (0, import_react.useRef)(false);
   const value = preferences(state.value);
   const query = search.trim().toLowerCase();
-  const rows = catalog.filter((row) => (!query || `${row.label} ${row.id} ${row.aliases.join(" ")} ${row.keys.join(" ")}`.toLowerCase().includes(query)) && (filter === "all" || (filter === "dshkey" ? row.id.startsWith("dshkey.") : row.modified)));
+  const rows = catalog.filter(
+    (row) => (!query || `${row.label} ${row.id} ${row.aliases.join(" ")} ${row.keys.join(" ")}`.toLowerCase().includes(query)) && (filter === "all" || (filter === "dshkey" ? row.id.startsWith("dshkey.") : row.modified))
+  );
   async function update(field, next) {
     if (saving.current || state.status !== "ready" || !state.writable) return;
     saving.current = true;
@@ -318,17 +376,348 @@ function Settings({ form, shortcuts }) {
       setBusy(false);
     }
   }
-  return /* @__PURE__ */ import_react.default.createElement("section", { className: "dk-root", "aria-label": "DSHKey \u5FEB\u6377\u952E\u8BBE\u7F6E" }, /* @__PURE__ */ import_react.default.createElement("header", { className: "dk-header" }, /* @__PURE__ */ import_react.default.createElement("div", null, /* @__PURE__ */ import_react.default.createElement("span", { className: "dk-eyebrow" }, "DSHKey"), /* @__PURE__ */ import_react.default.createElement("h2", null, "\u5FEB\u6377\u952E"), /* @__PURE__ */ import_react.default.createElement("p", { className: "dk-muted" }, "\u8BA9\u5E38\u7528\u64CD\u4F5C\u89E6\u624B\u53EF\u53CA\u3002")), /* @__PURE__ */ import_react.default.createElement("span", { className: "dk-badge" }, shortcuts.runtime === "desktop" ? "\u684C\u9762\u7AEF" : "Web", " \xB7 ", shortcuts.platform === "macos" ? "macOS" : shortcuts.platform === "windows" ? "Windows" : "Linux")), /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-card dk-options" }, [["enabled", "\u542F\u7528\u6269\u5C55\u5FEB\u6377\u952E"], ["sameWorkspace", "\u4EC5\u5207\u6362\u5F53\u524D\u5DE5\u4F5C\u533A\u4F1A\u8BDD"], ["wrapSessions", "\u5FAA\u73AF\u5207\u6362\u4F1A\u8BDD"]].map(([field, label]) => /* @__PURE__ */ import_react.default.createElement("label", { key: field, className: "dk-option" }, /* @__PURE__ */ import_react.default.createElement("span", null, label), /* @__PURE__ */ import_react.default.createElement("input", { type: "checkbox", role: "switch", checked: value[field], disabled: busy || state.status !== "ready" || !state.writable, onChange: (e) => void update(field, e.target.checked) })))), state.status !== "ready" ? /* @__PURE__ */ import_react.default.createElement("p", { role: "status" }, "\u63D2\u4EF6\u8BBE\u7F6E\u5C1A\u672A\u5C31\u7EEA\uFF0C\u6269\u5C55\u52A8\u4F5C\u6682\u4E0D\u542F\u7528\u3002") : !state.writable && /* @__PURE__ */ import_react.default.createElement("p", { role: "status" }, "\u5F53\u524D\u8FDE\u63A5\u7684\u63D2\u4EF6\u8BBE\u7F6E\u53EA\u8BFB\u3002"), message && /* @__PURE__ */ import_react.default.createElement("p", { role: "status" }, message), /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-toolbar" }, /* @__PURE__ */ import_react.default.createElement("input", { type: "search", "aria-label": "\u641C\u7D22\u5FEB\u6377\u952E", placeholder: "\u641C\u7D22\u52A8\u4F5C\u6216\u5FEB\u6377\u952E\u2026", value: search, onChange: (e) => setSearch(e.target.value) }), /* @__PURE__ */ import_react.default.createElement("select", { "aria-label": "\u7B5B\u9009\u5FEB\u6377\u952E", value: filter, onChange: (e) => setFilter(e.target.value) }, /* @__PURE__ */ import_react.default.createElement("option", { value: "all" }, "\u5168\u90E8\u52A8\u4F5C"), /* @__PURE__ */ import_react.default.createElement("option", { value: "dshkey" }, "DSHKey \u6269\u5C55"), /* @__PURE__ */ import_react.default.createElement("option", { value: "modified" }, "\u5DF2\u4FEE\u6539"))), config.status !== "ready" && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, config.status === "loading" ? "\u6B63\u5728\u8BFB\u53D6\u952E\u4F4D\u2026" : "\u65E0\u6CD5\u8BFB\u53D6\u952E\u4F4D\uFF0C\u6682\u65F6\u4E0D\u80FD\u4FEE\u6539\u3002"), /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-card" }, rows.map((row) => /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-item", key: row.id }, /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-row" }, /* @__PURE__ */ import_react.default.createElement("div", null, /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-label" }, row.label, row.modified && /* @__PURE__ */ import_react.default.createElement("span", { className: "dk-dot", title: "\u5DF2\u4FEE\u6539", "aria-label": "\u5DF2\u4FEE\u6539" })), /* @__PURE__ */ import_react.default.createElement("span", { className: "dk-meta" }, actions.find((action) => action.id === row.id)?.group ?? "DSH \u539F\u751F")), /* @__PURE__ */ import_react.default.createElement("button", { className: "dk-binding", "aria-label": `\u4FEE\u6539 ${row.label} \u5FEB\u6377\u952E`, disabled: config.status !== "ready", onClick: () => setEditing(editing === row.id ? void 0 : row.id) }, /* @__PURE__ */ import_react.default.createElement(Keycaps, { keys: row.keys }))), (row.issue || row.conflicts.length > 0) && /* @__PURE__ */ import_react.default.createElement("p", { role: "status" }, row.issue ? failureMessage(row.issue) : "\u6B64\u952E\u4F4D\u5B58\u5728\u51B2\u7A81\uFF0C\u6682\u4E0D\u53EF\u7528"), editing === row.id && /* @__PURE__ */ import_react.default.createElement(Editor, { row, shortcuts, close: () => setEditing(void 0) }))), rows.length === 0 && /* @__PURE__ */ import_react.default.createElement("p", { className: "dk-empty" }, "\u6CA1\u6709\u5339\u914D\u7684\u5FEB\u6377\u952E\u3002")), filter === "all" && /* @__PURE__ */ import_react.default.createElement("details", { className: "dk-fixed" }, /* @__PURE__ */ import_react.default.createElement("summary", null, "\u539F\u751F\u56FA\u5B9A\u6309\u952E ", /* @__PURE__ */ import_react.default.createElement("span", { className: "dk-muted" }, fixed.length)), fixed.filter((row) => !query || row.label.toLowerCase().includes(query)).map((row) => /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-row", key: row.id }, /* @__PURE__ */ import_react.default.createElement("span", null, row.label), /* @__PURE__ */ import_react.default.createElement(Keycaps, { keys: row.keys })))), /* @__PURE__ */ import_react.default.createElement("p", { className: "dk-footer" }, "\u952E\u4F4D\u968F\u5F53\u524D\u8BBE\u5907\u4FDD\u5B58\u3002\u65B0\u589E\u52A8\u4F5C\u9ED8\u8BA4\u4F7F\u7528 ", shortcuts.platform === "macos" ? "\u2318" : "Ctrl", " + Alt + Shift\uFF1BLinux \u8BF7\u6309\u5BBF\u4E3B\u652F\u6301\u7684\u7EC4\u5408\u81EA\u884C\u7ED1\u5B9A\u3002"));
+  const platformName = shortcuts.platform === "macos" ? "macOS" : shortcuts.platform === "windows" ? "Windows" : "Linux";
+  return /* @__PURE__ */ import_react.default.createElement("section", { className: "dk-root", "aria-label": "DSHKey \u5FEB\u6377\u952E\u8BBE\u7F6E" }, /* @__PURE__ */ import_react.default.createElement("header", { className: "dk-header" }, /* @__PURE__ */ import_react.default.createElement("div", null, /* @__PURE__ */ import_react.default.createElement("span", { className: "dk-eyebrow" }, "DSHKey"), /* @__PURE__ */ import_react.default.createElement("h2", null, "\u5FEB\u6377\u952E"), /* @__PURE__ */ import_react.default.createElement("p", { className: "dk-muted" }, "\u8BA9\u5E38\u7528\u64CD\u4F5C\u89E6\u624B\u53EF\u53CA\u3002")), /* @__PURE__ */ import_react.default.createElement("span", { className: "dk-badge" }, shortcuts.runtime === "desktop" ? "\u684C\u9762\u7AEF" : "Web", " \xB7 ", platformName)), /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-card dk-options" }, toggleOptions.map(([field, label]) => /* @__PURE__ */ import_react.default.createElement("label", { key: field, className: "dk-option" }, /* @__PURE__ */ import_react.default.createElement("span", null, label), /* @__PURE__ */ import_react.default.createElement(
+    "input",
+    {
+      type: "checkbox",
+      role: "switch",
+      checked: value[field],
+      disabled: busy || state.status !== "ready" || !state.writable,
+      onChange: (event) => void update(field, event.target.checked)
+    }
+  )))), state.status !== "ready" ? /* @__PURE__ */ import_react.default.createElement("p", { role: "status" }, "\u63D2\u4EF6\u8BBE\u7F6E\u5C1A\u672A\u5C31\u7EEA\uFF0C\u6269\u5C55\u52A8\u4F5C\u6682\u4E0D\u542F\u7528\u3002") : !state.writable && /* @__PURE__ */ import_react.default.createElement("p", { role: "status" }, "\u5F53\u524D\u8FDE\u63A5\u7684\u63D2\u4EF6\u8BBE\u7F6E\u53EA\u8BFB\u3002"), message && /* @__PURE__ */ import_react.default.createElement("p", { role: "status" }, message), /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-toolbar" }, /* @__PURE__ */ import_react.default.createElement(
+    "input",
+    {
+      type: "search",
+      "aria-label": "\u641C\u7D22\u5FEB\u6377\u952E",
+      placeholder: "\u641C\u7D22\u52A8\u4F5C\u6216\u5FEB\u6377\u952E\u2026",
+      value: search,
+      onChange: (event) => setSearch(event.target.value)
+    }
+  ), /* @__PURE__ */ import_react.default.createElement("select", { "aria-label": "\u7B5B\u9009\u5FEB\u6377\u952E", value: filter, onChange: (event) => setFilter(event.target.value) }, /* @__PURE__ */ import_react.default.createElement("option", { value: "all" }, "\u5168\u90E8\u52A8\u4F5C"), /* @__PURE__ */ import_react.default.createElement("option", { value: "dshkey" }, "DSHKey \u6269\u5C55"), /* @__PURE__ */ import_react.default.createElement("option", { value: "modified" }, "\u5DF2\u4FEE\u6539"))), config.status !== "ready" && /* @__PURE__ */ import_react.default.createElement("p", { role: "alert" }, config.status === "loading" ? "\u6B63\u5728\u8BFB\u53D6\u952E\u4F4D\u2026" : "\u65E0\u6CD5\u8BFB\u53D6\u952E\u4F4D\uFF0C\u6682\u65F6\u4E0D\u80FD\u4FEE\u6539\u3002"), /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-card" }, rows.map((row) => /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-item", key: row.id }, /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-row" }, /* @__PURE__ */ import_react.default.createElement("div", null, /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-label" }, row.label, row.modified && /* @__PURE__ */ import_react.default.createElement("span", { className: "dk-dot", title: "\u5DF2\u4FEE\u6539", "aria-label": "\u5DF2\u4FEE\u6539" })), /* @__PURE__ */ import_react.default.createElement("span", { className: "dk-meta" }, actions.find((action) => action.id === row.id)?.group ?? "DSH \u539F\u751F")), /* @__PURE__ */ import_react.default.createElement(
+    "button",
+    {
+      className: "dk-binding",
+      "aria-label": `\u4FEE\u6539 ${row.label} \u5FEB\u6377\u952E`,
+      disabled: config.status !== "ready",
+      onClick: () => setEditing(editing === row.id ? void 0 : row.id)
+    },
+    /* @__PURE__ */ import_react.default.createElement(Keycaps, { keys: row.keys })
+  )), (row.issue || row.conflicts.length > 0) && /* @__PURE__ */ import_react.default.createElement("p", { role: "status" }, row.issue ? failureMessage(row.issue) : "\u6B64\u952E\u4F4D\u5B58\u5728\u51B2\u7A81\uFF0C\u6682\u4E0D\u53EF\u7528"), editing === row.id && /* @__PURE__ */ import_react.default.createElement(Editor, { row, shortcuts, close: () => setEditing(void 0) }))), rows.length === 0 && /* @__PURE__ */ import_react.default.createElement("p", { className: "dk-empty" }, "\u6CA1\u6709\u5339\u914D\u7684\u5FEB\u6377\u952E\u3002")), filter === "all" && /* @__PURE__ */ import_react.default.createElement("details", { className: "dk-fixed" }, /* @__PURE__ */ import_react.default.createElement("summary", null, "\u539F\u751F\u56FA\u5B9A\u6309\u952E ", /* @__PURE__ */ import_react.default.createElement("span", { className: "dk-muted" }, fixed.length)), fixed.filter((row) => !query || row.label.toLowerCase().includes(query)).map((row) => /* @__PURE__ */ import_react.default.createElement("div", { className: "dk-row", key: row.id }, /* @__PURE__ */ import_react.default.createElement("span", null, row.label), /* @__PURE__ */ import_react.default.createElement(Keycaps, { keys: row.keys })))), /* @__PURE__ */ import_react.default.createElement("p", { className: "dk-footer" }, "\u952E\u4F4D\u968F\u5F53\u524D\u8BBE\u5907\u4FDD\u5B58\u3002\u65B0\u589E\u52A8\u4F5C\u9ED8\u8BA4\u4F7F\u7528 ", shortcuts.platform === "macos" ? "\u2318" : "Ctrl", " + Alt + Shift\uFF1BLinux \u8BF7\u6309\u5BBF\u4E3B\u652F\u6301\u7684\u7EC4\u5408\u81EA\u884C\u7ED1\u5B9A\u3002"));
 }
 
 // src/style.ts
 var css = `
-.dk-root{color:var(--dsw-alias-label-primary,CanvasText);font:14px/1.5 system-ui,sans-serif;max-width:880px;margin:0 auto;padding:8px 0 32px;color-scheme:inherit}
-.dk-root *{box-sizing:border-box}.dk-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px}.dk-header h2{font-size:26px;line-height:1.2;margin:5px 0 8px;font-weight:650;letter-spacing:-.6px}.dk-header p{margin:0}.dk-eyebrow{font-size:12px;font-weight:650;letter-spacing:1.4px}.dk-muted,.dk-meta,.dk-footer{color:var(--dsw-alias-label-secondary,GrayText)}.dk-badge{font-size:12px;padding:5px 10px;border:1px solid var(--dsw-alias-border-l2,ButtonBorder);border-radius:20px;white-space:nowrap}
-.dk-card{border:1px solid var(--dsw-alias-border-l2,ButtonBorder);border-radius:12px;overflow:hidden;background:var(--dsw-alias-bg-layer-1,Canvas)}.dk-option{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 18px}.dk-option+.dk-option,.dk-item+.dk-item{border-top:1px solid var(--dsw-alias-border-l2,ButtonBorder)}.dk-option input{appearance:none;width:32px;height:20px;border-radius:12px;background:var(--dsw-alias-bg-layer-3,ButtonFace);border:1px solid var(--dsw-alias-border-l2,ButtonBorder);position:relative;cursor:pointer;flex:none}.dk-option input:after{content:'';position:absolute;background:var(--dsw-alias-label-secondary,GrayText);border-radius:50%;width:12px;height:12px;top:3px;left:3px;transition:transform .12s}.dk-option input:checked{background:var(--dsw-alias-state-business-primary,#4169e1);border-color:transparent}.dk-option input:checked:after{background:white;transform:translateX(12px)}
-.dk-toolbar{display:flex;gap:10px;margin:24px 0 12px}.dk-toolbar input{flex:1;min-width:0}.dk-root input[type=search],.dk-root select{background:var(--dsw-alias-bg-layer-1,Canvas);color:inherit;border:1px solid var(--dsw-alias-border-l2,ButtonBorder);border-radius:8px;padding:9px 12px;font:inherit}.dk-root button{font:inherit;cursor:pointer;color:inherit;background:var(--dsw-alias-bg-layer-1,Canvas);border:1px solid var(--dsw-alias-border-l2,ButtonBorder);border-radius:7px;padding:7px 11px}.dk-root button:hover{background:var(--dsw-alias-bg-layer-3,ButtonFace)}.dk-root :focus-visible{outline:2px solid var(--dsw-alias-state-business-primary,#4169e1);outline-offset:3px}.dk-root :disabled{opacity:.5;cursor:not-allowed}.dk-row{display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:76px;padding:14px 18px}.dk-label{display:flex;align-items:center;gap:8px;font-weight:550}.dk-meta{display:block;font-size:12px;margin-top:3px}.dk-dot{height:6px;width:6px;border-radius:50%;background:var(--dsw-alias-state-business-primary,#4169e1)}.dk-root .dk-binding{border-color:transparent;background:transparent;min-height:36px;flex:none}.dk-keys{display:inline-flex;gap:4px;align-items:center;white-space:nowrap}.dk-keys kbd{font:12px/1.2 system-ui,sans-serif;min-width:24px;text-align:center;padding:5px 6px;border-radius:5px;background:var(--dsw-alias-bg-layer-2,ButtonFace);border:1px solid var(--dsw-alias-border-l2,ButtonBorder);box-shadow:0 1px 0 var(--dsw-alias-border-l2,ButtonBorder)}
-.dk-editor{padding:0 18px 18px}.dk-editor-main{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.dk-root .dk-recorder{min-width:180px;min-height:42px;border-style:dashed}.dk-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.dk-root .dk-primary{background:var(--dsw-alias-state-business-primary,#4169e1);color:white;border-color:transparent}.dk-item>p,.dk-editor p{margin:0 18px 12px;font-size:13px}.dk-editor p{margin:10px 0;color:var(--dsw-alias-state-error-primary,#b43e3e)}.dk-fixed{margin-top:20px}.dk-fixed summary{cursor:pointer;padding:8px 0;font-weight:550}.dk-fixed .dk-row{min-height:50px;padding:10px 0}.dk-footer{font-size:12px;margin-top:20px}.dk-empty{padding:28px;text-align:center}
-@media(max-width:560px){.dk-header{align-items:flex-start}.dk-toolbar{flex-wrap:wrap}.dk-toolbar input{flex-basis:100%}.dk-row{align-items:flex-start;flex-direction:column;gap:8px}.dk-root .dk-binding{padding-left:0}.dk-badge{font-size:11px}.dk-header h2{font-size:24px}}@media(prefers-reduced-motion:reduce){.dk-root *{transition:none!important}}
+.dk-root {
+  color: var(--dsw-alias-label-primary, CanvasText);
+  font: 14px/1.5 system-ui, sans-serif;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 8px 0 32px;
+  color-scheme: inherit;
+}
+
+.dk-root * {
+  box-sizing: border-box;
+}
+
+.dk-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dk-header h2 {
+  font-size: 26px;
+  line-height: 1.2;
+  margin: 5px 0 8px;
+  font-weight: 650;
+  letter-spacing: -.6px;
+}
+
+.dk-header p {
+  margin: 0;
+}
+
+.dk-eyebrow {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 1.4px;
+}
+
+.dk-muted,
+.dk-meta,
+.dk-footer {
+  color: var(--dsw-alias-label-secondary, GrayText);
+}
+
+.dk-badge {
+  font-size: 12px;
+  padding: 5px 10px;
+  border: 1px solid var(--dsw-alias-border-l2, ButtonBorder);
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.dk-card {
+  border: 1px solid var(--dsw-alias-border-l2, ButtonBorder);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--dsw-alias-bg-layer-1, Canvas);
+}
+
+.dk-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 18px;
+}
+
+.dk-option + .dk-option,
+.dk-item + .dk-item {
+  border-top: 1px solid var(--dsw-alias-border-l2, ButtonBorder);
+}
+
+.dk-option input {
+  appearance: none;
+  width: 32px;
+  height: 20px;
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-3, ButtonFace);
+  border: 1px solid var(--dsw-alias-border-l2, ButtonBorder);
+  position: relative;
+  cursor: pointer;
+  flex: none;
+}
+
+.dk-option input:after {
+  content: '';
+  position: absolute;
+  background: var(--dsw-alias-label-secondary, GrayText);
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  top: 3px;
+  left: 3px;
+  transition: transform .12s;
+}
+
+.dk-option input:checked {
+  background: var(--dsw-alias-state-business-primary, #4169e1);
+  border-color: transparent;
+}
+
+.dk-option input:checked:after {
+  background: white;
+  transform: translateX(12px);
+}
+
+.dk-toolbar {
+  display: flex;
+  gap: 10px;
+  margin: 24px 0 12px;
+}
+
+.dk-toolbar input {
+  flex: 1;
+  min-width: 0;
+}
+
+.dk-root input[type=search],
+.dk-root select {
+  background: var(--dsw-alias-bg-layer-1, Canvas);
+  color: inherit;
+  border: 1px solid var(--dsw-alias-border-l2, ButtonBorder);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font: inherit;
+}
+
+.dk-root button {
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+  background: var(--dsw-alias-bg-layer-1, Canvas);
+  border: 1px solid var(--dsw-alias-border-l2, ButtonBorder);
+  border-radius: 7px;
+  padding: 7px 11px;
+}
+
+.dk-root button:hover {
+  background: var(--dsw-alias-bg-layer-3, ButtonFace);
+}
+
+.dk-root :focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary, #4169e1);
+  outline-offset: 3px;
+}
+
+.dk-root :disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.dk-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  min-height: 76px;
+  padding: 14px 18px;
+}
+
+.dk-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 550;
+}
+
+.dk-meta {
+  display: block;
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.dk-dot {
+  height: 6px;
+  width: 6px;
+  border-radius: 50%;
+  background: var(--dsw-alias-state-business-primary, #4169e1);
+}
+
+.dk-root .dk-binding {
+  border-color: transparent;
+  background: transparent;
+  min-height: 36px;
+  flex: none;
+}
+
+.dk-keys {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.dk-keys kbd {
+  font: 12px/1.2 system-ui, sans-serif;
+  min-width: 24px;
+  text-align: center;
+  padding: 5px 6px;
+  border-radius: 5px;
+  background: var(--dsw-alias-bg-layer-2, ButtonFace);
+  border: 1px solid var(--dsw-alias-border-l2, ButtonBorder);
+  box-shadow: 0 1px 0 var(--dsw-alias-border-l2, ButtonBorder);
+}
+
+.dk-editor {
+  padding: 0 18px 18px;
+}
+
+.dk-editor-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dk-root .dk-recorder {
+  min-width: 180px;
+  min-height: 42px;
+  border-style: dashed;
+}
+
+.dk-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.dk-root .dk-primary {
+  background: var(--dsw-alias-state-business-primary, #4169e1);
+  color: white;
+  border-color: transparent;
+}
+
+.dk-item > p,
+.dk-editor p {
+  margin: 0 18px 12px;
+  font-size: 13px;
+}
+
+.dk-editor p {
+  margin: 10px 0;
+  color: var(--dsw-alias-state-error-primary, #b43e3e);
+}
+
+.dk-fixed {
+  margin-top: 20px;
+}
+
+.dk-fixed summary {
+  cursor: pointer;
+  padding: 8px 0;
+  font-weight: 550;
+}
+
+.dk-fixed .dk-row {
+  min-height: 50px;
+  padding: 10px 0;
+}
+
+.dk-footer {
+  font-size: 12px;
+  margin-top: 20px;
+}
+
+.dk-empty {
+  padding: 28px;
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .dk-header {
+    align-items: flex-start;
+  }
+
+  .dk-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .dk-toolbar input {
+    flex-basis: 100%;
+  }
+
+  .dk-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dk-root .dk-binding {
+    padding-left: 0;
+  }
+
+  .dk-badge {
+    font-size: 11px;
+  }
+
+  .dk-header h2 {
+    font-size: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dk-root * {
+    transition: none !important;
+  }
+}
 `;
 
 // src/client.tsx
