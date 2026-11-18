@@ -14,9 +14,25 @@ const inside = (root: string, path: string) => {
   return tail === '' || (tail !== '..' && !tail.startsWith(`..${sep}`) && !isAbsolute(tail))
 }
 
-/** Scan-owned local readers. No shell, inherited FS backend, or link traversal. */
-export async function workspaceTools(workspace: string) {
+export async function scanScope(workspace: string, input = '.') {
   const root = await realpath(workspace)
+  if (input.includes('\0') || input.includes(':') || input.startsWith('\\\\')) throw new Error('扫描范围必须是工作区内的相对路径。')
+  const target = resolve(root, input)
+  if (!inside(root, target)) throw new Error('扫描范围不能越出工作区。')
+  let cursor = root
+  for (const component of relative(root, target).split(sep).filter(Boolean)) {
+    cursor = join(cursor, component)
+    if ((await lstat(cursor)).isSymbolicLink()) throw new Error('扫描范围不支持符号链接或 junction。')
+  }
+  const stat = await lstat(target)
+  if (!stat.isFile() && !stat.isDirectory()) throw new Error('扫描范围必须是普通文件或目录。')
+  return relative(root, target).split(sep).join('/') || '.'
+}
+
+/** Scan-owned local readers. No shell, inherited FS backend, or link traversal. */
+export async function workspaceTools(workspace: string, scope = '.') {
+  const root = await realpath(workspace)
+  const scoped = resolve(root, await scanScope(workspace, scope))
   const boundary = () => new Error('Security workspace boundary: outside paths and symbolic links/junctions are not readable.')
   async function checked(input: string, signal: AbortSignal) {
     signal.throwIfAborted()
@@ -24,7 +40,7 @@ export async function workspaceTools(workspace: string) {
     if (input.includes('\0') || (process.platform === 'win32' &&
       (input.startsWith('\\\\') || input.replace(/^[a-z]:/i, '').includes(':')))) throw boundary()
     const path = resolve(root, input)
-    if (!inside(root, path) || await realpath(root) !== root) throw boundary()
+    if (!inside(scoped, path) || await realpath(root) !== root) throw boundary()
     let cursor = root
     for (const component of relative(root, path).split(sep).filter(Boolean)) {
       cursor = join(cursor, component)
@@ -61,7 +77,7 @@ export async function workspaceTools(workspace: string) {
     } finally { await handle.close() }
   }
   async function files(input: string, signal: AbortSignal) {
-    const start = await checked(input, signal)
+    const start = await checked(input === '.' ? scoped : input, signal)
     const result: string[] = []
     let visited = 0, truncated = false
     async function visit(path: string): Promise<void> {

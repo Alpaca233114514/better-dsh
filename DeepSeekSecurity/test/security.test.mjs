@@ -207,6 +207,7 @@ test('chat invocation reaches native scan tool, child AgentLoop and verified rep
       assert.ok(index <= 3, 'Unexpected retry: inspect tool failure')
       yield { type: 'block-start', index: 0, blockType: 'tool-call' }
       yield { type: 'block-end', index: 0, block: { type: 'tool-call', id: `call-${index}`, name, arguments: JSON.stringify(args) } }
+      yield { type: 'usage', usage: { inputTokens: 100, outputTokens: 20, cacheReadTokens: 30, cacheWriteTokens: 5 } }
       yield { type: 'finish', reason: { kind: 'tool-calls' } }
     }
   }
@@ -259,6 +260,7 @@ test('chat invocation reaches native scan tool, child AgentLoop and verified rep
     assert.equal(mounted, true)
     assert.ok(requests.every(r => r.model === 'chosen-model' && r.provider === 'dsh-fixture-provider'))
     assert.ok(task.reportPath.endsWith('report.md'))
+    assert.deepEqual(task.usage, { inputTokens: 300, outputTokens: 60, cacheReadTokens: 90, cacheWriteTokens: 15, calls: 3, unreportedCalls: 0 })
     assert.equal(ctx.agents.get(task.id), undefined)
     const events = JSON.stringify(parent.agent.session.snapshotEvents())
     assert.match(events, /security_scan/)

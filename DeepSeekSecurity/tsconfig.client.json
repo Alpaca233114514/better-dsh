@@ -1,1 +1,1 @@
-{ "extends": "./tsconfig.json", "include": ["src/client.tsx", "src/assets.d.ts"] }
+{ "extends": "./tsconfig.json", "include": ["src/client.tsx", "src/assets.d.ts", "test/client-contract.ts"] }

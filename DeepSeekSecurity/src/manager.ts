@@ -5,7 +5,8 @@ import { active, taskSchema, type State, type Task, type Phase } from './contrac
 
 export interface RunHooks {
   signal: AbortSignal
-  update(change: Partial<Pick<Task, 'scanId' | 'phase' | 'findings' | 'completed' | 'total' | 'reportPath'>>): Promise<void>
+  cancel?(): void
+  update(change: Partial<Pick<Task, 'scanId' | 'phase' | 'findings' | 'completed' | 'total' | 'reportPath' | 'usage' | 'conversationId'>>): Promise<void>
 }
 export interface ScanDriver {
   run(task: Task, hooks: RunHooks): Promise<void>
@@ -15,7 +16,8 @@ export interface ScanDriver {
 /** Owns only task lifetime and persistence; model driving belongs to DSH. */
 export class SecurityManager {
   private tasks = new Map<string, Task>()
-  private runs = new Map<string, { controller: AbortController; settled: Promise<void> }>()
+  private history = new Map<string, Task>()
+  private runs = new Map<string, { controller: AbortController; settled: Promise<void>; published: Promise<void>; publish: () => void }>()
   private writes: Promise<void> = Promise.resolve()
   private disposed = false
   readonly ready: Promise<void>
@@ -31,10 +33,11 @@ export class SecurityManager {
     if (!Array.isArray(saved)) throw new Error('Invalid Security state; original file preserved')
     for (const value of saved) {
       const task = taskSchema.parse(value)
-      if (this.tasks.has(task.workspace)) throw new Error('Duplicate workspace in Security state')
+      if (this.history.has(task.id)) throw new Error('Duplicate task in Security state')
+      this.history.set(task.id, task)
       this.tasks.set(task.workspace, task)
     }
-    for (const task of this.tasks.values()) {
+    for (const task of this.history.values()) {
       if (!active(task)) continue
       await this.driver.stop(task, false, 'DSH stopped before the scan completed')
       task.status = 'interrupted'
@@ -45,7 +48,7 @@ export class SecurityManager {
   }
 
   private save() {
-    const content = JSON.stringify([...this.tasks.values()], null, 2) + '\n'
+    const content = JSON.stringify([...this.history.values()], null, 2) + '\n'
     const write = this.writes.then(async () => {
       await mkdir(this.directory, { recursive: true })
       const temporary = join(this.directory, `tasks-${randomUUID()}.tmp`)
@@ -62,7 +65,12 @@ export class SecurityManager {
     return { workspace, task: structuredClone(this.tasks.get(workspace) ?? null) }
   }
 
-  async start(workspace: string, sessionId: string, provider: string, model: string, reasoningEffort?: string, instructions?: string): Promise<State> {
+  async list(workspace: string): Promise<Task[]> {
+    await this.ready
+    return structuredClone([...this.history.values()].filter(task => task.workspace === workspace).reverse())
+  }
+
+  async start(workspace: string, sessionId: string, provider: string, model: string, reasoningEffort?: string, instructions?: string, scope = '.', options: { ultra?: boolean; conversation?: boolean } = {}): Promise<State> {
     await this.ready
     if (this.disposed) throw new Error('Security plugin has been disposed')
     if (this.runs.has(workspace)) return this.state(workspace)
@@ -71,12 +79,34 @@ export class SecurityManager {
       ...(reasoningEffort ? { reasoningEffort } : {}),
       ...(instructions ? { instructions } : {}),
       status: 'starting', phase: 'preflight', findings: 0, startedAt: now, updatedAt: now }
+    task.scope = scope
+    if (options.ultra) task.ultra = true
+    if (options.conversation) task.conversation = true
+    task.timeline = [{ at: now, phase: 'preflight' }]
     const controller = new AbortController()
     this.tasks.set(workspace, task)
+    this.history.set(task.id, task)
     // Claim synchronously before any filesystem await; double-clicks share this run.
-    const running = { controller, settled: Promise.resolve() }
+    let publish!: () => void
+    const published = new Promise<void>(resolve => { publish = resolve })
+    const running = { controller, settled: Promise.resolve(), published, publish }
     this.runs.set(workspace, running)
-    running.settled = this.execute(task, controller).finally(() => this.runs.delete(workspace))
+    running.settled = this.execute(task, controller).finally(() => { publish(); this.runs.delete(workspace) })
+    return this.state(workspace)
+  }
+
+  async conversation(workspace: string, taskId: string): Promise<State> {
+    await this.ready
+    const task = this.tasks.get(workspace)
+    if (!task || task.id !== taskId) throw new Error('扫描任务已变化，请刷新工作台。')
+    const run = this.runs.get(workspace)
+    if (!run) {
+      if (task.conversationId) return this.state(workspace)
+      throw new Error(task.error || '扫描会话创建失败。')
+    }
+    // 会话发布后即返回，不等待模型扫描结束。 Return after publication, before audit completion.
+    await run.published
+    if (!task.conversationId) throw new Error(task.error || '扫描会话创建失败。')
     return this.state(workspace)
   }
 
@@ -87,12 +117,19 @@ export class SecurityManager {
       task.status = 'running'
       await this.driver.run(task, {
         signal: controller.signal,
+        cancel: () => controller.abort(new Error('扫描会话已停止。')),
         update: async change => {
           // scanId must be retained even when cancellation races scan registration.
           if (change.scanId) task.scanId = change.scanId
+          if (change.conversationId) task.conversationId = change.conversationId
+          if (change.usage) task.usage = change.usage
           controller.signal.throwIfAborted()
+          if (change.phase && task.timeline?.at(-1)?.phase !== change.phase) {
+            task.timeline?.push({ at: new Date().toISOString(), phase: change.phase })
+          }
           Object.assign(task, change, { updatedAt: new Date().toISOString() })
           await this.save()
+          if (change.conversationId) this.runs.get(task.workspace)?.publish()
         },
       })
       controller.signal.throwIfAborted()
@@ -113,10 +150,11 @@ export class SecurityManager {
     }
   }
 
-  async cancel(workspace: string): Promise<State> {
+  async cancel(workspace: string, taskId?: string): Promise<State> {
     await this.ready
     const run = this.runs.get(workspace)
     const task = this.tasks.get(workspace)
+    if (taskId && task?.id !== taskId) throw new Error('扫描任务已变化，请刷新后重试。')
     if (run && task) {
       task.status = 'cancelling'
       run.controller.abort(new Error('User cancelled Security scan'))
